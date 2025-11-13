@@ -1,6 +1,6 @@
 /**
  * Persona Group Editor Component
- * Add, edit, and remove persona groups
+ * Add, edit, and remove persona groups with automatic weight normalization
  */
 
 import React, { useState } from 'react';
@@ -21,8 +21,10 @@ import {
   MenuItem,
   OutlinedInput,
   Chip,
+  Alert,
+  Divider,
 } from '@mui/material';
-import { Add as AddIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { Add as AddIcon, Delete as DeleteIcon, Edit as EditIcon } from '@mui/icons-material';
 import { PersonaGroup, AGE_GROUPS, GENDERS, OCCUPATIONS } from '../../services/types';
 
 interface PersonaGroupEditorProps {
@@ -32,7 +34,29 @@ interface PersonaGroupEditorProps {
 
 const PersonaGroupEditor: React.FC<PersonaGroupEditorProps> = ({ personaGroups, setPersonaGroups }) => {
   const [editingGroup, setEditingGroup] = useState<Partial<PersonaGroup> | null>(null);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [personaInput, setPersonaInput] = useState('');
+
+  // Calculate total weight
+  const totalWeight = personaGroups.reduce((sum, group) => sum + group.weight, 0);
+
+  // Normalize weights so they sum to 1.0
+  const normalizeWeights = (groups: PersonaGroup[]): PersonaGroup[] => {
+    if (groups.length === 0) return groups;
+
+    const total = groups.reduce((sum, group) => sum + group.weight, 0);
+    if (total === 0) {
+      // If all weights are 0, distribute equally
+      const equalWeight = 1.0 / groups.length;
+      return groups.map(group => ({ ...group, weight: equalWeight }));
+    }
+
+    // Normalize to sum to 1.0
+    return groups.map(group => ({
+      ...group,
+      weight: group.weight / total,
+    }));
+  };
 
   const handleAdd = () => {
     setEditingGroup({
@@ -46,6 +70,12 @@ const PersonaGroupEditor: React.FC<PersonaGroupEditorProps> = ({ personaGroups, 
       },
       weight: 1.0,
     });
+    setEditingIndex(null);
+  };
+
+  const handleEdit = (index: number) => {
+    setEditingGroup({ ...personaGroups[index] });
+    setEditingIndex(index);
   };
 
   const handleSave = () => {
@@ -63,18 +93,34 @@ const PersonaGroupEditor: React.FC<PersonaGroupEditorProps> = ({ personaGroups, 
       weight: editingGroup.weight || 1.0,
     };
 
-    setPersonaGroups([...personaGroups, newGroup]);
+    let updatedGroups: PersonaGroup[];
+    if (editingIndex !== null) {
+      // Update existing group
+      updatedGroups = personaGroups.map((group, i) => i === editingIndex ? newGroup : group);
+    } else {
+      // Add new group
+      updatedGroups = [...personaGroups, newGroup];
+    }
+
+    // Normalize weights
+    updatedGroups = normalizeWeights(updatedGroups);
+
+    setPersonaGroups(updatedGroups);
     setEditingGroup(null);
+    setEditingIndex(null);
     setPersonaInput('');
   };
 
   const handleDelete = (index: number) => {
     const updated = personaGroups.filter((_, i) => i !== index);
-    setPersonaGroups(updated);
+    // Normalize weights after deletion
+    const normalized = normalizeWeights(updated);
+    setPersonaGroups(normalized);
   };
 
   const handleCancel = () => {
     setEditingGroup(null);
+    setEditingIndex(null);
     setPersonaInput('');
   };
 
@@ -95,31 +141,48 @@ const PersonaGroupEditor: React.FC<PersonaGroupEditorProps> = ({ personaGroups, 
     <Paper sx={{ p: 3, mb: 3 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="h5">Persona Groups</Typography>
-        <Button startIcon={<AddIcon />} variant="outlined" onClick={handleAdd}>
+        <Button startIcon={<AddIcon />} variant="outlined" onClick={handleAdd} disabled={!!editingGroup}>
           Add Persona Group
         </Button>
       </Box>
+
+      {/* Weight Summary */}
+      {personaGroups.length > 0 && (
+        <Alert
+          severity={Math.abs(totalWeight - 1.0) < 0.01 ? "success" : "warning"}
+          sx={{ mb: 2 }}
+        >
+          <Typography variant="body2">
+            <strong>Total Weight:</strong> {totalWeight.toFixed(3)}
+            {Math.abs(totalWeight - 1.0) >= 0.01 && ' (weights are automatically normalized to sum to 1.0 when saving)'}
+          </Typography>
+        </Alert>
+      )}
 
       {/* Existing Persona Groups */}
       <Grid container spacing={2} sx={{ mb: 2 }}>
         {personaGroups.map((group, index) => (
           <Grid item xs={12} key={index}>
-            <Card variant="outlined">
+            <Card variant="outlined" sx={{ bgcolor: editingIndex === index ? '#f0f7ff' : 'inherit' }}>
               <CardContent>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <Box sx={{ flexGrow: 1 }}>
                     <Typography variant="h6" gutterBottom>
-                      {group.name} (Weight: {group.weight})
+                      {group.name}
+                    </Typography>
+                    <Typography variant="body2" color="primary" gutterBottom>
+                      Weight: {group.weight.toFixed(3)} ({(group.weight * 100).toFixed(1)}%)
                     </Typography>
                     <Typography variant="body2" color="text.secondary" gutterBottom>
                       {group.description}
                     </Typography>
-                    <Typography variant="subtitle2" sx={{ mt: 2, mb: 1 }}>
-                      Personas:
+                    <Divider sx={{ my: 1.5 }} />
+                    <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                      Personas ({group.personas.length}):
                     </Typography>
                     <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
                       {group.personas.map((persona, i) => (
-                        <Chip key={i} label={persona} size="small" />
+                        <Chip key={i} label={persona} size="small" variant="outlined" />
                       ))}
                     </Box>
                     <Typography variant="subtitle2" gutterBottom>
@@ -128,24 +191,39 @@ const PersonaGroupEditor: React.FC<PersonaGroupEditorProps> = ({ personaGroups, 
                     <Grid container spacing={1}>
                       <Grid item xs={12} md={4}>
                         <Typography variant="caption" color="text.secondary">
-                          Genders: {group.target_demographics.gender.join(', ') || 'All'}
+                          <strong>Genders:</strong> {group.target_demographics.gender.join(', ') || 'All'}
                         </Typography>
                       </Grid>
                       <Grid item xs={12} md={4}>
                         <Typography variant="caption" color="text.secondary">
-                          Ages: {group.target_demographics.age_group.join(', ') || 'All'}
+                          <strong>Ages:</strong> {group.target_demographics.age_group.join(', ') || 'All'}
                         </Typography>
                       </Grid>
                       <Grid item xs={12} md={4}>
                         <Typography variant="caption" color="text.secondary">
-                          Occupations: {group.target_demographics.occupation.join(', ') || 'All'}
+                          <strong>Occupations:</strong> {group.target_demographics.occupation.join(', ') || 'All'}
                         </Typography>
                       </Grid>
                     </Grid>
                   </Box>
-                  <IconButton onClick={() => handleDelete(index)} color="error" size="small">
-                    <DeleteIcon />
-                  </IconButton>
+                  <Box sx={{ display: 'flex', gap: 0.5 }}>
+                    <IconButton
+                      onClick={() => handleEdit(index)}
+                      color="primary"
+                      size="small"
+                      disabled={!!editingGroup}
+                    >
+                      <EditIcon />
+                    </IconButton>
+                    <IconButton
+                      onClick={() => handleDelete(index)}
+                      color="error"
+                      size="small"
+                      disabled={!!editingGroup}
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  </Box>
                 </Box>
               </CardContent>
             </Card>
@@ -155,10 +233,10 @@ const PersonaGroupEditor: React.FC<PersonaGroupEditorProps> = ({ personaGroups, 
 
       {/* Add/Edit Form */}
       {editingGroup && (
-        <Card sx={{ mt: 2, backgroundColor: '#f9f9f9' }}>
+        <Card sx={{ mt: 2, backgroundColor: '#f9f9f9', border: '2px solid #1976d2' }}>
           <CardContent>
             <Typography variant="h6" gutterBottom>
-              New Persona Group
+              {editingIndex !== null ? 'Edit Persona Group' : 'New Persona Group'}
             </Typography>
             <Grid container spacing={2}>
               <Grid item xs={12} md={8}>
@@ -178,6 +256,7 @@ const PersonaGroupEditor: React.FC<PersonaGroupEditorProps> = ({ personaGroups, 
                   value={editingGroup.weight || 1.0}
                   onChange={(e) => setEditingGroup({ ...editingGroup, weight: parseFloat(e.target.value) || 1.0 })}
                   inputProps={{ min: 0, step: 0.1 }}
+                  helperText="Will be normalized with other groups"
                 />
               </Grid>
               <Grid item xs={12}>
@@ -194,7 +273,7 @@ const PersonaGroupEditor: React.FC<PersonaGroupEditorProps> = ({ personaGroups, 
               {/* Personas */}
               <Grid item xs={12}>
                 <Typography variant="subtitle2" gutterBottom>
-                  Personas
+                  Personas *
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
                   <TextField
@@ -216,9 +295,15 @@ const PersonaGroupEditor: React.FC<PersonaGroupEditorProps> = ({ personaGroups, 
                       label={persona}
                       onDelete={() => handleRemovePersona(i)}
                       size="small"
+                      color="primary"
                     />
                   ))}
                 </Box>
+                {(!editingGroup.personas || editingGroup.personas.length === 0) && (
+                  <Typography variant="caption" color="error" display="block" sx={{ mt: 1 }}>
+                    At least one persona is required
+                  </Typography>
+                )}
               </Grid>
 
               {/* Target Demographics */}
@@ -329,7 +414,7 @@ const PersonaGroupEditor: React.FC<PersonaGroupEditorProps> = ({ personaGroups, 
               onClick={handleSave}
               disabled={!editingGroup.name || !editingGroup.personas || editingGroup.personas.length === 0}
             >
-              Add Persona Group
+              {editingIndex !== null ? 'Save Changes' : 'Add Persona Group'}
             </Button>
           </CardActions>
         </Card>
