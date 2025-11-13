@@ -67,7 +67,7 @@ const SurveyForm: React.FC<SurveyFormProps> = ({ surveyData, setSurveyData }) =>
               value={surveyData.context}
               onChange={(e) => handleChange('context', e.target.value)}
               multiline
-              rows={3}
+              rows={6}
               helperText="General context or background for the survey"
               required
             />

@@ -171,7 +171,7 @@ const CategoryEditor: React.FC<CategoryEditorProps> = ({ categories, setCategori
                   value={editingCategory.context || ''}
                   onChange={(e) => setEditingCategory({ ...editingCategory, context: e.target.value })}
                   multiline
-                  rows={2}
+                  rows={4}
                   helperText="Additional context for this category"
                 />
               </Grid>
