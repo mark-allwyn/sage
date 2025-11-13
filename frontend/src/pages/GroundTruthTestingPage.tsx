@@ -842,6 +842,7 @@ const GroundTruthTestingPage: React.FC = () => {
               <ConfusionMatrix
                 testRunDistributions={comparisonResults.test_run_distributions}
                 groundTruthDistributions={comparisonResults.ground_truth_distributions}
+                survey={survey}
               />
             </Grid>
 
