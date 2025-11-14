@@ -32,6 +32,34 @@ const CategoryList: React.FC<CategoryListProps> = ({ categories }) => {
                 <Typography variant="body2" color="text.secondary" paragraph>
                   {category.description}
                 </Typography>
+
+                {/* Display media if present */}
+                {category.media_type === 'image' && (category.media_url || category.media_path) && (
+                  <Box sx={{ mb: 2 }}>
+                    <img
+                      src={category.media_url || category.media_path}
+                      alt={category.name}
+                      style={{
+                        width: '100%',
+                        maxHeight: '300px',
+                        objectFit: 'cover',
+                        borderRadius: '4px'
+                      }}
+                    />
+                  </Box>
+                )}
+
+                {category.media_type === 'webpage' && category.media_url && (
+                  <Box sx={{ mb: 2, p: 2, backgroundColor: '#e3f2fd', borderRadius: 1 }}>
+                    <Typography variant="caption" color="text.secondary">
+                      Webpage URL:
+                    </Typography>
+                    <Typography variant="body2" sx={{ wordBreak: 'break-all' }}>
+                      {category.media_url}
+                    </Typography>
+                  </Box>
+                )}
+
                 {category.context && (
                   <Box sx={{ p: 2, backgroundColor: '#f5f5f5', borderRadius: 1 }}>
                     <Typography variant="caption" color="text.secondary">

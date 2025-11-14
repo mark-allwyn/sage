@@ -1,0 +1,183 @@
+survey:
+  name: "Image Comparison Test - Product Designs"
+  description: "Compare two product design mockups to understand customer preferences"
+  context: "We are testing two different product design concepts. Please evaluate each design carefully based on the images shown."
+  sample_size: 50
+  demographics:
+    - age_group
+    - gender
+    - occupation
+    - persona_group
+  categories:
+    - id: design_a
+      name: "Design A - Minimalist"
+      description: "Clean, minimalist product design with simple lines"
+      context: "This is a minimalist design approach featuring:
+- Clean, uncluttered aesthetic
+- Simple geometric shapes
+- Neutral color palette
+- Focus on functionality
+- Modern and sleek appearance
+"
+      media_type: "image"
+      media_url: "https://picsum.photos/seed/designa/800/600"
+    - id: design_b
+      name: "Design B - Bold"
+      description: "Bold, colorful product design with dynamic elements"
+      context: "This is a bold design approach featuring:
+- Vibrant color scheme
+- Dynamic visual elements
+- Attention-grabbing details
+- Playful and energetic feel
+- Contemporary style
+"
+      media_type: "image"
+      media_url: "https://picsum.photos/seed/designb/800/600"
+  questions:
+    - id: design_a_appeal
+      text: "How visually appealing do you find this design?"
+      type: likert_5
+      category: design_a
+      scale:
+        1: "Not appealing at all"
+        2: "Slightly appealing"
+        3: "Moderately appealing"
+        4: "Very appealing"
+        5: "Extremely appealing"
+    - id: design_a_purchase
+      text: "How likely would you be to purchase a product with this design?"
+      type: likert_5
+      category: design_a
+      scale:
+        1: "Very Unlikely"
+        2: "Unlikely"
+        3: "Neutral"
+        4: "Likely"
+        5: "Very Likely"
+    - id: design_a_quality
+      text: "This design looks high quality and well-made"
+      type: likert_5
+      category: design_a
+      scale:
+        1: "Strongly Disagree"
+        2: "Disagree"
+        3: "Neutral"
+        4: "Agree"
+        5: "Strongly Agree"
+    - id: design_a_modern
+      text: "This design feels modern and contemporary"
+      type: likert_5
+      category: design_a
+      scale:
+        1: "Strongly Disagree"
+        2: "Disagree"
+        3: "Neutral"
+        4: "Agree"
+        5: "Strongly Agree"
+    - id: design_b_appeal
+      text: "How visually appealing do you find this design?"
+      type: likert_5
+      category: design_b
+      scale:
+        1: "Not appealing at all"
+        2: "Slightly appealing"
+        3: "Moderately appealing"
+        4: "Very appealing"
+        5: "Extremely appealing"
+    - id: design_b_purchase
+      text: "How likely would you be to purchase a product with this design?"
+      type: likert_5
+      category: design_b
+      scale:
+        1: "Very Unlikely"
+        2: "Unlikely"
+        3: "Neutral"
+        4: "Likely"
+        5: "Very Likely"
+    - id: design_b_quality
+      text: "This design looks high quality and well-made"
+      type: likert_5
+      category: design_b
+      scale:
+        1: "Strongly Disagree"
+        2: "Disagree"
+        3: "Neutral"
+        4: "Agree"
+        5: "Strongly Agree"
+    - id: design_b_modern
+      text: "This design feels modern and contemporary"
+      type: likert_5
+      category: design_b
+      scale:
+        1: "Strongly Disagree"
+        2: "Disagree"
+        3: "Neutral"
+        4: "Agree"
+        5: "Strongly Agree"
+    - id: design_preference
+      text: "Overall, which design do you prefer: {design_a} or {design_b}?"
+      type: preference_scale
+      category: comparison
+      categories_compared: [design_a, design_b]
+      scale:
+        1: "Strongly prefer {design_a}"
+        2: "Prefer {design_a}"
+        3: "No preference"
+        4: "Prefer {design_b}"
+        5: "Strongly prefer {design_b}"
+    - id: style_preference
+      text: "When comparing {design_a} and {design_b}, which style better matches your personal taste?"
+      type: preference_scale
+      category: comparison
+      categories_compared: [design_a, design_b]
+      scale:
+        1: "Much better match with {design_a}"
+        2: "Better match with {design_a}"
+        3: "Equal match"
+        4: "Better match with {design_b}"
+        5: "Much better match with {design_b}"
+  persona_groups:
+    - name: "Design Enthusiasts"
+      description: "People who value aesthetics and design quality"
+      weight: 0.30
+      personas:
+        - "A 28-year-old graphic designer who appreciates minimalist aesthetics and clean lines"
+        - "A 32-year-old UX designer who values modern, functional design"
+        - "A 35-year-old art director who keeps up with contemporary design trends"
+      target_demographics:
+        gender: ["Male", "Female", "Non-binary"]
+        age_group: ["25-34", "35-44"]
+        occupation: ["Professional", "Technical"]
+    - name: "Bold Style Seekers"
+      description: "Consumers who prefer vibrant, eye-catching designs"
+      weight: 0.25
+      personas:
+        - "A 24-year-old fashion-forward individual who loves colorful, bold statements"
+        - "A 29-year-old creative professional who gravitates toward dynamic visuals"
+        - "A 26-year-old influencer who values products that stand out"
+      target_demographics:
+        gender: ["Male", "Female", "Non-binary"]
+        age_group: ["18-24", "25-34"]
+        occupation: ["Professional", "Self-employed", "Student"]
+    - name: "Practical Buyers"
+      description: "Consumers focused on functionality over aesthetics"
+      weight: 0.25
+      personas:
+        - "A 42-year-old parent who prioritizes practicality and value"
+        - "A 38-year-old professional who prefers understated, classic designs"
+        - "A 45-year-old who values quality and durability over trends"
+      target_demographics:
+        gender: ["Male", "Female"]
+        age_group: ["35-44", "45-54"]
+        occupation: ["Professional", "Manager", "Service"]
+    - name: "Traditional Consumers"
+      description: "Buyers who prefer conservative, timeless designs"
+      weight: 0.20
+      personas:
+        - "A 52-year-old who prefers classic designs over trendy options"
+        - "A 58-year-old conservative buyer who values traditional aesthetics"
+        - "A 65-year-old retiree who appreciates simple, elegant design"
+      target_demographics:
+        gender: ["Male", "Female"]
+        age_group: ["45-54", "55-64", "65+"]
+        occupation: ["Manager", "Retired", "Professional"]

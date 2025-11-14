@@ -203,6 +203,27 @@ const SurveyUserViewPage: React.FC = () => {
                             <Typography variant="subtitle2" fontWeight="bold" color="primary.dark" gutterBottom>
                               {category.name}
                             </Typography>
+
+                            {/* Display image if available */}
+                            {category.media_type === 'image' && (category.media_url || category.media_path) && (
+                              <Box sx={{ mb: 2, display: 'flex', justifyContent: 'center' }}>
+                                <img
+                                  src={category.media_url || category.media_path}
+                                  alt={category.name}
+                                  style={{
+                                    maxWidth: '100%',
+                                    maxHeight: '300px',
+                                    borderRadius: '8px',
+                                    objectFit: 'contain'
+                                  }}
+                                  onError={(e) => {
+                                    console.error(`Failed to load image for ${category.name}:`, category.media_url || category.media_path);
+                                    e.currentTarget.style.display = 'none';
+                                  }}
+                                />
+                              </Box>
+                            )}
+
                             {category.description && (
                               <Typography variant="body2" color="primary.dark" paragraph sx={{ mb: category.context ? 1 : 0, fontSize: '0.875rem' }}>
                                 {category.description}
@@ -231,6 +252,27 @@ const SurveyUserViewPage: React.FC = () => {
                         <Typography variant="subtitle2" fontWeight="bold" color="primary.dark" gutterBottom>
                           {category.name}
                         </Typography>
+
+                        {/* Display image if available */}
+                        {category.media_type === 'image' && (category.media_url || category.media_path) && (
+                          <Box sx={{ mb: 2, display: 'flex', justifyContent: 'center' }}>
+                            <img
+                              src={category.media_url || category.media_path}
+                              alt={category.name}
+                              style={{
+                                maxWidth: '100%',
+                                maxHeight: '400px',
+                                borderRadius: '8px',
+                                objectFit: 'contain'
+                              }}
+                              onError={(e) => {
+                                console.error(`Failed to load image for ${category.name}:`, category.media_url || category.media_path);
+                                e.currentTarget.style.display = 'none';
+                              }}
+                            />
+                          </Box>
+                        )}
+
                         {category.description && (
                           <Typography variant="body2" color="primary.dark" paragraph sx={{ mb: category.context ? 2 : 0 }}>
                             {category.description}

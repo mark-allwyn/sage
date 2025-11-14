@@ -53,6 +53,10 @@ export interface Category {
   name: string;
   description: string;
   context: string;
+  // Multi-modal fields
+  media_type?: 'image' | 'webpage';
+  media_url?: string;
+  media_path?: string;
 }
 
 // Response Types
@@ -212,17 +216,28 @@ export const LLM_PROVIDERS: { value: 'openai' | 'anthropic'; label: string }[] =
 ];
 
 export const OPENAI_MODELS = [
-  { value: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo (Fast & Affordable)' },
-  { value: 'gpt-4-turbo-preview', label: 'GPT-4 Turbo (Balanced)' },
-  { value: 'gpt-5', label: 'GPT-5 (Most Capable)' },
-  { value: 'gpt-5-nano', label: 'GPT-5 Nano (Cheap)' },
+  { value: 'gpt-5.1-instant', label: 'GPT-5.1 Instant (Latest, Most Capable)', supportsVision: true },
+  { value: 'gpt-5.1-thinking', label: 'GPT-5.1 Thinking (Advanced Reasoning)', supportsVision: true },
+  { value: 'gpt-4o', label: 'GPT-4o', supportsVision: true },
+  { value: 'gpt-4o-mini', label: 'GPT-4o Mini (Fast & Cost-Effective)', supportsVision: true },
+  { value: 'gpt-4-turbo', label: 'GPT-4 Turbo', supportsVision: true },
 ];
 
 export const ANTHROPIC_MODELS = [
-  { value: 'claude-3-haiku-20240307', label: 'Claude 3 Haiku (Fast & Affordable)' },
-  { value: 'claude-3-sonnet-20240229', label: 'Claude 3 Sonnet (Balanced)' },
-  { value: 'claude-3-opus-20240229', label: 'Claude 3 Opus (Most Capable)' },
+  { value: 'claude-sonnet-4-5-20250929', label: 'Claude Sonnet 4.5 (Latest, Most Capable)', supportsVision: true },
+  { value: 'claude-haiku-4-5-20251015', label: 'Claude Haiku 4.5 (Fast & Cost-Effective)', supportsVision: true },
+  { value: 'claude-opus-4-1-20250805', label: 'Claude Opus 4.1 (Advanced Reasoning)', supportsVision: true },
+  { value: 'claude-3-5-sonnet-20241022', label: 'Claude 3.5 Sonnet', supportsVision: true },
+  { value: 'claude-3-5-haiku-20241022', label: 'Claude 3.5 Haiku', supportsVision: true },
+  { value: 'claude-3-opus-20240229', label: 'Claude 3 Opus', supportsVision: true },
 ];
+
+// Helper function to check if a model supports vision
+export const isVisionCapableModel = (provider: 'openai' | 'anthropic', model: string): boolean => {
+  const models = provider === 'openai' ? OPENAI_MODELS : ANTHROPIC_MODELS;
+  const modelInfo = models.find(m => m.value === model);
+  return modelInfo?.supportsVision || false;
+};
 
 export const NORMALIZE_METHODS: { value: 'paper' | 'softmax' | 'linear'; label: string; description: string }[] = [
   { value: 'paper', label: 'Paper Method', description: 'Normalization method from original SSR paper' },
@@ -382,4 +397,14 @@ export interface ComparisonResults {
       [question_id: string]: AggregatedDistribution;
     };
   };
+}
+
+// Media Upload Types
+export interface MediaUploadResponse {
+  success: boolean;
+  media_type: 'image' | 'webpage';
+  media_path?: string;
+  media_url?: string;
+  filename?: string;
+  message?: string;
 }

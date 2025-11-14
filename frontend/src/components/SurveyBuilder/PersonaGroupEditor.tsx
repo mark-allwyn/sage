@@ -138,193 +138,195 @@ const PersonaGroupEditor: React.FC<PersonaGroupEditorProps> = ({ personaGroups, 
   };
 
   // Render the edit/add form
-  const renderEditForm = () => (
-    <Card sx={{ mt: 2, backgroundColor: '#f9f9f9', border: '2px solid #1976d2' }}>
-      <CardContent>
-        <Typography variant="h6" gutterBottom>
-          {editingIndex !== null ? 'Edit Persona Group' : 'New Persona Group'}
-        </Typography>
-        <Grid container spacing={2}>
-          <Grid item xs={12} md={8}>
-            <TextField
-              fullWidth
-              label="Group Name"
-              value={editingGroup?.name || ''}
-              onChange={(e) => setEditingGroup({ ...editingGroup, name: e.target.value })}
-              required
-            />
-          </Grid>
-          <Grid item xs={12} md={4}>
-            <TextField
-              fullWidth
-              type="number"
-              label="Weight"
-              value={editingGroup?.weight || 1.0}
-              onChange={(e) => setEditingGroup({ ...editingGroup, weight: parseFloat(e.target.value) || 1.0 })}
-              inputProps={{ min: 0, step: 0.1 }}
-              helperText="Will be normalized with other groups"
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              label="Description"
-              value={editingGroup?.description || ''}
-              onChange={(e) => setEditingGroup({ ...editingGroup, description: e.target.value })}
-              multiline
-              rows={2}
-            />
-          </Grid>
-
-          {/* Personas */}
-          <Grid item xs={12}>
-            <Typography variant="subtitle2" gutterBottom>
-              Personas *
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
+  function renderEditForm() {
+    return (
+      <Card sx={{ mt: 2, backgroundColor: '#f9f9f9', border: '2px solid #1976d2' }}>
+        <CardContent>
+          <Typography variant="h6" gutterBottom>
+            {editingIndex !== null ? 'Edit Persona Group' : 'New Persona Group'}
+          </Typography>
+          <Grid container spacing={2}>
+            <Grid item xs={12} md={8}>
               <TextField
                 fullWidth
-                size="small"
-                label="Add persona description"
-                value={personaInput}
-                onChange={(e) => setPersonaInput(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleAddPersona()}
+                label="Group Name"
+                value={editingGroup?.name || ''}
+                onChange={(e) => setEditingGroup({ ...editingGroup, name: e.target.value })}
+                required
               />
-              <Button onClick={handleAddPersona} variant="outlined">
-                Add
-              </Button>
-            </Box>
-            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-              {editingGroup?.personas?.map((persona, i) => (
-                <Chip
-                  key={i}
-                  label={persona}
-                  onDelete={() => handleRemovePersona(i)}
-                  size="small"
-                  color="primary"
-                />
-              ))}
-            </Box>
-            {(!editingGroup?.personas || editingGroup.personas.length === 0) && (
-              <Typography variant="caption" color="error" display="block" sx={{ mt: 1 }}>
-                At least one persona is required
-              </Typography>
-            )}
-          </Grid>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                type="number"
+                label="Weight"
+                value={editingGroup?.weight || 1.0}
+                onChange={(e) => setEditingGroup({ ...editingGroup, weight: parseFloat(e.target.value) || 1.0 })}
+                inputProps={{ min: 0, step: 0.1 }}
+                helperText="Will be normalized with other groups"
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Description"
+                value={editingGroup?.description || ''}
+                onChange={(e) => setEditingGroup({ ...editingGroup, description: e.target.value })}
+                multiline
+                rows={2}
+              />
+            </Grid>
 
-          {/* Target Demographics */}
-          <Grid item xs={12}>
-            <Typography variant="subtitle2" gutterBottom>
-              Target Demographics
-            </Typography>
-          </Grid>
-          <Grid item xs={12} md={4}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Genders</InputLabel>
-              <Select
-                multiple
-                value={editingGroup?.target_demographics?.gender || []}
-                label="Genders"
-                onChange={(e) => setEditingGroup({
-                  ...editingGroup,
-                  target_demographics: {
-                    ...(editingGroup?.target_demographics || { age_group: [], occupation: [] }),
-                    gender: e.target.value as string[],
-                  },
-                })}
-                input={<OutlinedInput label="Genders" />}
-                renderValue={(selected) => (
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                    {selected.map((value) => (
-                      <Chip key={value} label={value} size="small" />
-                    ))}
-                  </Box>
-                )}
-              >
-                {GENDERS.map((gender) => (
-                  <MenuItem key={gender} value={gender}>
-                    {gender}
-                  </MenuItem>
+            {/* Personas */}
+            <Grid item xs={12}>
+              <Typography variant="subtitle2" gutterBottom>
+                Personas *
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Add persona description"
+                  value={personaInput}
+                  onChange={(e) => setPersonaInput(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleAddPersona()}
+                />
+                <Button onClick={handleAddPersona} variant="outlined">
+                  Add
+                </Button>
+              </Box>
+              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                {editingGroup?.personas?.map((persona, i) => (
+                  <Chip
+                    key={i}
+                    label={persona}
+                    onDelete={() => handleRemovePersona(i)}
+                    size="small"
+                    color="primary"
+                  />
                 ))}
-              </Select>
-            </FormControl>
+              </Box>
+              {(!editingGroup?.personas || editingGroup.personas.length === 0) && (
+                <Typography variant="caption" color="error" display="block" sx={{ mt: 1 }}>
+                  At least one persona is required
+                </Typography>
+              )}
+            </Grid>
+
+            {/* Target Demographics */}
+            <Grid item xs={12}>
+              <Typography variant="subtitle2" gutterBottom>
+                Target Demographics
+              </Typography>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Genders</InputLabel>
+                <Select
+                  multiple
+                  value={editingGroup?.target_demographics?.gender || []}
+                  label="Genders"
+                  onChange={(e) => setEditingGroup({
+                    ...editingGroup,
+                    target_demographics: {
+                      ...(editingGroup?.target_demographics || { age_group: [], occupation: [] }),
+                      gender: e.target.value as string[],
+                    },
+                  })}
+                  input={<OutlinedInput label="Genders" />}
+                  renderValue={(selected) => (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {selected.map((value) => (
+                        <Chip key={value} label={value} size="small" />
+                      ))}
+                    </Box>
+                  )}
+                >
+                  {GENDERS.map((gender) => (
+                    <MenuItem key={gender} value={gender}>
+                      {gender}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Age Groups</InputLabel>
+                <Select
+                  multiple
+                  value={editingGroup?.target_demographics?.age_group || []}
+                  label="Age Groups"
+                  onChange={(e) => setEditingGroup({
+                    ...editingGroup,
+                    target_demographics: {
+                      ...(editingGroup?.target_demographics || { gender: [], occupation: [] }),
+                      age_group: e.target.value as string[],
+                    },
+                  })}
+                  input={<OutlinedInput label="Age Groups" />}
+                  renderValue={(selected) => (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {selected.map((value) => (
+                        <Chip key={value} label={value} size="small" />
+                      ))}
+                    </Box>
+                  )}
+                >
+                  {AGE_GROUPS.map((age) => (
+                    <MenuItem key={age} value={age}>
+                      {age}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Occupations</InputLabel>
+                <Select
+                  multiple
+                  value={editingGroup?.target_demographics?.occupation || []}
+                  label="Occupations"
+                  onChange={(e) => setEditingGroup({
+                    ...editingGroup,
+                    target_demographics: {
+                      ...(editingGroup?.target_demographics || { gender: [], age_group: [] }),
+                      occupation: e.target.value as string[],
+                    },
+                  })}
+                  input={<OutlinedInput label="Occupations" />}
+                  renderValue={(selected) => (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {selected.map((value) => (
+                        <Chip key={value} label={value} size="small" />
+                      ))}
+                    </Box>
+                  )}
+                >
+                  {OCCUPATIONS.map((occ) => (
+                    <MenuItem key={occ} value={occ}>
+                      {occ}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
           </Grid>
-          <Grid item xs={12} md={4}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Age Groups</InputLabel>
-              <Select
-                multiple
-                value={editingGroup?.target_demographics?.age_group || []}
-                label="Age Groups"
-                onChange={(e) => setEditingGroup({
-                  ...editingGroup,
-                  target_demographics: {
-                    ...(editingGroup?.target_demographics || { gender: [], occupation: [] }),
-                    age_group: e.target.value as string[],
-                  },
-                })}
-                input={<OutlinedInput label="Age Groups" />}
-                renderValue={(selected) => (
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                    {selected.map((value) => (
-                      <Chip key={value} label={value} size="small" />
-                    ))}
-                  </Box>
-                )}
-              >
-                {AGE_GROUPS.map((age) => (
-                  <MenuItem key={age} value={age}>
-                    {age}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} md={4}>
-            <FormControl fullWidth size="small">
-              <InputLabel>Occupations</InputLabel>
-              <Select
-                multiple
-                value={editingGroup?.target_demographics?.occupation || []}
-                label="Occupations"
-                onChange={(e) => setEditingGroup({
-                  ...editingGroup,
-                  target_demographics: {
-                    ...(editingGroup?.target_demographics || { gender: [], age_group: [] }),
-                    occupation: e.target.value as string[],
-                  },
-                })}
-                input={<OutlinedInput label="Occupations" />}
-                renderValue={(selected) => (
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                    {selected.map((value) => (
-                      <Chip key={value} label={value} size="small" />
-                    ))}
-                  </Box>
-                )}
-              >
-                {OCCUPATIONS.map((occ) => (
-                  <MenuItem key={occ} value={occ}>
-                    {occ}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-        </Grid>
-      </CardContent>
-      <CardActions>
-        <Button onClick={handleCancel}>Cancel</Button>
-        <Button
-          variant="contained"
-          onClick={handleSave}
-          disabled={!editingGroup?.name || !editingGroup?.personas || editingGroup.personas.length === 0}
-        >
-          {editingIndex !== null ? 'Save Changes' : 'Add Persona Group'}
-        </Button>
-      </CardActions>
-    </Card>
-  );
+        </CardContent>
+        <CardActions>
+          <Button onClick={handleCancel}>Cancel</Button>
+          <Button
+            variant="contained"
+            onClick={handleSave}
+            disabled={!editingGroup?.name || !editingGroup?.personas || editingGroup.personas.length === 0}
+          >
+            {editingIndex !== null ? 'Save Changes' : 'Add Persona Group'}
+          </Button>
+        </CardActions>
+      </Card>
+    );
+  }
 
   return (
     <Paper sx={{ p: 3, mb: 3 }}>

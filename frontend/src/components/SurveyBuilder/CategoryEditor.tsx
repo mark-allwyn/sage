@@ -15,9 +15,19 @@ import {
   Card,
   CardContent,
   CardActions,
+  Alert,
+  CircularProgress,
+  Chip,
 } from '@mui/material';
-import { Add as AddIcon, Delete as DeleteIcon, Edit as EditIcon } from '@mui/icons-material';
-import { Category } from '../../services/types';
+import {
+  Add as AddIcon,
+  Delete as DeleteIcon,
+  Edit as EditIcon,
+  Image as ImageIcon,
+  Link as LinkIcon,
+} from '@mui/icons-material';
+import { Category, MediaUploadResponse } from '../../services/types';
+import axios from 'axios';
 
 interface CategoryEditorProps {
   categories: Category[];
@@ -27,6 +37,9 @@ interface CategoryEditorProps {
 const CategoryEditor: React.FC<CategoryEditorProps> = ({ categories, setCategories }) => {
   const [editingCategory, setEditingCategory] = useState<Partial<Category> | null>(null);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [mediaUrl, setMediaUrl] = useState('');
 
   const handleAdd = () => {
     setEditingCategory({
@@ -75,6 +88,80 @@ const CategoryEditor: React.FC<CategoryEditorProps> = ({ categories, setCategori
   const handleCancel = () => {
     setEditingCategory(null);
     setEditingIndex(null);
+    setMediaUrl('');
+    setUploadError(null);
+  };
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !editingCategory) return;
+
+    setUploading(true);
+    setUploadError(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await axios.post<MediaUploadResponse>(
+        'http://localhost:8000/api/upload/image',
+        formData,
+        { headers: { 'Content-Type': 'multipart/form-data' } }
+      );
+
+      if (response.data.success) {
+        setEditingCategory({
+          ...editingCategory,
+          media_type: 'image',
+          media_path: response.data.media_path,
+          media_url: response.data.media_url,
+        });
+      }
+    } catch (error: any) {
+      setUploadError(error.response?.data?.detail || 'Failed to upload image');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleWebpageUrlProcess = async () => {
+    if (!mediaUrl || !editingCategory) return;
+
+    setUploading(true);
+    setUploadError(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('media_url', mediaUrl);
+
+      const response = await axios.post<MediaUploadResponse>(
+        'http://localhost:8000/api/process/webpage-url',
+        formData
+      );
+
+      if (response.data.success) {
+        setEditingCategory({
+          ...editingCategory,
+          media_type: 'webpage',
+          media_url: mediaUrl,
+        });
+        setMediaUrl('');
+      }
+    } catch (error: any) {
+      setUploadError(error.response?.data?.detail || 'Failed to process webpage URL');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleRemoveMedia = () => {
+    if (!editingCategory) return;
+    setEditingCategory({
+      ...editingCategory,
+      media_type: undefined,
+      media_url: undefined,
+      media_path: undefined,
+    });
   };
 
   return (
@@ -96,7 +183,7 @@ const CategoryEditor: React.FC<CategoryEditorProps> = ({ categories, setCategori
           <Grid item xs={12} md={6} key={index}>
             <Card variant="outlined">
               <CardContent>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                   <Box sx={{ flexGrow: 1 }}>
                     <Typography variant="subtitle2" color="text.secondary">
                       {cat.id}
@@ -122,6 +209,46 @@ const CategoryEditor: React.FC<CategoryEditorProps> = ({ categories, setCategori
                     </IconButton>
                   </Box>
                 </Box>
+
+                {/* Display media preview if present */}
+                {cat.media_type === 'image' && (cat.media_url || cat.media_path) && (
+                  <Box sx={{ mt: 2 }}>
+                    <img
+                      src={cat.media_url || cat.media_path}
+                      alt={cat.name}
+                      style={{
+                        width: '100%',
+                        maxHeight: '150px',
+                        objectFit: 'cover',
+                        borderRadius: '8px',
+                        border: '1px solid #e0e0e0',
+                      }}
+                    />
+                  </Box>
+                )}
+
+                {cat.media_type === 'webpage' && cat.media_url && (
+                  <Box sx={{ mt: 2, p: 1.5, backgroundColor: '#e3f2fd', borderRadius: 1 }}>
+                    <Typography variant="caption" fontWeight="bold" display="block" gutterBottom>
+                      Webpage URL:
+                    </Typography>
+                    <Typography variant="caption" sx={{ wordBreak: 'break-all' }}>
+                      {cat.media_url}
+                    </Typography>
+                  </Box>
+                )}
+
+                {cat.media_type && (
+                  <Box sx={{ mt: 1.5 }}>
+                    <Chip
+                      label={`${cat.media_type.replace('_', ' ').toUpperCase()} attached`}
+                      size="small"
+                      color="success"
+                      variant="outlined"
+                      icon={cat.media_type === 'image' ? <ImageIcon /> : <LinkIcon />}
+                    />
+                  </Box>
+                )}
               </CardContent>
             </Card>
           </Grid>
@@ -174,6 +301,125 @@ const CategoryEditor: React.FC<CategoryEditorProps> = ({ categories, setCategori
                   rows={4}
                   helperText="Additional context for this category"
                 />
+              </Grid>
+
+              {/* Media Upload Section */}
+              <Grid item xs={12}>
+                <Typography variant="subtitle1" gutterBottom sx={{ mt: 2 }}>
+                  Media Content (Optional)
+                </Typography>
+                <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
+                  Add images or webpage URLs to provide visual context. Vision-capable models required.
+                </Typography>
+
+                {uploadError && (
+                  <Alert severity="error" sx={{ mb: 2 }} onClose={() => setUploadError(null)}>
+                    {uploadError}
+                  </Alert>
+                )}
+
+                {editingCategory.media_type ? (
+                  <Card variant="outlined" sx={{ p: 2, mb: 2, backgroundColor: '#e8f5e9' }}>
+                    <Box sx={{ mb: 2 }}>
+                      <Typography variant="body2" fontWeight="bold" gutterBottom>
+                        Media Type: {editingCategory.media_type?.replace('_', ' ').toUpperCase()}
+                      </Typography>
+
+                      {/* Display Image Preview */}
+                      {editingCategory.media_type === 'image' && (editingCategory.media_url || editingCategory.media_path) && (
+                        <Box sx={{ mt: 2, mb: 2 }}>
+                          <img
+                            src={editingCategory.media_url || editingCategory.media_path}
+                            alt={editingCategory.name || 'Category image'}
+                            style={{
+                              width: '100%',
+                              maxHeight: '300px',
+                              objectFit: 'contain',
+                              borderRadius: '8px',
+                              border: '1px solid #ddd',
+                            }}
+                          />
+                        </Box>
+                      )}
+
+                      {/* Display Webpage URL */}
+                      {editingCategory.media_type === 'webpage' && editingCategory.media_url && (
+                        <Box sx={{ mt: 2, p: 2, backgroundColor: '#e3f2fd', borderRadius: 1 }}>
+                          <Typography variant="caption" fontWeight="bold" display="block" gutterBottom>
+                            Webpage URL:
+                          </Typography>
+                          <Typography variant="caption" sx={{ wordBreak: 'break-all' }}>
+                            {editingCategory.media_url}
+                          </Typography>
+                        </Box>
+                      )}
+
+                      {editingCategory.media_path && (
+                        <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
+                          Path: {editingCategory.media_path}
+                        </Typography>
+                      )}
+                    </Box>
+
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                      <Button onClick={handleRemoveMedia} color="error" size="small" variant="outlined">
+                        Remove Media
+                      </Button>
+                    </Box>
+                  </Card>
+                ) : (
+                  <Box>
+                    {/* Image Upload */}
+                    <Box sx={{ mb: 2 }}>
+                      <Button
+                        variant="outlined"
+                        component="label"
+                        startIcon={<ImageIcon />}
+                        disabled={uploading}
+                        fullWidth
+                      >
+                        Upload Image (JPG, PNG, WebP)
+                        <input
+                          type="file"
+                          hidden
+                          accept="image/*"
+                          onChange={handleImageUpload}
+                        />
+                      </Button>
+                    </Box>
+
+                    {/* Webpage URL */}
+                    <Box sx={{ mb: 2 }}>
+                      <TextField
+                        fullWidth
+                        label="Webpage URL"
+                        value={mediaUrl}
+                        onChange={(e) => setMediaUrl(e.target.value)}
+                        placeholder="https://example.com"
+                        helperText="Enter a webpage URL to capture as context"
+                        disabled={uploading}
+                      />
+                      <Box sx={{ mt: 1 }}>
+                        <Button
+                          variant="outlined"
+                          startIcon={<LinkIcon />}
+                          onClick={handleWebpageUrlProcess}
+                          disabled={uploading || !mediaUrl}
+                          fullWidth
+                        >
+                          Process Webpage URL
+                        </Button>
+                      </Box>
+                    </Box>
+
+                    {uploading && (
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <CircularProgress size={20} />
+                        <Typography variant="caption">Processing media...</Typography>
+                      </Box>
+                    )}
+                  </Box>
+                )}
               </Grid>
             </Grid>
           </CardContent>

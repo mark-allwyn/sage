@@ -9,9 +9,10 @@ This backend provides REST API endpoints for the React demo app to:
 - View response datasets
 """
 
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, Request
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, Request, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from typing import List, Dict, Optional, Any
 import sys
@@ -22,6 +23,8 @@ from pathlib import Path
 from datetime import datetime
 from dotenv import load_dotenv
 import time
+import hashlib
+import shutil
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -34,11 +37,13 @@ load_dotenv()
 from ssr_core.survey import Survey, PersonaGroup, Question, Category
 from ssr_core.llm_client import LLMClient, generate_diverse_profiles, RespondentProfile, Response
 from ssr_core.ssr_model import SemanticSimilarityRater, RatingDistribution
+from ssr_core.model_validator import ModelValidator, validate_survey_model, ModelIncompatibleError
 from collections import defaultdict
 import numpy as np
 
 # Import ground truth metrics
 from ground_truth_metrics import compare_survey_runs
+
 
 # Helper function to convert numpy types to Python native types
 def convert_numpy_types(obj):
@@ -95,6 +100,28 @@ app.add_middleware(
 )
 
 # ===================
+# File Upload Configuration
+# ===================
+
+# Setup upload directories
+UPLOAD_DIR = Path("backend/uploads")
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+# Subdirectories for different media types
+IMAGES_DIR = UPLOAD_DIR / "images"
+CACHE_DIR = UPLOAD_DIR / "cache"
+
+IMAGES_DIR.mkdir(exist_ok=True)
+CACHE_DIR.mkdir(exist_ok=True)
+
+# Mount static files for serving uploaded media
+app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
+
+# Allowed file extensions
+ALLOWED_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
+MAX_FILE_SIZE = 100 * 1024 * 1024  # 100MB
+
+# ===================
 # Pydantic Models
 # ===================
 
@@ -118,6 +145,10 @@ class CategorySchema(BaseModel):
     name: str
     description: str
     context: str
+    # Multi-modal fields
+    media_type: Optional[str] = None
+    media_url: Optional[str] = None
+    media_path: Optional[str] = None
 
 class QuestionSchema(BaseModel):
     id: str
@@ -353,7 +384,10 @@ def survey_to_schema(survey: Survey) -> SurveySchema:
                 id=c.id,
                 name=c.name,
                 description=c.description,
-                context=c.context
+                context=c.context,
+                media_type=c.media_type,
+                media_url=c.media_url,
+                media_path=c.media_path
             ) for c in survey.categories
         ]
 
@@ -623,6 +657,14 @@ async def run_survey_stream(request: RunSurveyRequest):
         try:
             survey = load_survey(request.survey_id)
 
+            # Validate model compatibility with survey media content
+            try:
+                validate_survey_model(survey, request.llm_provider, request.model)
+            except ModelIncompatibleError as e:
+                error_data = {'status': 'error', 'message': str(e), 'progress': 0}
+                yield f"data: {json.dumps(error_data)}\n\n"
+                return
+
             # Send initial status
             msg_data = {'status': 'starting', 'message': f'Starting survey: {survey.name}', 'progress': 0}
             yield f"data: {json.dumps(msg_data)}\n\n"
@@ -793,6 +835,12 @@ async def run_survey_stream(request: RunSurveyRequest):
 async def run_survey(request: RunSurveyRequest):
     """Run complete survey pipeline (profiles → responses → SSR)"""
     survey = load_survey(request.survey_id)
+
+    # Validate model compatibility with survey media content
+    try:
+        validate_survey_model(survey, request.llm_provider, request.model)
+    except ModelIncompatibleError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
     try:
         # Step 1: Generate profiles
@@ -1195,6 +1243,91 @@ async def compare_run_to_ground_truth(run_id: str, ground_truth_id: str):
         logger.error(f"Error comparing: {str(e)}")
         logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Error comparing: {str(e)}")
+
+# ===================
+# File Upload Endpoints
+# ===================
+
+@app.post("/api/upload/image")
+async def upload_image(file: UploadFile = File(...)):
+    """
+    Upload an image file for a category.
+    Returns the file path and URL for the uploaded image.
+    """
+    try:
+        # Validate file extension
+        file_ext = Path(file.filename).suffix.lower()
+        if file_ext not in ALLOWED_IMAGE_EXTENSIONS:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid file type. Allowed: {', '.join(ALLOWED_IMAGE_EXTENSIONS)}"
+            )
+
+        # Generate unique filename using hash
+        content = await file.read()
+        if len(content) > MAX_FILE_SIZE:
+            raise HTTPException(
+                status_code=400,
+                detail=f"File too large. Max size: {MAX_FILE_SIZE / 1024 / 1024}MB"
+            )
+
+        file_hash = hashlib.md5(content).hexdigest()
+        unique_filename = f"{file_hash}{file_ext}"
+        file_path = IMAGES_DIR / unique_filename
+
+        # Save file
+        with open(file_path, "wb") as f:
+            f.write(content)
+
+        # Return relative path for storage and URL for access
+        relative_path = f"uploads/images/{unique_filename}"
+
+        logger.info(f"Uploaded image: {unique_filename}")
+
+        return {
+            "success": True,
+            "media_type": "image",
+            "media_path": str(file_path),
+            "media_url": f"http://localhost:8000/{relative_path}",
+            "filename": unique_filename
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error uploading image: {e}")
+        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
+
+
+@app.post("/api/process/webpage-url")
+async def process_webpage_url(media_url: str = Form(...)):
+    """
+    Process a webpage URL.
+    Takes a screenshot for visual analysis.
+    """
+    try:
+        if not media_url.startswith(('http://', 'https://')):
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid URL. Must start with http:// or https://"
+            )
+
+        logger.info(f"Processing webpage URL: {media_url}")
+
+        # For now, just return URL - screenshot functionality can be added later with playwright
+        # TODO: Add screenshot capture using playwright
+
+        return {
+            "success": True,
+            "media_type": "webpage",
+            "media_url": media_url,
+            "message": "Webpage URL saved. Screenshot capture coming soon."
+        }
+
+    except Exception as e:
+        logger.error(f"Error processing webpage URL: {e}")
+        raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}")
+
 
 # WebSocket endpoint for real-time progress (future enhancement)
 @app.websocket("/ws/run-survey")
