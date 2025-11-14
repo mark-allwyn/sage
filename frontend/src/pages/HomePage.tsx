@@ -67,9 +67,14 @@ const HomePage: React.FC = () => {
       </Box>
 
       {/* Quick Actions */}
-      <Typography variant="h4" gutterBottom sx={{ mb: 3 }}>
-        Quick Actions
-      </Typography>
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h4" gutterBottom>
+          Quick Actions
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          Get started with the most common tasks
+        </Typography>
+      </Box>
       <Grid container spacing={3} sx={{ mb: 6 }}>
         <Grid item xs={12} md={4}>
           <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -199,89 +204,171 @@ const HomePage: React.FC = () => {
 
       {/* How It Works */}
       <Paper sx={{ p: 4, mb: 4 }}>
-        <Typography variant="h4" gutterBottom>
-          How It Works
-        </Typography>
-        <Grid container spacing={3} sx={{ mt: 2 }}>
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="h4" gutterBottom>
+            How It Works
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Four simple steps to generate synthetic survey data
+          </Typography>
+        </Box>
+        <Grid container spacing={3} sx={{ mt: 1 }}>
           <Grid item xs={12} md={3}>
-            <Typography variant="h6" color="primary" gutterBottom>
-              1. Define Survey
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Create questions, categories, and persona groups that represent your target demographics.
-            </Typography>
+            <Box sx={{ textAlign: 'center', p: 3, bgcolor: 'background.default', borderRadius: 2, height: '100%' }}>
+              <Box sx={{
+                width: 48,
+                height: 48,
+                borderRadius: '50%',
+                bgcolor: 'primary.main',
+                color: 'white',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 24,
+                fontWeight: 'bold',
+                margin: '0 auto 16px'
+              }}>
+                1
+              </Box>
+              <Typography variant="h6" fontWeight="bold" gutterBottom>
+                Define Survey
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Create questions, categories, and persona groups that represent your target demographics.
+              </Typography>
+            </Box>
           </Grid>
           <Grid item xs={12} md={3}>
-            <Typography variant="h6" color="primary" gutterBottom>
-              2. Generate Profiles
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Automatically create diverse respondent profiles based on persona groups and demographic targets.
-            </Typography>
+            <Box sx={{ textAlign: 'center', p: 3, bgcolor: 'background.default', borderRadius: 2, height: '100%' }}>
+              <Box sx={{
+                width: 48,
+                height: 48,
+                borderRadius: '50%',
+                bgcolor: 'primary.main',
+                color: 'white',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 24,
+                fontWeight: 'bold',
+                margin: '0 auto 16px'
+              }}>
+                2
+              </Box>
+              <Typography variant="h6" fontWeight="bold" gutterBottom>
+                Generate Profiles
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Automatically create diverse respondent profiles based on persona groups and demographic targets.
+              </Typography>
+            </Box>
           </Grid>
           <Grid item xs={12} md={3}>
-            <Typography variant="h6" color="primary" gutterBottom>
-              3. Collect Responses
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Use LLMs (GPT-4, Claude) to generate natural language responses from each profile.
-            </Typography>
+            <Box sx={{ textAlign: 'center', p: 3, bgcolor: 'background.default', borderRadius: 2, height: '100%' }}>
+              <Box sx={{
+                width: 48,
+                height: 48,
+                borderRadius: '50%',
+                bgcolor: 'primary.main',
+                color: 'white',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 24,
+                fontWeight: 'bold',
+                margin: '0 auto 16px'
+              }}>
+                3
+              </Box>
+              <Typography variant="h6" fontWeight="bold" gutterBottom>
+                Collect Responses
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Use LLMs (GPT-5, Claude 4) to generate natural language responses from each profile.
+              </Typography>
+            </Box>
           </Grid>
           <Grid item xs={12} md={3}>
-            <Typography variant="h6" color="primary" gutterBottom>
-              4. Apply SSR
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Convert text responses to probability distributions using semantic similarity rating.
-            </Typography>
+            <Box sx={{ textAlign: 'center', p: 3, bgcolor: 'background.default', borderRadius: 2, height: '100%' }}>
+              <Box sx={{
+                width: 48,
+                height: 48,
+                borderRadius: '50%',
+                bgcolor: 'primary.main',
+                color: 'white',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 24,
+                fontWeight: 'bold',
+                margin: '0 auto 16px'
+              }}>
+                4
+              </Box>
+              <Typography variant="h6" fontWeight="bold" gutterBottom>
+                Apply SSR
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Convert text responses to probability distributions using semantic similarity rating.
+              </Typography>
+            </Box>
           </Grid>
         </Grid>
       </Paper>
 
       {/* Features */}
-      <Typography variant="h4" gutterBottom>
-        Key Features
-      </Typography>
-      <Grid container spacing={2} sx={{ mt: 2 }}>
-        <Grid item xs={12} md={6}>
-          <Box sx={{ mb: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              Multi-Category Support
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="h4" gutterBottom>
+          Key Features
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          Everything you need for synthetic survey research
+        </Typography>
+      </Box>
+      <Grid container spacing={3} sx={{ mt: 1 }}>
+        <Grid item xs={12} sm={6} md={3}>
+          <Paper sx={{ p: 3, height: '100%', textAlign: 'center' }}>
+            <Box sx={{ fontSize: 48, mb: 2 }}>📊</Box>
+            <Typography variant="h6" fontWeight="bold" gutterBottom>
+              Multi-Modal Support
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Compare multiple products, services, or concepts within a single survey.
+              Include images and webpage URLs in your surveys with vision-capable models.
             </Typography>
-          </Box>
+          </Paper>
         </Grid>
-        <Grid item xs={12} md={6}>
-          <Box sx={{ mb: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              Flexible Question Types
+        <Grid item xs={12} sm={6} md={3}>
+          <Paper sx={{ p: 3, height: '100%', textAlign: 'center' }}>
+            <Box sx={{ fontSize: 48, mb: 2 }}>❓</Box>
+            <Typography variant="h6" fontWeight="bold" gutterBottom>
+              Flexible Questions
             </Typography>
             <Typography variant="body2" color="text.secondary">
               Yes/No, Likert scales, multiple choice, and preference comparisons.
             </Typography>
-          </Box>
+          </Paper>
         </Grid>
-        <Grid item xs={12} md={6}>
-          <Box sx={{ mb: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              Persona-Based Sampling
+        <Grid item xs={12} sm={6} md={3}>
+          <Paper sx={{ p: 3, height: '100%', textAlign: 'center' }}>
+            <Box sx={{ fontSize: 48, mb: 2 }}>👥</Box>
+            <Typography variant="h6" fontWeight="bold" gutterBottom>
+              Persona Sampling
             </Typography>
             <Typography variant="body2" color="text.secondary">
               Target specific demographics with weighted persona groups.
             </Typography>
-          </Box>
+          </Paper>
         </Grid>
-        <Grid item xs={12} md={6}>
-          <Box sx={{ mb: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              Multiple LLM Providers
+        <Grid item xs={12} sm={6} md={3}>
+          <Paper sx={{ p: 3, height: '100%', textAlign: 'center' }}>
+            <Box sx={{ fontSize: 48, mb: 2 }}>🤖</Box>
+            <Typography variant="h6" fontWeight="bold" gutterBottom>
+              Latest LLM Models
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Choose between OpenAI GPT-4 and Anthropic Claude models.
+              OpenAI GPT-5 and Anthropic Claude 4 with vision support.
             </Typography>
-          </Box>
+          </Paper>
         </Grid>
       </Grid>
     </Box>

@@ -152,6 +152,23 @@ class SemanticSimilarityRater:
 
         return similarities
 
+    def calculate_similarities(
+        self,
+        response_text: str,
+        reference_statements: List[str]
+    ) -> np.ndarray:
+        """
+        Convenience alias for compute_semantic_similarities.
+
+        Args:
+            response_text: The textual response to rate
+            reference_statements: List of reference statements (scale labels)
+
+        Returns:
+            Array of similarity scores (cosine similarities)
+        """
+        return self.compute_semantic_similarities(response_text, reference_statements)
+
     def similarities_to_probabilities(
         self,
         similarities: np.ndarray

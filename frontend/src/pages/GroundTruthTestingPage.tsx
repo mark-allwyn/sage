@@ -60,7 +60,7 @@ import {
   useSurveyRuns,
   useCompareToGroundTruth,
 } from '../services/hooks';
-import { CreateGroundTruthFromSSRRequest, RunSurveyRequest, LLM_PROVIDERS, OPENAI_MODELS, ANTHROPIC_MODELS, NORMALIZE_METHODS } from '../services/types';
+import { CreateGroundTruthFromSSRRequest, RunSurveyRequest, LLM_PROVIDERS, OPENAI_MODELS, ANTHROPIC_MODELS } from '../services/types';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -1066,27 +1066,7 @@ const GroundTruthTestingPage: React.FC = () => {
                 />
               </Grid>
 
-              <Grid item xs={12} md={4}>
-                <FormControl fullWidth required>
-                  <InputLabel>Normalize Method</InputLabel>
-                  <Select
-                    value={ssrConfig.normalize_method}
-                    label="Normalize Method"
-                    onChange={(e) =>
-                      setSSRConfig({
-                        ...ssrConfig,
-                        normalize_method: e.target.value as 'paper' | 'softmax' | 'linear',
-                      })
-                    }
-                  >
-                    {NORMALIZE_METHODS.map((method) => (
-                      <MenuItem key={method.value} value={method.value}>
-                        {method.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
+              {/* Normalize method is always 'paper' (from research paper arXiv:2510.08338v2) */}
             </Grid>
 
             {createSSRMutation.isPending && (
@@ -1226,27 +1206,7 @@ const GroundTruthTestingPage: React.FC = () => {
                 />
               </Grid>
 
-              <Grid item xs={12} md={4}>
-                <FormControl fullWidth required>
-                  <InputLabel>Normalize Method</InputLabel>
-                  <Select
-                    value={experimentConfig.normalize_method}
-                    label="Normalize Method"
-                    onChange={(e) =>
-                      setExperimentConfig({
-                        ...experimentConfig,
-                        normalize_method: e.target.value as 'paper' | 'softmax' | 'linear',
-                      })
-                    }
-                  >
-                    {NORMALIZE_METHODS.map((method) => (
-                      <MenuItem key={method.value} value={method.value}>
-                        {method.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
+              {/* Normalize method is always 'paper' (from research paper arXiv:2510.08338v2) */}
             </Grid>
 
             {runSurveyMutation.isPending && (

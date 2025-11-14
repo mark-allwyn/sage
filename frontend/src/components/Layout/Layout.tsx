@@ -20,6 +20,7 @@ import {
   IconButton,
   useTheme,
   useMediaQuery,
+  Divider,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -30,6 +31,7 @@ import {
   Science as ScienceIcon,
   Person as PersonIcon,
   Info as InfoIcon,
+  History as HistoryIcon,
 } from '@mui/icons-material';
 
 const drawerWidth = 240;
@@ -42,15 +44,30 @@ interface NavItem {
   label: string;
   path: string;
   icon: React.ReactElement;
+  divider?: boolean; // Add divider after this item
 }
 
+// Reorganized following UX best practices:
+// 1. Overview/Getting Started section
+// 2. Survey Creation workflow (Build → Preview → Test)
+// 3. Survey Execution (Run → View Results)
+// 4. Analysis & Validation
 const navItems: NavItem[] = [
+  // Getting Started
   { label: 'Home', path: '/', icon: <HomeIcon /> },
-  { label: 'System Overview', path: '/overview', icon: <InfoIcon /> },
+  { label: 'System Overview', path: '/overview', icon: <InfoIcon />, divider: true },
+
+  // Survey Creation Workflow
   { label: 'Survey Builder', path: '/builder', icon: <CreateIcon /> },
-  { label: 'Survey Preview', path: '/preview', icon: <VisibilityIcon /> },
-  { label: 'User View', path: '/user-view', icon: <PersonIcon /> },
+  { label: 'Survey Preview', path: '/preview', icon: <VisibilityIcon />, divider: true },
+
+  // Survey Execution
   { label: 'Run Survey', path: '/runner', icon: <PlayArrowIcon /> },
+  { label: 'User View', path: '/user-view', icon: <PersonIcon />, divider: true },
+
+  // Analysis & Results
+  { label: 'Survey History', path: '/history', icon: <HistoryIcon /> },
+  { label: 'Ground Truth Testing', path: '/ground-truth', icon: <ScienceIcon /> },
 ];
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
@@ -82,16 +99,19 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         </Box>
       </Toolbar>
       <List>
-        {navItems.map((item) => (
-          <ListItem key={item.path} disablePadding>
-            <ListItemButton
-              selected={location.pathname === item.path}
-              onClick={() => handleNavigation(item.path)}
-            >
-              <ListItemIcon>{item.icon}</ListItemIcon>
-              <ListItemText primary={item.label} />
-            </ListItemButton>
-          </ListItem>
+        {navItems.map((item, index) => (
+          <React.Fragment key={item.path}>
+            <ListItem disablePadding>
+              <ListItemButton
+                selected={location.pathname === item.path}
+                onClick={() => handleNavigation(item.path)}
+              >
+                <ListItemIcon>{item.icon}</ListItemIcon>
+                <ListItemText primary={item.label} />
+              </ListItemButton>
+            </ListItem>
+            {item.divider && <Divider sx={{ my: 1 }} />}
+          </React.Fragment>
         ))}
       </List>
     </Box>

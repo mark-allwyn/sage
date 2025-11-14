@@ -98,11 +98,20 @@ class PersonaGroup:
 
 @dataclass
 class Category:
-    """Represents a product/service category in multi-category surveys."""
+    """Represents a product/service category in multi-category surveys with multi-modal support."""
     id: str
     name: str
     description: str = ""
     context: str = ""
+
+    # Multi-modal fields
+    media_type: Optional[str] = None  # 'image' or 'webpage'
+    media_url: Optional[str] = None   # URL if applicable (image URL, webpage URL)
+    media_path: Optional[str] = None  # Local file path if uploaded
+
+    def has_media(self) -> bool:
+        """Check if this category has any media content."""
+        return self.media_type is not None
 
     def format_context(self) -> str:
         """Format category context for LLM prompts."""
@@ -113,6 +122,40 @@ class Category:
         elif self.description:
             return f"{self.name}: {self.description}"
         return self.name
+
+    def prepare_media_for_llm(self) -> Dict:
+        """
+        Prepare all media content for LLM API calls.
+
+        Returns:
+            Dict with keys:
+                - images: List[str] - Paths or URLs to images
+                - text_context: str - Additional text context
+                - has_media: bool - Whether any media is present
+        """
+        result = {
+            'images': [],
+            'text_context': '',
+            'has_media': self.has_media()
+        }
+
+        if not self.has_media():
+            return result
+
+        # Collect image paths/URLs
+        if self.media_type == 'image':
+            # Single image
+            if self.media_url:
+                result['images'].append(self.media_url)
+            elif self.media_path:
+                result['images'].append(self.media_path)
+
+        elif self.media_type == 'webpage':
+            # Screenshot of webpage
+            if self.media_path:  # Screenshot saved as image
+                result['images'].append(self.media_path)
+
+        return result
 
 
 @dataclass
@@ -187,6 +230,12 @@ class Survey:
         """Check if this is a multi-category survey."""
         return self.categories is not None and len(self.categories) > 0
 
+    def has_media_categories(self) -> bool:
+        """Check if any category has media content."""
+        if not self.categories:
+            return False
+        return any(cat.has_media() for cat in self.categories)
+
     def get_category_by_id(self, category_id: str) -> Optional[Category]:
         """Retrieve a category by its ID."""
         if not self.categories:
@@ -236,7 +285,11 @@ class Survey:
                     id=cat_config['id'],
                     name=cat_config['name'],
                     description=cat_config.get('description', ''),
-                    context=cat_config.get('context', '')
+                    context=cat_config.get('context', ''),
+                    # Multi-modal fields
+                    media_type=cat_config.get('media_type'),
+                    media_url=cat_config.get('media_url'),
+                    media_path=cat_config.get('media_path')
                 )
                 categories.append(category)
 

@@ -242,43 +242,82 @@ const SurveyBuilderPage: React.FC = () => {
       </Box>
 
       {/* Mode Selector */}
-      <Paper sx={{ p: 3, mb: 3 }}>
-        <Typography variant="h6" gutterBottom>
-          Mode
-        </Typography>
-        <Grid container spacing={2}>
+      <Paper sx={{ p: 4, mb: 3 }}>
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="h5" gutterBottom>
+            Getting Started
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Choose whether to create a new survey or edit an existing one
+          </Typography>
+        </Box>
+
+        <Grid container spacing={3}>
           <Grid item xs={12} md={6}>
-            <Button
-              fullWidth
-              variant={mode === 'create' ? 'contained' : 'outlined'}
-              size="large"
-              startIcon={<AddIcon />}
+            <Box
               onClick={() => handleModeChange('create')}
+              sx={{
+                p: 3,
+                border: mode === 'create' ? '2px solid' : '1px solid',
+                borderColor: mode === 'create' ? 'primary.main' : 'divider',
+                borderRadius: 2,
+                cursor: 'pointer',
+                bgcolor: mode === 'create' ? 'primary.light' : 'transparent',
+                transition: 'all 0.2s',
+                '&:hover': {
+                  borderColor: 'primary.main',
+                  bgcolor: mode === 'create' ? 'primary.light' : 'action.hover',
+                },
+              }}
             >
-              Create New Survey
-            </Button>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <AddIcon sx={{ fontSize: 40, color: mode === 'create' ? 'primary.dark' : 'primary.main', mr: 2 }} />
+                <Typography variant="h6">Create New Survey</Typography>
+              </Box>
+              <Typography variant="body2" color="text.secondary">
+                Start from scratch with a blank survey configuration. Define questions, categories, and persona groups.
+              </Typography>
+            </Box>
           </Grid>
           <Grid item xs={12} md={6}>
-            <Button
-              fullWidth
-              variant={mode === 'edit' ? 'contained' : 'outlined'}
-              size="large"
-              startIcon={<CodeIcon />}
+            <Box
               onClick={() => handleModeChange('edit')}
+              sx={{
+                p: 3,
+                border: mode === 'edit' ? '2px solid' : '1px solid',
+                borderColor: mode === 'edit' ? 'primary.main' : 'divider',
+                borderRadius: 2,
+                cursor: 'pointer',
+                bgcolor: mode === 'edit' ? 'primary.light' : 'transparent',
+                transition: 'all 0.2s',
+                '&:hover': {
+                  borderColor: 'primary.main',
+                  bgcolor: mode === 'edit' ? 'primary.light' : 'action.hover',
+                },
+              }}
             >
-              Edit Existing Survey
-            </Button>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <CodeIcon sx={{ fontSize: 40, color: mode === 'edit' ? 'primary.dark' : 'primary.main', mr: 2 }} />
+                <Typography variant="h6">Edit Existing Survey</Typography>
+              </Box>
+              <Typography variant="body2" color="text.secondary">
+                Modify an existing survey configuration. Update questions, adjust categories, or refine persona groups.
+              </Typography>
+            </Box>
           </Grid>
         </Grid>
 
         {/* Survey Selector (only in edit mode) */}
         {mode === 'edit' && (
-          <Box sx={{ mt: 3 }}>
-            <FormControl fullWidth>
-              <InputLabel>Select Survey to Edit</InputLabel>
+          <Box sx={{ mt: 4, p: 3, bgcolor: 'background.default', borderRadius: 2 }}>
+            <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+              Select Survey to Edit
+            </Typography>
+            <FormControl fullWidth sx={{ mt: 2 }}>
+              <InputLabel>Survey</InputLabel>
               <Select
                 value={selectedSurveyId}
-                label="Select Survey to Edit"
+                label="Survey"
                 onChange={(e) => handleSurveySelect(e.target.value)}
                 disabled={surveysLoading}
               >
@@ -287,14 +326,22 @@ const SurveyBuilderPage: React.FC = () => {
                 </MenuItem>
                 {surveys?.map((s) => (
                   <MenuItem key={s.id} value={s.id}>
-                    {s.name}
+                    <Box>
+                      <Typography variant="body2">{s.name}</Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {s.num_questions} questions • {s.num_persona_groups} persona groups
+                      </Typography>
+                    </Box>
                   </MenuItem>
                 ))}
               </Select>
             </FormControl>
             {surveyLoading && (
-              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-                <CircularProgress size={24} />
+              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 2, mt: 3 }}>
+                <CircularProgress size={20} />
+                <Typography variant="body2" color="text.secondary">
+                  Loading survey...
+                </Typography>
               </Box>
             )}
           </Box>
@@ -303,53 +350,57 @@ const SurveyBuilderPage: React.FC = () => {
 
       {/* Survey Information */}
       {(mode === 'create' || (mode === 'edit' && selectedSurveyId)) && (
-        <Paper sx={{ p: 3, mb: 3 }}>
-          <Typography variant="h6" gutterBottom>
-            Survey Information
-          </Typography>
-          <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} md={mode === 'edit' ? 6 : 8}>
+        <Paper sx={{ p: 4, mb: 3 }}>
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="h5" gutterBottom>
+              Survey Information
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {mode === 'edit' ? 'Update your survey configuration and save changes' : 'Provide a filename for your new survey configuration'}
+            </Typography>
+          </Box>
+          <Grid container spacing={3} alignItems="flex-end">
+            <Grid item xs={12} md={mode === 'edit' ? 12 : 12}>
               <TextField
                 fullWidth
                 label="Filename"
                 value={filename}
                 onChange={(e) => setFilename(e.target.value)}
                 placeholder="my_survey.yaml"
-                helperText="Enter a filename for the survey configuration (e.g., my_survey.yaml)"
+                helperText={mode === 'edit' ? 'Filename cannot be changed in edit mode' : 'Enter a descriptive filename (e.g., customer_satisfaction.yaml)'}
                 disabled={mode === 'edit'}
               />
             </Grid>
-            <Grid item xs={12} md={mode === 'edit' ? 3 : 4}>
-              <Button
-                fullWidth
-                variant="contained"
-                size="large"
-                startIcon={isLoading ? <CircularProgress size={20} /> : <SaveIcon />}
-                disabled={isLoading || !filename.trim()}
-                onClick={() => {
-                  // Generate YAML from current survey data
-                  const yaml = generateYAML(surveyData);
-                  handleSave(yaml);
-                }}
-              >
-                {isLoading ? 'Saving...' : mode === 'edit' ? 'Update Survey' : 'Save Survey'}
-              </Button>
-            </Grid>
-            {mode === 'edit' && (
-              <Grid item xs={12} md={3}>
+            <Grid item xs={12}>
+              <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+                {mode === 'edit' && (
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    size="large"
+                    startIcon={<DeleteIcon />}
+                    onClick={() => setDeleteDialogOpen(true)}
+                    disabled={isLoading}
+                  >
+                    Delete Survey
+                  </Button>
+                )}
                 <Button
-                  fullWidth
-                  variant="outlined"
-                  color="error"
+                  variant="contained"
                   size="large"
-                  startIcon={<DeleteIcon />}
-                  onClick={() => setDeleteDialogOpen(true)}
-                  disabled={isLoading}
+                  startIcon={isLoading ? <CircularProgress size={20} /> : <SaveIcon />}
+                  disabled={isLoading || !filename.trim()}
+                  onClick={() => {
+                    // Generate YAML from current survey data
+                    const yaml = generateYAML(surveyData);
+                    handleSave(yaml);
+                  }}
+                  sx={{ minWidth: 200 }}
                 >
-                  Delete
+                  {isLoading ? 'Saving...' : mode === 'edit' ? 'Update Survey' : 'Save Survey'}
                 </Button>
-              </Grid>
-            )}
+              </Box>
+            </Grid>
           </Grid>
         </Paper>
       )}

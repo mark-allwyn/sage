@@ -2,6 +2,8 @@
 
 from typing import Dict, List, Optional
 import os
+import base64
+from pathlib import Path
 from dataclasses import dataclass
 from tqdm import tqdm
 import time
@@ -92,17 +94,118 @@ class LLMClient:
         else:
             raise ValueError(f"Unsupported provider: {provider}")
 
+    def _encode_image_to_base64(self, image_path: str) -> str:
+        """Encode an image file to base64 string."""
+        with open(image_path, "rb") as image_file:
+            return base64.b64encode(image_file.read()).decode('utf-8')
+
+    def _construct_multi_modal_message(
+        self,
+        text_content: str,
+        images: Optional[List[str]] = None
+    ) -> Dict:
+        """
+        Construct a multi-modal message for LLM APIs.
+
+        Args:
+            text_content: Text prompt
+            images: List of image paths to include
+
+        Returns:
+            Message dict suitable for OpenAI or Anthropic APIs
+        """
+        if not images or len(images) == 0:
+            # Text-only message
+            return {"role": "user", "content": text_content}
+
+        # Multi-modal message with images
+        if self.provider == "openai":
+            # OpenAI format: list of content blocks
+            content_blocks = [{"type": "text", "text": text_content}]
+
+            for image_path in images:
+                # Determine if URL or file path
+                if image_path.startswith(('http://', 'https://')):
+                    # Image URL - pass directly
+                    content_blocks.append({
+                        "type": "image_url",
+                        "image_url": {"url": image_path}
+                    })
+                else:
+                    # Local file - encode to base64
+                    base64_image = self._encode_image_to_base64(image_path)
+                    ext = Path(image_path).suffix.lower()
+                    media_type = {
+                        '.jpg': 'image/jpeg',
+                        '.jpeg': 'image/jpeg',
+                        '.png': 'image/png',
+                        '.webp': 'image/webp',
+                        '.gif': 'image/gif'
+                    }.get(ext, 'image/jpeg')
+
+                    content_blocks.append({
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:{media_type};base64,{base64_image}"
+                        }
+                    })
+
+            return {"role": "user", "content": content_blocks}
+
+        elif self.provider == "anthropic":
+            # Anthropic format: list of content blocks
+            content_blocks = [{"type": "text", "text": text_content}]
+
+            for image_path in images:
+                # Anthropic only supports base64-encoded images
+                if image_path.startswith(('http://', 'https://')):
+                    # TODO: Download and encode URL images for Anthropic
+                    # For now, skip URL images (can add download logic later)
+                    continue
+
+                base64_image = self._encode_image_to_base64(image_path)
+                ext = Path(image_path).suffix.lower()
+                media_type = {
+                    '.jpg': 'image/jpeg',
+                    '.jpeg': 'image/jpeg',
+                    '.png': 'image/png',
+                    '.webp': 'image/webp',
+                    '.gif': 'image/gif'
+                }.get(ext, 'image/jpeg')
+
+                content_blocks.append({
+                    "type": "image",
+                    "source": {
+                        "type": "base64",
+                        "media_type": media_type,
+                        "data": base64_image
+                    }
+                })
+
+            return {"role": "user", "content": content_blocks}
+
     def generate_response(
         self,
         prompt: str,
-        system_message: Optional[str] = None
+        system_message: Optional[str] = None,
+        images: Optional[List[str]] = None
     ) -> str:
-        """Generate a single response from the LLM."""
+        """
+        Generate a single response from the LLM.
+
+        Args:
+            prompt: Text prompt
+            system_message: Optional system message
+            images: Optional list of image paths/URLs for multi-modal queries
+        """
         if self.provider == "openai":
             messages = []
             if system_message:
                 messages.append({"role": "system", "content": system_message})
-            messages.append({"role": "user", "content": prompt})
+
+            # Construct multi-modal message if images provided
+            user_message = self._construct_multi_modal_message(prompt, images)
+            messages.append(user_message)
 
             response = self.client.chat.completions.create(
                 model=self.model,
@@ -113,12 +216,15 @@ class LLMClient:
             return response.choices[0].message.content
 
         elif self.provider == "anthropic":
+            # Construct multi-modal message if images provided
+            user_message = self._construct_multi_modal_message(prompt, images)
+
             response = self.client.messages.create(
                 model=self.model,
                 max_tokens=self.max_tokens,
                 temperature=self.temperature,
                 system=system_message or "",
-                messages=[{"role": "user", "content": prompt}]
+                messages=[user_message]
             )
             return response.content[0].text
 
@@ -154,8 +260,36 @@ class LLMClient:
                 for question in survey.questions:
                     prompt = survey.format_prompt(question, profile.to_dict())
 
+                    # Prepare media content for multi-modal queries
+                    images = []
+                    if survey.has_categories():
+                        if question.is_comparative():
+                            # Comparative question: collect media from all compared categories
+                            for cat_id in question.categories_compared:
+                                category = survey.get_category_by_id(cat_id)
+                                if category:
+                                    media_data = category.prepare_media_for_llm()
+                                    images.extend(media_data.get('images', []))
+                                    # Append additional text context if available
+                                    if media_data.get('text_context'):
+                                        prompt += media_data['text_context']
+                        elif question.category:
+                            # Regular category question: collect media from assigned category
+                            category = survey.get_category_by_id(question.category)
+                            if category:
+                                media_data = category.prepare_media_for_llm()
+                                images.extend(media_data.get('images', []))
+                                # Append additional text context if available
+                                if media_data.get('text_context'):
+                                    prompt += media_data['text_context']
+
                     try:
-                        text_response = self.generate_response(prompt, system_message)
+                        # Generate response with optional media
+                        text_response = self.generate_response(
+                            prompt,
+                            system_message,
+                            images=images if images else None
+                        )
 
                         # Determine category for this response
                         category = None
@@ -254,8 +388,36 @@ class LLMClient:
 
         prompt = survey.format_prompt(question, profile.to_dict())
 
+        # Prepare media content for multi-modal queries
+        images = []
+        if survey.has_categories():
+            if question.is_comparative():
+                # Comparative question: collect media from all compared categories
+                for cat_id in question.categories_compared:
+                    category = survey.get_category_by_id(cat_id)
+                    if category:
+                        media_data = category.prepare_media_for_llm()
+                        images.extend(media_data.get('images', []))
+                        # Append transcript to prompt if available
+                        if media_data.get('text_context'):
+                            prompt += media_data['text_context']
+            elif question.category:
+                # Regular category question: collect media from assigned category
+                category = survey.get_category_by_id(question.category)
+                if category:
+                    media_data = category.prepare_media_for_llm()
+                    images.extend(media_data.get('images', []))
+                    # Append transcript to prompt if available
+                    if media_data.get('text_context'):
+                        prompt += media_data['text_context']
+
         try:
-            text_response = self.generate_response(prompt, system_message)
+            # Generate response with optional media
+            text_response = self.generate_response(
+                prompt,
+                system_message,
+                images=images if images else None
+            )
 
             # Determine category for this response
             category = None
