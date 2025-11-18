@@ -28,6 +28,7 @@ import GroundTruthTestingPage from './pages/GroundTruthTestingPage';
 import SystemOverviewPage from './pages/SystemOverviewPage';
 import DocumentationPage from './pages/DocumentationPage';
 import SettingsPage from './pages/SettingsPage';
+import EvaluationDashboardPage from './pages/EvaluationDashboardPage';
 
 // Create React Query client
 const queryClient = new QueryClient({
@@ -78,6 +79,9 @@ const App: React.FC = () => {
 
               {/* Ground Truth Testing - experimentation */}
               <Route path="/ground-truth" element={<GroundTruthTestingPage />} />
+
+              {/* Evaluation Dashboard - LLM response quality monitoring */}
+              <Route path="/evaluations" element={<EvaluationDashboardPage />} />
 
               {/* Settings - system configuration and status */}
               <Route path="/settings" element={<SettingsPage />} />

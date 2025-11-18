@@ -1465,6 +1465,190 @@ async def reset_settings():
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# ===================
+# Evaluation Endpoints
+# ===================
+
+from evaluation import create_evaluator, ResponseEvaluator
+
+
+class EvaluateResponsesRequest(BaseModel):
+    """Request to evaluate survey responses"""
+    survey_id: str
+    run_id: Optional[str] = None
+    sample_size: Optional[int] = None
+    metrics: Optional[List[str]] = Field(default=None)
+    evaluator_model: str = Field(default="gpt-4o-mini")
+    threshold: float = Field(default=0.5)
+
+
+class EvaluationListItem(BaseModel):
+    """Summary of an evaluation"""
+    evaluation_id: str
+    survey_id: str
+    timestamp: str
+    evaluated_responses: int
+    overall_score: float
+    success: bool
+
+
+@app.post("/api/evaluations/evaluate")
+async def evaluate_responses(request: EvaluateResponsesRequest):
+    """
+    Evaluate LLM responses for a survey run
+
+    This endpoint evaluates responses using DeepEval metrics including
+    answer relevancy, bias detection, and hallucination detection.
+    """
+    try:
+        logger.info(f"Starting evaluation for survey {request.survey_id}")
+
+        # Load survey configuration
+        survey_path = SURVEYS_DIR / f"{request.survey_id}.yaml"
+        if not survey_path.exists():
+            raise HTTPException(status_code=404, detail=f"Survey {request.survey_id} not found")
+
+        survey_config = load_survey(survey_path)
+
+        # Load responses - either from specific run or latest run
+        if request.run_id:
+            run_file = RESULTS_DIR / f"{request.run_id}.json"
+            if not run_file.exists():
+                raise HTTPException(status_code=404, detail=f"Run {request.run_id} not found")
+        else:
+            # Find latest run for this survey
+            run_files = list(RESULTS_DIR.glob(f"{request.survey_id}_*.json"))
+            if not run_files:
+                raise HTTPException(status_code=404, detail=f"No runs found for survey {request.survey_id}")
+            run_file = max(run_files, key=lambda p: p.stat().st_mtime)
+
+        with open(run_file, 'r') as f:
+            run_data = json.load(f)
+
+        # Extract responses
+        responses = []
+        for category, cat_data in run_data.get("distributions", {}).items():
+            for question_id, question_data in cat_data.items():
+                for respondent_id, dist_data in question_data.items():
+                    responses.append({
+                        "question_id": question_id,
+                        "respondent_id": respondent_id,
+                        "text_response": dist_data.get("text_response", ""),
+                        "category": category,
+                    })
+
+        if not responses:
+            raise HTTPException(status_code=400, detail="No responses found to evaluate")
+
+        # Create evaluator
+        evaluator = create_evaluator(
+            metrics=request.metrics,
+            evaluator_model=request.evaluator_model,
+            threshold=request.threshold,
+        )
+
+        # Run evaluation
+        result = evaluator.evaluate_survey_responses(
+            survey_id=request.survey_id,
+            responses=responses,
+            questions=survey_config.get("questions", []),
+            sample_size=request.sample_size,
+        )
+
+        logger.info(f"Evaluation complete for survey {request.survey_id}")
+
+        return result
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error evaluating responses: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/evaluations")
+async def list_evaluations(survey_id: Optional[str] = None):
+    """
+    List all evaluations, optionally filtered by survey_id
+    """
+    try:
+        evaluator = ResponseEvaluator()
+        evaluations = evaluator.list_evaluations(survey_id=survey_id)
+
+        return {
+            "evaluations": evaluations,
+            "count": len(evaluations),
+        }
+
+    except Exception as e:
+        logger.error(f"Error listing evaluations: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/evaluations/{evaluation_id}")
+async def get_evaluation(evaluation_id: str):
+    """
+    Get detailed evaluation results
+    """
+    try:
+        evaluator = ResponseEvaluator()
+        result = evaluator.load_evaluation(evaluation_id)
+
+        if not result:
+            raise HTTPException(status_code=404, detail=f"Evaluation {evaluation_id} not found")
+
+        return result
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error loading evaluation: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/api/evaluations/{evaluation_id}")
+async def delete_evaluation(evaluation_id: str):
+    """
+    Delete an evaluation
+    """
+    try:
+        evaluator = ResponseEvaluator()
+        filepath = evaluator.results_dir / f"{evaluation_id}.json"
+
+        if not filepath.exists():
+            raise HTTPException(status_code=404, detail=f"Evaluation {evaluation_id} not found")
+
+        filepath.unlink()
+        logger.info(f"Deleted evaluation {evaluation_id}")
+
+        return {
+            "evaluation_id": evaluation_id,
+            "status": "deleted",
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting evaluation: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/evaluations/compare")
+async def compare_evaluations(evaluation_ids: List[str]):
+    """
+    Compare multiple evaluations to see trends
+    """
+    try:
+        evaluator = ResponseEvaluator()
+        result = evaluator.compare_evaluations(evaluation_ids)
+
+        return result
+
+    except Exception as e:
+        logger.error(f"Error comparing evaluations: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # WebSocket endpoint for real-time progress (future enhancement)
 @app.websocket("/ws/run-survey")
 async def websocket_run_survey(websocket: WebSocket):

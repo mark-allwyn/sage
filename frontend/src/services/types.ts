@@ -462,3 +462,108 @@ export interface UpdateSettingsRequest {
   api_key?: string;
   models: string[];
 }
+
+// Evaluation Types
+export type EvaluationMetricType = 'answer_relevancy' | 'bias' | 'hallucination';
+
+export interface MetricScore {
+  score: number;
+  reason?: string;
+  success?: boolean;
+}
+
+export interface EvaluationScores {
+  [metricName: string]: MetricScore;
+}
+
+export interface AggregatedMetricScore {
+  mean: number;
+  min: number;
+  max: number;
+  count: number;
+}
+
+export interface EvaluationResult {
+  success: boolean;
+  question_id?: string;
+  respondent_id?: string;
+  scores?: EvaluationScores;
+  overall_score?: number;
+  timestamp: string;
+  error?: string;
+}
+
+export interface EvaluationConfig {
+  metrics: string[];
+  evaluator_model: string;
+  threshold: number;
+}
+
+export interface SurveyEvaluation {
+  survey_id: string;
+  success: boolean;
+  total_responses: number;
+  evaluated_responses: number;
+  successful_evaluations: number;
+  aggregated_scores: {
+    [metricName: string]: AggregatedMetricScore;
+  };
+  overall_mean_score: number;
+  individual_evaluations: EvaluationResult[];
+  timestamp: string;
+  config: EvaluationConfig;
+  error?: string;
+}
+
+export interface EvaluationListItem {
+  evaluation_id: string;
+  survey_id: string;
+  timestamp: string;
+  evaluated_responses: number;
+  overall_score: number;
+  success: boolean;
+}
+
+export interface EvaluateResponsesRequest {
+  survey_id: string;
+  run_id?: string;
+  sample_size?: number;
+  metrics?: string[];
+  evaluator_model?: string;
+  threshold?: number;
+}
+
+export interface MetricTrend {
+  timestamp: string;
+  model: string;
+  mean_score: number;
+  evaluation_id: string;
+}
+
+export interface EvaluationComparison {
+  success: boolean;
+  num_evaluations: number;
+  metrics: {
+    [metricName: string]: MetricTrend[];
+  };
+  timestamp: string;
+  error?: string;
+}
+
+export const EVALUATION_METRICS: { value: EvaluationMetricType; label: string; description: string }[] = [
+  {
+    value: 'answer_relevancy',
+    label: 'Answer Relevancy',
+    description: 'Measures how relevant the response is to the question',
+  },
+  {
+    value: 'bias',
+    label: 'Bias Detection',
+    description: 'Detects potential biases in the response',
+  },
+  {
+    value: 'hallucination',
+    label: 'Hallucination Detection',
+    description: 'Detects if the response contains fabricated information',
+  },
+];

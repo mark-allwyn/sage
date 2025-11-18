@@ -36,6 +36,7 @@ import {
   LinkedIn as LinkedInIcon,
   Twitter as TwitterIcon,
   Email as EmailIcon,
+  Assessment as AssessmentIcon,
 } from '@mui/icons-material';
 import { AppBreadcrumbs } from '../Breadcrumbs';
 
@@ -51,7 +52,7 @@ interface NavItem {
   description?: string;
 }
 
-// Ultra-streamlined navigation: 5 core workflow items
+// Ultra-streamlined navigation: core workflow items
 // Removed: Overview (accessible from Home page)
 // Focus: Home → Create → Run → Results → Advanced
 const navItems: NavItem[] = [
@@ -59,6 +60,7 @@ const navItems: NavItem[] = [
   { label: 'Create', path: '/builder', icon: <CreateIcon />, description: 'Build surveys' },
   { label: 'Run', path: '/runner', icon: <PlayArrowIcon />, description: 'Execute surveys' },
   { label: 'Results', path: '/history', icon: <HistoryIcon />, description: 'View data' },
+  { label: 'Evaluations', path: '/evaluations', icon: <AssessmentIcon />, badge: 'beta', description: 'LLM quality monitoring' },
   { label: 'Experiments', path: '/ground-truth', icon: <ScienceIcon />, badge: 'beta', description: 'Ground truth testing' },
   { label: 'Settings', path: '/settings', icon: <SettingsIcon />, description: 'System configuration' },
 ];
