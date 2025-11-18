@@ -23,6 +23,8 @@ import {
   CreateGroundTruthFromSSRRequest,
   UploadGroundTruthRequest,
   ComparisonResults,
+  SystemSettings,
+  UpdateSettingsRequest,
 } from './types';
 
 // Create axios instance with base configuration
@@ -300,6 +302,34 @@ export const getErrorMessage = (error: unknown): string => {
     return error.message;
   }
   return 'An unexpected error occurred';
+};
+
+// ===================
+// Settings
+// ===================
+
+/**
+ * Get system settings
+ */
+export const getSettings = async (): Promise<SystemSettings> => {
+  const response = await api.get('/api/settings');
+  return response.data;
+};
+
+/**
+ * Update provider settings
+ */
+export const updateProviderSettings = async (request: UpdateSettingsRequest): Promise<{ success: boolean; message: string }> => {
+  const response = await api.put('/api/settings/provider', request);
+  return response.data;
+};
+
+/**
+ * Reset settings to defaults
+ */
+export const resetSettings = async (): Promise<{ success: boolean; message: string }> => {
+  const response = await api.post('/api/settings/reset');
+  return response.data;
 };
 
 export default api;

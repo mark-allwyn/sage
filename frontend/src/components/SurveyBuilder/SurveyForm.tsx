@@ -10,25 +10,18 @@ import {
   Typography,
   TextField,
   Grid,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  OutlinedInput,
-  Chip,
   Tooltip,
   IconButton,
   Accordion,
   AccordionSummary,
   AccordionDetails,
-  Badge,
 } from '@mui/material';
 import {
   HelpOutline as HelpIcon,
   ExpandMore as ExpandMoreIcon,
   CheckCircle as CheckCircleIcon,
 } from '@mui/icons-material';
-import { SurveyBuilderState, DEMOGRAPHICS_OPTIONS } from '../../services/types';
+import { SurveyBuilderState } from '../../services/types';
 import QuestionEditor from './QuestionEditor';
 import PersonaGroupEditor from './PersonaGroupEditor';
 import CategoryEditor from './CategoryEditor';
@@ -194,44 +187,6 @@ const SurveyForm: React.FC<SurveyFormProps> = ({ surveyData, setSurveyData }) =>
                 helperText="Number of synthetic respondents (10-1000)"
               />
               <Tooltip title="The total number of synthetic respondents to generate. Larger samples provide more statistical power but take longer to run. Start with 100-200 for testing." arrow placement="right">
-                <IconButton
-                  size="medium"
-                  sx={{
-                    mt: 1,
-                    minWidth: 44,
-                    minHeight: 44,
-                  }}
-                >
-                  <HelpIcon />
-                </IconButton>
-              </Tooltip>
-            </Box>
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-              <FormControl fullWidth>
-                <InputLabel>Demographics</InputLabel>
-                <Select
-                  multiple
-                  value={surveyData.demographics}
-                  onChange={(e) => handleChange('demographics', e.target.value)}
-                  input={<OutlinedInput label="Demographics" />}
-                  renderValue={(selected) => (
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                      {selected.map((value) => (
-                        <Chip key={value} label={value} size="small" />
-                      ))}
-                    </Box>
-                  )}
-                >
-                  {DEMOGRAPHICS_OPTIONS.map((option) => (
-                    <MenuItem key={option} value={option}>
-                      {option}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <Tooltip title="Select demographic dimensions to vary across your synthetic audience. These will be used to create diverse respondent profiles that match your target population." arrow placement="right">
                 <IconButton
                   size="medium"
                   sx={{

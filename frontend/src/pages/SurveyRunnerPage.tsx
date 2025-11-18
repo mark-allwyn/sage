@@ -22,7 +22,7 @@ import {
   IconButton,
   Divider,
 } from '@mui/material';
-import { PlayArrow as PlayArrowIcon, HelpOutline as HelpIcon, CreateOutlined as CreateIcon, Visibility as VisibilityIcon } from '@mui/icons-material';
+import { PlayArrow as PlayArrowIcon, CreateOutlined as CreateIcon, Visibility as VisibilityIcon } from '@mui/icons-material';
 import { useSurveys, useSurvey } from '../services/hooks';
 import RunConfigPanel from '../components/SurveyRunner/RunConfigPanel';
 import RunProgress from '../components/SurveyRunner/RunProgress';
@@ -30,6 +30,7 @@ import ResponseDataset from '../components/SurveyRunner/ResponseDataset';
 import { RunSurveyConfig, RunSurveyResponse } from '../services/types';
 import { SurveyRunnerSkeleton } from '../components/LoadingSkeleton';
 import { EmptyState } from '../components/EmptyState';
+import PageHeader from '../components/PageHeader';
 
 const SurveyRunnerPage: React.FC = () => {
   const navigate = useNavigate();
@@ -93,7 +94,7 @@ const SurveyRunnerPage: React.FC = () => {
     if (runConfig.seed < 0 || runConfig.seed > 10000) {
       validationErrors.push('Seed must be between 0 and 10000');
     }
-    if (!['openai', 'anthropic'].includes(runConfig.llm_provider)) {
+    if (!['openai', 'anthropic', 'ollama'].includes(runConfig.llm_provider)) {
       validationErrors.push('Invalid LLM provider');
     }
     if (runConfig.normalize_method !== 'paper') {
@@ -176,10 +177,10 @@ const SurveyRunnerPage: React.FC = () => {
                 const runId = data.result?.run_id;
                 if (runId) {
                   console.log('Navigating to:', `/history/${runId}?completed=true`);
-                  // Use a small delay to let the success message show
+                  // Use a delay to let the success message show
                   setTimeout(() => {
                     navigate(`/history/${runId}?completed=true`);
-                  }, 1000);
+                  }, 3000);
                 } else {
                   console.error('No run_id in result:', data);
                 }
@@ -207,14 +208,11 @@ const SurveyRunnerPage: React.FC = () => {
   return (
     <Box>
       {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h3" component="h1" gutterBottom>
-          Run Survey
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          Execute the complete SSR pipeline
-        </Typography>
-      </Box>
+      <PageHeader
+        title="Run Survey"
+        subtitle="Execute the complete SSR pipeline and generate synthetic audience responses"
+        icon={<PlayArrowIcon sx={{ fontSize: 28 }} />}
+      />
 
       {/* Empty State - No Surveys */}
       {!surveysLoading && surveys && surveys.length === 0 && (

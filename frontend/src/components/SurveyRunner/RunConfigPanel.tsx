@@ -20,7 +20,7 @@ import {
   IconButton,
 } from '@mui/material';
 import { HelpOutline as HelpIcon } from '@mui/icons-material';
-import { RunSurveyConfig, LLM_PROVIDERS, OPENAI_MODELS, ANTHROPIC_MODELS } from '../../services/types';
+import { RunSurveyConfig, LLM_PROVIDERS, OPENAI_MODELS, ANTHROPIC_MODELS, OLLAMA_MODELS } from '../../services/types';
 
 interface RunConfigPanelProps {
   config: RunSurveyConfig;
@@ -34,7 +34,9 @@ const RunConfigPanel: React.FC<RunConfigPanelProps> = ({ config, setConfig, disa
   };
 
   const getModelOptions = () => {
-    return config.llm_provider === 'openai' ? OPENAI_MODELS : ANTHROPIC_MODELS;
+    if (config.llm_provider === 'openai') return OPENAI_MODELS;
+    if (config.llm_provider === 'anthropic') return ANTHROPIC_MODELS;
+    return OLLAMA_MODELS;
   };
 
   return (
@@ -96,8 +98,11 @@ const RunConfigPanel: React.FC<RunConfigPanelProps> = ({ config, setConfig, disa
                 label="LLM Provider"
                 onChange={(e) => {
                   // Update provider and model atomically
-                  const newProvider = e.target.value as 'openai' | 'anthropic';
-                  const newModels = newProvider === 'openai' ? OPENAI_MODELS : ANTHROPIC_MODELS;
+                  const newProvider = e.target.value as 'openai' | 'anthropic' | 'ollama';
+                  let newModels;
+                  if (newProvider === 'openai') newModels = OPENAI_MODELS;
+                  else if (newProvider === 'anthropic') newModels = ANTHROPIC_MODELS;
+                  else newModels = OLLAMA_MODELS;
                   setConfig({
                     ...config,
                     llm_provider: newProvider,
@@ -112,7 +117,7 @@ const RunConfigPanel: React.FC<RunConfigPanelProps> = ({ config, setConfig, disa
                 ))}
               </Select>
             </FormControl>
-            <Tooltip title="Select between OpenAI (GPT models) or Anthropic (Claude models). Make sure you have API keys configured for your chosen provider.">
+            <Tooltip title="Select between OpenAI (GPT models), Anthropic (Claude models), or Ollama (Local models like Gemma 3). Make sure you have API keys configured for cloud providers, or Ollama running locally.">
               <IconButton size="small" sx={{ mt: 1 }}>
                 <HelpIcon fontSize="small" />
               </IconButton>

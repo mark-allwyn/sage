@@ -76,6 +76,7 @@ import {
 } from '../services/hooks';
 import { CreateGroundTruthFromSSRRequest, RunSurveyRequest, LLM_PROVIDERS, OPENAI_MODELS, ANTHROPIC_MODELS } from '../services/types';
 import { EmptyState } from '../components/EmptyState';
+import PageHeader from '../components/PageHeader';
 
 const GroundTruthTestingPage: React.FC = () => {
   const [activeStep, setActiveStep] = useState(0);
@@ -348,14 +349,12 @@ const GroundTruthTestingPage: React.FC = () => {
   return (
     <Box>
       {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h3" component="h1" gutterBottom>
-          Ground Truth Experiments
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          Validate synthetic data quality by comparing survey runs against ground truth baselines
-        </Typography>
-      </Box>
+      <PageHeader
+        title="Ground Truth Experiments"
+        subtitle="Validate synthetic data quality by comparing survey runs against ground truth baselines"
+        icon={<ScienceIcon sx={{ fontSize: 28 }} />}
+        badge={{ label: "Beta", color: "secondary" }}
+      />
 
       {/* Workflow Stepper */}
       <Paper sx={{ p: 4, mb: 3 }}>

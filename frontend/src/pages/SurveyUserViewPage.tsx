@@ -1,6 +1,6 @@
 /**
- * Survey User View Page
- * Shows what a survey respondent would see when taking the survey
+ * Survey Test Mode (Respondent Simulation)
+ * Allows testing the survey experience as an actual respondent would see it
  */
 
 import React, { useState } from 'react';
@@ -151,10 +151,10 @@ const SurveyUserViewPage: React.FC = () => {
       {/* Header */}
       <Box sx={{ mb: 4 }}>
         <Typography variant="h3" component="h1" gutterBottom>
-          User View
+          Test Survey (Respondent Mode)
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          Experience the survey as a respondent would see it
+          Experience exactly what a survey respondent would see - test questions, flow, and formatting
         </Typography>
       </Box>
 

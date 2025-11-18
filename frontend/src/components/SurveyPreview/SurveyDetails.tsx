@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { Paper, Typography, Grid, Chip, Box } from '@mui/material';
+import { Paper, Typography, Grid, Box } from '@mui/material';
 import { Survey } from '../../services/types';
 
 interface SurveyDetailsProps {
@@ -25,7 +25,13 @@ const SurveyDetails: React.FC<SurveyDetailsProps> = ({ survey }) => {
         <Typography variant="subtitle2" gutterBottom>
           Context
         </Typography>
-        <Typography variant="body2">
+        <Typography
+          variant="body2"
+          sx={{
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-word'
+          }}
+        >
           {survey.context}
         </Typography>
       </Box>
@@ -62,16 +68,6 @@ const SurveyDetails: React.FC<SurveyDetailsProps> = ({ survey }) => {
           <Typography variant="h6">
             {survey.categories?.length || 0}
           </Typography>
-        </Grid>
-        <Grid item xs={12}>
-          <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-            Demographics
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-            {survey.demographics.map((demo) => (
-              <Chip key={demo} label={demo} size="small" color="primary" variant="outlined" />
-            ))}
-          </Box>
         </Grid>
       </Grid>
     </Paper>

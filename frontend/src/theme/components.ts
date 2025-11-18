@@ -30,10 +30,10 @@ export const components: Components<Omit<Theme, 'components'>> = {
         },
       },
       containedPrimary: {
-        background: '#0B617C',  // Solid color, no gradient
+        background: '#4F46E5',  // Indigo 600
         '&:hover': {
-          background: '#094D63',
-          boxShadow: '0 2px 8px rgba(11, 97, 124, 0.24)',  // Subtle shadow on hover
+          background: '#4338CA',  // Indigo 700
+          boxShadow: '0 2px 8px rgba(79, 70, 229, 0.24)',
         },
       },
       sizeLarge: {
@@ -44,7 +44,7 @@ export const components: Components<Omit<Theme, 'components'>> = {
         borderWidth: '1px',
         '&:hover': {
           borderWidth: '1px',
-          backgroundColor: 'rgba(11, 97, 124, 0.04)',
+          backgroundColor: 'rgba(79, 70, 229, 0.04)',
         },
       },
     },
@@ -87,8 +87,8 @@ export const components: Components<Omit<Theme, 'components'>> = {
         border: '1px solid #e8e8ed',
         transition: `all ${transitions.duration.standard}ms ${transitions.easing.smooth}`,
         '&:hover': {
-          borderColor: '#0B617C',
-          boxShadow: '0 4px 16px rgba(11, 97, 124, 0.08)',
+          borderColor: '#4F46E5',
+          boxShadow: '0 4px 16px rgba(79, 70, 229, 0.08)',
         },
       },
     },
@@ -122,7 +122,7 @@ export const components: Components<Omit<Theme, 'components'>> = {
       root: {
         borderRadius: borderRadius.sm,
         '&:hover .MuiOutlinedInput-notchedOutline': {
-          borderColor: '#0B617C',
+          borderColor: '#4F46E5',
         },
       },
       notchedOutline: {
@@ -208,9 +208,9 @@ export const components: Components<Omit<Theme, 'components'>> = {
           backgroundColor: 'rgba(0, 0, 0, 0.04)',
         },
         '&.Mui-selected': {
-          backgroundColor: 'rgba(11, 97, 124, 0.08)',
+          backgroundColor: 'rgba(79, 70, 229, 0.08)',
           '&:hover': {
-            backgroundColor: 'rgba(11, 97, 124, 0.12)',
+            backgroundColor: 'rgba(79, 70, 229, 0.12)',
           },
         },
       },
@@ -227,7 +227,7 @@ export const components: Components<Omit<Theme, 'components'>> = {
         minHeight: 48,
         transition: `all ${transitions.duration.shortest}ms ${transitions.easing.smooth}`,
         '&:hover': {
-          color: '#0B617C',
+          color: '#4F46E5',
           opacity: 1,
         },
       },
@@ -253,7 +253,7 @@ export const components: Components<Omit<Theme, 'components'>> = {
       },
       bar: {
         borderRadius: borderRadius.full,
-        background: 'linear-gradient(90deg, #0B617C 0%, #27E2CC 100%)',
+        background: 'linear-gradient(90deg, #4F46E5 0%, #06B6D4 100%)',
       },
     },
   },
@@ -326,12 +326,12 @@ export const components: Components<Omit<Theme, 'components'>> = {
         padding: '8px 12px',
         transition: `all ${transitions.duration.shortest}ms ${transitions.easing.smooth}`,
         '&:hover': {
-          backgroundColor: 'rgba(11, 97, 124, 0.06)',
+          backgroundColor: 'rgba(79, 70, 229, 0.06)',
         },
         '&.Mui-selected': {
-          backgroundColor: 'rgba(11, 97, 124, 0.1)',
+          backgroundColor: 'rgba(79, 70, 229, 0.1)',
           '&:hover': {
-            backgroundColor: 'rgba(11, 97, 124, 0.14)',
+            backgroundColor: 'rgba(79, 70, 229, 0.14)',
           },
         },
       },
@@ -360,10 +360,10 @@ export const components: Components<Omit<Theme, 'components'>> = {
         width: 20,
         height: 20,
         '&:hover': {
-          boxShadow: '0 0 0 8px rgba(11, 97, 124, 0.16)',
+          boxShadow: '0 0 0 8px rgba(79, 70, 229, 0.16)',
         },
         '&.Mui-focusVisible': {
-          boxShadow: '0 0 0 8px rgba(11, 97, 124, 0.24)',
+          boxShadow: '0 0 0 8px rgba(79, 70, 229, 0.24)',
         },
       },
       track: {
@@ -382,7 +382,7 @@ export const components: Components<Omit<Theme, 'components'>> = {
   MuiCssBaseline: {
     styleOverrides: {
       '*:focus-visible': {
-        outline: '2px solid #0B617C',
+        outline: '2px solid #4F46E5',
         outlineOffset: '2px',
         borderRadius: '4px',
       },
@@ -393,13 +393,13 @@ export const components: Components<Omit<Theme, 'components'>> = {
         scrollBehavior: 'smooth',
       },
       '::selection': {
-        backgroundColor: 'rgba(11, 97, 124, 0.2)',
+        backgroundColor: 'rgba(99, 102, 241, 0.2)',
         color: 'inherit',
       },
       body: {
         backgroundImage: `
-          radial-gradient(at 40% 20%, rgba(11, 97, 124, 0.02) 0, transparent 50%),
-          radial-gradient(at 80% 80%, rgba(39, 226, 204, 0.02) 0, transparent 50%)
+          radial-gradient(at 40% 20%, rgba(99, 102, 241, 0.03) 0, transparent 50%),
+          radial-gradient(at 80% 80%, rgba(168, 85, 247, 0.02) 0, transparent 50%)
         `,
       },
       '@media (prefers-reduced-motion: reduce)': {

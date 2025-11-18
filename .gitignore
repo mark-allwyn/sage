@@ -39,6 +39,9 @@ venv.bak/
 .env.local
 .env.*.local
 
+# Settings with API keys
+backend/settings.json
+
 # IDEs
 .vscode/
 .idea/

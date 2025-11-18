@@ -38,11 +38,14 @@ import {
   Search as SearchIcon,
   History as HistoryIcon,
   PlayArrow as PlayArrowIcon,
+  Download as DownloadIcon,
 } from '@mui/icons-material';
 import { useSurveyRuns, useDeleteSurveyRun, useSurveys } from '../services/hooks';
 import { SurveyRunMetadata } from '../services/types';
 import { ListSkeleton } from '../components/LoadingSkeleton';
 import { EmptyState } from '../components/EmptyState';
+import PageHeader from '../components/PageHeader';
+import { exportSurveyHistoryToCSV } from '../utils/csvExport';
 
 const SurveyHistoryPage: React.FC = () => {
   const navigate = useNavigate();
@@ -76,6 +79,11 @@ const SurveyHistoryPage: React.FC = () => {
     navigate(`/history/${runId}`);
   };
 
+  const handleExportCSV = () => {
+    if (!filteredRuns || filteredRuns.length === 0) return;
+    exportSurveyHistoryToCSV(filteredRuns);
+  };
+
   // Filter runs by search query
   const filteredRuns = runs?.filter((run) => {
     if (!searchQuery) return true;
@@ -94,18 +102,15 @@ const SurveyHistoryPage: React.FC = () => {
   return (
     <Box>
       {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h3" component="h1" gutterBottom>
-          Survey History
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          View and manage previously run surveys
-        </Typography>
-      </Box>
+      <PageHeader
+        title="Survey History"
+        subtitle="View and manage previously run surveys with detailed results"
+        icon={<HistoryIcon sx={{ fontSize: 28 }} />}
+      />
 
       {/* Filters */}
       <Paper sx={{ p: 4, mb: 3 }}>
-        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
           <FormControl sx={{ minWidth: 200 }}>
             <InputLabel>Filter by Survey</InputLabel>
             <Select
@@ -137,6 +142,15 @@ const SurveyHistoryPage: React.FC = () => {
             }}
             sx={{ flexGrow: 1 }}
           />
+
+          <Button
+            startIcon={<DownloadIcon />}
+            variant="outlined"
+            onClick={handleExportCSV}
+            disabled={!filteredRuns || filteredRuns.length === 0}
+          >
+            Export CSV
+          </Button>
         </Box>
       </Paper>
 

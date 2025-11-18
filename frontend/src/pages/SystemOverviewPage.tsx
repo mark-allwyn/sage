@@ -7,7 +7,6 @@ import React, { useState } from 'react';
 import {
   Box,
   Typography,
-  Container,
   Paper,
   Grid,
   Divider,
@@ -31,9 +30,11 @@ import {
   AccountTree as FlowIcon,
   Storage as DataIcon,
   Dataset as DatasetIcon,
+  Info as InfoIcon,
 } from '@mui/icons-material';
 import SystemWorkflowDiagram from '../components/SystemWorkflowDiagram';
 import ArchitectureDiagram from '../components/ArchitectureDiagram';
+import PageHeader from '../components/PageHeader';
 
 const SystemOverviewPage: React.FC = () => {
   const [expandedSections, setExpandedSections] = useState<string[]>([]);
@@ -47,17 +48,12 @@ const SystemOverviewPage: React.FC = () => {
   };
 
   return (
-    <Container maxWidth="xl">
-      <Box sx={{ py: 6 }}>
-        {/* Header */}
-        <Box sx={{ mb: 6, textAlign: 'center', maxWidth: 800, mx: 'auto' }}>
-          <Typography variant="h2" component="h1" sx={{ mb: 2, fontWeight: 600 }}>
-            System Overview
-          </Typography>
-          <Typography variant="h6" color="text.secondary" sx={{ fontWeight: 400, lineHeight: 1.5 }}>
-            Understanding the SSR Pipeline workflow and technical architecture
-          </Typography>
-        </Box>
+    <Box>
+      <PageHeader
+        title="System Overview"
+        subtitle="Understanding the SSR Pipeline workflow and technical architecture"
+        icon={<InfoIcon sx={{ fontSize: 28 }} />}
+      />
 
         {/* Workflow Section */}
         <Accordion
@@ -1062,8 +1058,7 @@ const SystemOverviewPage: React.FC = () => {
             </Box>
           </AccordionDetails>
         </Accordion>
-      </Box>
-    </Container>
+    </Box>
   );
 };
 

@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -16,7 +16,11 @@ import {
   CircularProgress,
   Alert,
   Grid,
+  Button,
 } from '@mui/material';
+import {
+  Visibility as VisibilityIcon,
+} from '@mui/icons-material';
 import { useSurveys, useSurvey } from '../services/hooks';
 import SurveyDetails from '../components/SurveyPreview/SurveyDetails';
 import QuestionList from '../components/SurveyPreview/QuestionList';
@@ -26,6 +30,7 @@ import CategoryList from '../components/SurveyPreview/CategoryList';
 const SurveyPreviewPage: React.FC = () => {
   const { surveyId: urlSurveyId } = useParams<{ surveyId?: string }>();
   const [selectedSurveyId, setSelectedSurveyId] = useState<string>(urlSurveyId || '');
+  const navigate = useNavigate();
 
   const { data: surveys, isLoading: surveysLoading, error: surveysError } = useSurveys();
   const {
@@ -36,6 +41,12 @@ const SurveyPreviewPage: React.FC = () => {
 
   const handleSurveyChange = (event: any) => {
     setSelectedSurveyId(event.target.value);
+  };
+
+  const handleViewAsUser = () => {
+    if (selectedSurveyId) {
+      navigate(`/user-view/${selectedSurveyId}`);
+    }
   };
 
   return (
@@ -52,13 +63,26 @@ const SurveyPreviewPage: React.FC = () => {
 
       {/* Survey Selector */}
       <Paper sx={{ p: 4, mb: 3 }}>
-        <Box sx={{ mb: 3 }}>
-          <Typography variant="h5" gutterBottom>
-            Select Survey
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Choose a survey to view its details and configuration
-          </Typography>
+        <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <Box>
+            <Typography variant="h5" gutterBottom>
+              Select Survey
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Choose a survey to view its details and configuration
+            </Typography>
+          </Box>
+          {selectedSurveyId && (
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<VisibilityIcon />}
+              onClick={handleViewAsUser}
+              sx={{ whiteSpace: 'nowrap' }}
+            >
+              Test as Respondent
+            </Button>
+          )}
         </Box>
         <FormControl fullWidth>
           <InputLabel>Select Survey</InputLabel>

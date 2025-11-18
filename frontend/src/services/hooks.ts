@@ -23,6 +23,8 @@ import {
   CreateGroundTruthFromSSRRequest,
   UploadGroundTruthRequest,
   ComparisonResults,
+  SystemSettings,
+  UpdateSettingsRequest,
 } from './types';
 import * as api from './api';
 
@@ -38,6 +40,7 @@ export const queryKeys = {
   surveyRun: (runId: string) => ['surveyRun', runId] as const,
   groundTruths: (surveyId?: string) => surveyId ? ['groundTruths', surveyId] : ['groundTruths'] as const,
   groundTruth: (gtId: string) => ['groundTruth', gtId] as const,
+  settings: ['settings'] as const,
 };
 
 // ===================
@@ -383,6 +386,57 @@ export const useCompareToGroundTruth = (
 ) => {
   return useMutation<ComparisonResults, Error, { runId: string; groundTruthId: string }>({
     mutationFn: ({ runId, groundTruthId }) => api.compareToGroundTruth(runId, groundTruthId),
+    ...options,
+  });
+};
+
+// ===================
+// Settings Hooks
+// ===================
+
+/**
+ * Get system settings
+ */
+export const useSettings = (
+  options?: Omit<UseQueryOptions<SystemSettings, Error>, 'queryKey' | 'queryFn'>
+) => {
+  return useQuery<SystemSettings, Error>({
+    queryKey: queryKeys.settings,
+    queryFn: api.getSettings,
+    ...options,
+  });
+};
+
+/**
+ * Update provider settings
+ */
+export const useUpdateProviderSettings = (
+  options?: UseMutationOptions<{ success: boolean; message: string }, Error, UpdateSettingsRequest>
+) => {
+  const queryClient = useQueryClient();
+
+  return useMutation<{ success: boolean; message: string }, Error, UpdateSettingsRequest>({
+    mutationFn: api.updateProviderSettings,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.settings });
+    },
+    ...options,
+  });
+};
+
+/**
+ * Reset settings to defaults
+ */
+export const useResetSettings = (
+  options?: UseMutationOptions<{ success: boolean; message: string }, Error, void>
+) => {
+  const queryClient = useQueryClient();
+
+  return useMutation<{ success: boolean; message: string }, Error, void>({
+    mutationFn: api.resetSettings,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.settings });
+    },
     ...options,
   });
 };

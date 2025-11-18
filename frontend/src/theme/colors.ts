@@ -1,125 +1,183 @@
 /**
  * Color Tokens for S.A.G.E
- * Modern color system with brand identity
+ * Modern, professional color system with brand identity
+ * Inspired by Apple, Stripe, and modern SaaS design
  */
 
-// Brand Colors
+// Brand Colors - Compelling AI/Tech Palette
+// Inspired by leading AI companies (Anthropic, OpenAI, Linear, Vercel)
 export const brandColors = {
-  tealBlue: '#0B617C',
-  tealDark: '#022C33',
-  turquoise: '#27E2CC',
-  electricLime: '#C4F600',
-  atomicOrange: '#F69560',
-  cornflowerBlue: '#B09DF9',
-  lightGrey: '#F1F5F6',
+  // Primary - Deep Indigo (intelligence, trust, sophistication)
+  indigo: {
+    50: '#EEF2FF',
+    100: '#E0E7FF',
+    200: '#C7D2FE',
+    300: '#A5B4FC',
+    400: '#818CF8',
+    500: '#6366F1',  // Main brand color
+    600: '#4F46E5',
+    700: '#4338CA',
+    800: '#3730A3',
+    900: '#312E81',
+  },
+
+  // Secondary - Electric Cyan (innovation, technology, energy)
+  cyan: {
+    50: '#ECFEFF',
+    100: '#CFFAFE',
+    200: '#A5F3FC',
+    300: '#67E8F9',
+    400: '#22D3EE',
+    500: '#06B6D4',  // Main accent
+    600: '#0891B2',
+    700: '#0E7490',
+    800: '#155E75',
+    900: '#164E63',
+  },
+
+  // Accent - Vibrant Purple (creativity, AI)
+  purple: {
+    50: '#FAF5FF',
+    100: '#F3E8FF',
+    200: '#E9D5FF',
+    300: '#D8B4FE',
+    400: '#C084FC',
+    500: '#A855F7',
+    600: '#9333EA',
+    700: '#7E22CE',
+    800: '#6B21A8',
+    900: '#581C87',
+  },
+
+  // Success - Emerald Green (growth, success)
+  emerald: {
+    500: '#10B981',
+    600: '#059669',
+  },
+
+  // Warning - Amber
+  amber: {
+    500: '#F59E0B',
+    600: '#D97706',
+  },
+
+  // Error - Rose
+  rose: {
+    500: '#F43F5E',
+    600: '#E11D48',
+  },
+
+  // Neutral - Cool gray tones
+  slate: {
+    50: '#F8FAFC',
+    100: '#F1F5F9',
+    200: '#E2E8F0',
+    300: '#CBD5E1',
+    400: '#94A3B8',
+    500: '#64748B',
+    600: '#475569',
+    700: '#334155',
+    800: '#1E293B',
+    900: '#0F172A',
+  },
 };
 
 // Extended Color Palette
 export const colors = {
-  // Primary (Teal Blue)
+  // Primary (Indigo - intelligence, trust, AI/tech)
   primary: {
-    main: brandColors.tealBlue,
-    light: '#1A7A99',
-    dark: brandColors.tealDark,
+    main: brandColors.indigo[600],
+    light: brandColors.indigo[400],
+    dark: brandColors.indigo[800],
     contrastText: '#FFFFFF',
   },
 
-  // Secondary (Atomic Orange)
+  // Secondary (Cyan - innovation, energy, technology)
   secondary: {
-    main: brandColors.atomicOrange,
-    light: '#FF9D77',
-    dark: '#E67B49',
+    main: brandColors.cyan[500],
+    light: brandColors.cyan[300],
+    dark: brandColors.cyan[700],
     contrastText: '#FFFFFF',
   },
 
   // Accent Colors (for CTAs and highlights)
   accent: {
-    turquoise: brandColors.turquoise,
-    lime: brandColors.electricLime,
-    purple: brandColors.cornflowerBlue,
-    // Gradient combinations
-    gradientTeal: `linear-gradient(135deg, ${brandColors.tealBlue} 0%, ${brandColors.turquoise} 100%)`,
-    gradientLime: `linear-gradient(135deg, ${brandColors.turquoise} 0%, ${brandColors.electricLime} 100%)`,
-    gradientPurple: `linear-gradient(135deg, ${brandColors.tealBlue} 0%, ${brandColors.cornflowerBlue} 100%)`,
+    indigo: brandColors.indigo[500],
+    cyan: brandColors.cyan[500],
+    purple: brandColors.purple[500],
+    // Strategic gradients for brand identity
+    gradientPrimary: `linear-gradient(135deg, ${brandColors.indigo[600]} 0%, ${brandColors.indigo[500]} 100%)`,
+    gradientHero: `linear-gradient(135deg, ${brandColors.indigo[700]} 0%, ${brandColors.purple[600]} 100%)`,
+    gradientTech: `linear-gradient(135deg, ${brandColors.cyan[500]} 0%, ${brandColors.indigo[500]} 100%)`,
+    gradientAI: `linear-gradient(135deg, ${brandColors.purple[600]} 0%, ${brandColors.indigo[600]} 100%)`,
   },
 
-  // Semantic Colors
+  // Semantic Colors (clear and purposeful)
   success: {
-    main: '#2E7D32',
-    light: '#4CAF50',
-    dark: '#1B5E20',
+    main: brandColors.emerald[500],
+    light: brandColors.emerald[500],
+    dark: brandColors.emerald[600],
     contrastText: '#FFFFFF',
   },
 
   error: {
-    main: '#D32F2F',
-    light: '#EF5350',
-    dark: '#C62828',
+    main: brandColors.rose[500],
+    light: brandColors.rose[500],
+    dark: brandColors.rose[600],
     contrastText: '#FFFFFF',
   },
 
   warning: {
-    main: '#ED6C02',
-    light: '#FF9800',
-    dark: '#E65100',
+    main: brandColors.amber[500],
+    light: brandColors.amber[500],
+    dark: brandColors.amber[600],
     contrastText: '#FFFFFF',
   },
 
   info: {
-    main: brandColors.turquoise,
-    light: '#4DEBD9',
-    dark: '#1DB8A6',
-    contrastText: '#022C33',
+    main: brandColors.cyan[500],
+    light: brandColors.cyan[300],
+    dark: brandColors.cyan[700],
+    contrastText: '#FFFFFF',
   },
 
-  // Neutral Colors (refined greys)
-  grey: {
-    50: '#FAFBFC',
-    100: '#F1F5F6',
-    200: '#E4EAED',
-    300: '#D1D9DD',
-    400: '#9AA5AB',
-    500: '#6B7780',
-    600: '#4A5459',
-    700: '#2F3638',
-    800: '#1C2021',
-    900: '#0F1112',
-  },
+  // Neutral Colors (professional slate tones)
+  grey: brandColors.slate,
 
-  // Background Colors (Apple-like: pure, clean)
+  // Background Colors (clean and modern)
   background: {
-    default: '#FFFFFF',      // Clean white background
-    paper: '#FFFFFF',        // Pure white for cards
-    elevated: '#FBFBFB',     // Subtle elevation
-    subtle: '#F5F5F7',       // Apple-style subtle grey
+    default: '#FFFFFF',
+    paper: '#FFFFFF',
+    elevated: brandColors.slate[50],
+    subtle: brandColors.slate[100],
   },
 
-  // Text Colors (Apple-like: refined contrast)
+  // Text Colors (excellent contrast and readability)
   text: {
-    primary: '#1d1d1f',      // Apple's near-black
-    secondary: '#6e6e73',    // Apple's secondary grey
-    disabled: '#86868b',     // Lighter grey
-    hint: '#86868b',         // Same as disabled
+    primary: brandColors.slate[900],
+    secondary: brandColors.slate[600],
+    disabled: brandColors.slate[400],
+    hint: brandColors.slate[400],
   },
 
-  // Border Colors (Apple-like: extremely subtle)
+  // Border Colors (subtle and modern)
   border: {
-    main: '#d2d2d7',         // Apple's light border
-    light: '#e8e8ed',        // Even lighter
-    dark: '#c7c7cc',         // Slightly darker
-    focus: brandColors.tealBlue,
+    main: brandColors.slate[200],
+    light: brandColors.slate[100],
+    dark: brandColors.slate[300],
+    focus: brandColors.indigo[600],
   },
 
   // Action Colors (hover, selected, etc.)
   action: {
-    hover: 'rgba(11, 97, 124, 0.08)',
+    hover: `rgba(79, 70, 229, 0.08)`,  // Indigo
     hoverOpacity: 0.08,
-    selected: 'rgba(11, 97, 124, 0.12)',
+    selected: `rgba(79, 70, 229, 0.12)`,
     selectedOpacity: 0.12,
-    disabled: '#E4EAED',
-    disabledBackground: '#F1F5F6',
+    disabled: brandColors.slate[200],
+    disabledBackground: brandColors.slate[100],
     disabledOpacity: 0.38,
-    focus: 'rgba(11, 97, 124, 0.16)',
+    focus: `rgba(79, 70, 229, 0.16)`,
     focusOpacity: 0.16,
     activatedOpacity: 0.16,
   },
@@ -127,18 +185,19 @@ export const colors = {
   // Semantic Brand Colors for specific use cases
   semantic: {
     cta: {
-      primary: brandColors.electricLime,
-      secondary: brandColors.atomicOrange,
+      primary: brandColors.indigo[600],
+      secondary: brandColors.cyan[500],
     },
     features: {
-      new: brandColors.turquoise,
-      beta: brandColors.cornflowerBlue,
-      premium: brandColors.atomicOrange,
+      new: brandColors.cyan[500],
+      beta: brandColors.purple[500],
+      premium: brandColors.indigo[600],
     },
     status: {
-      running: brandColors.turquoise,
-      completed: brandColors.electricLime,
-      draft: brandColors.atomicOrange,
+      running: brandColors.cyan[500],
+      completed: brandColors.emerald[500],
+      pending: brandColors.purple[500],
+      draft: brandColors.amber[500],
     },
   },
 };

@@ -30,8 +30,12 @@ import {
   Create as CreateIcon,
   PlayArrow as PlayArrowIcon,
   Science as ScienceIcon,
-  Info as InfoIcon,
   History as HistoryIcon,
+  Settings as SettingsIcon,
+  GitHub as GitHubIcon,
+  LinkedIn as LinkedInIcon,
+  Twitter as TwitterIcon,
+  Email as EmailIcon,
 } from '@mui/icons-material';
 import { AppBreadcrumbs } from '../Breadcrumbs';
 
@@ -56,6 +60,7 @@ const navItems: NavItem[] = [
   { label: 'Run', path: '/runner', icon: <PlayArrowIcon />, description: 'Execute surveys' },
   { label: 'Results', path: '/history', icon: <HistoryIcon />, description: 'View data' },
   { label: 'Experiments', path: '/ground-truth', icon: <ScienceIcon />, badge: 'beta', description: 'Ground truth testing' },
+  { label: 'Settings', path: '/settings', icon: <SettingsIcon />, description: 'System configuration' },
 ];
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
@@ -290,6 +295,211 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         >
           <AppBreadcrumbs />
           {children}
+        </Container>
+      </Box>
+
+      {/* Footer */}
+      <Box
+        component="footer"
+        sx={{
+          bgcolor: 'background.paper',
+          borderTop: '1px solid',
+          borderColor: 'divider',
+          py: { xs: 4, md: 6 },
+          mt: 'auto',
+        }}
+      >
+        <Container maxWidth="xl">
+          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: { xs: 4, md: 6 } }}>
+            {/* Brand Section */}
+            <Box sx={{ flex: '1 1 auto', maxWidth: { xs: '100%', md: '300px' } }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
+                <ScienceIcon sx={{ color: 'primary.main', fontSize: 28 }} />
+                <Typography variant="h6" sx={{ fontWeight: 600, color: 'text.primary' }}>
+                  S.A.G.E
+                </Typography>
+              </Box>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2, lineHeight: 1.7 }}>
+                Synthetic Audience Generation Engine for cutting-edge market research using AI and Semantic Similarity Rating.
+              </Typography>
+            </Box>
+
+            {/* Integrations */}
+            <Box sx={{ flex: '0 0 auto' }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2, color: 'text.primary' }}>
+                Integrations
+              </Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                <Button
+                  sx={{ justifyContent: 'flex-start', color: 'text.secondary', textTransform: 'none', px: 0, minWidth: 0 }}
+                  component="a"
+                  href="https://openai.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  OpenAI
+                </Button>
+                <Button
+                  sx={{ justifyContent: 'flex-start', color: 'text.secondary', textTransform: 'none', px: 0, minWidth: 0 }}
+                  component="a"
+                  href="https://anthropic.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Anthropic
+                </Button>
+                <Button
+                  sx={{ justifyContent: 'flex-start', color: 'text.secondary', textTransform: 'none', px: 0, minWidth: 0 }}
+                  component="a"
+                  href="https://ollama.ai"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Ollama
+                </Button>
+              </Box>
+            </Box>
+
+            {/* Resources Links */}
+            <Box sx={{ flex: '0 0 auto' }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2, color: 'text.primary' }}>
+                Resources
+              </Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                <Button
+                  sx={{ justifyContent: 'flex-start', color: 'text.secondary', textTransform: 'none', px: 0, minWidth: 0 }}
+                  onClick={() => navigate('/documentation')}
+                >
+                  Documentation
+                </Button>
+                <Button
+                  sx={{ justifyContent: 'flex-start', color: 'text.secondary', textTransform: 'none', px: 0, minWidth: 0 }}
+                  onClick={() => navigate('/overview')}
+                >
+                  System Overview
+                </Button>
+                <Button
+                  sx={{ justifyContent: 'flex-start', color: 'text.secondary', textTransform: 'none', px: 0, minWidth: 0 }}
+                  component="a"
+                  href="https://arxiv.org/abs/2510.08338"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Research Paper
+                </Button>
+                <Button
+                  sx={{ justifyContent: 'flex-start', color: 'text.secondary', textTransform: 'none', px: 0, minWidth: 0 }}
+                  component="a"
+                  href="https://github.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  GitHub
+                </Button>
+              </Box>
+            </Box>
+
+            {/* Legal Links */}
+            <Box sx={{ flex: '0 0 auto' }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2, color: 'text.primary' }}>
+                Legal
+              </Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                <Button
+                  sx={{ justifyContent: 'flex-start', color: 'text.secondary', textTransform: 'none', px: 0, minWidth: 0 }}
+                  component="a"
+                  href="#privacy"
+                >
+                  Privacy Policy
+                </Button>
+                <Button
+                  sx={{ justifyContent: 'flex-start', color: 'text.secondary', textTransform: 'none', px: 0, minWidth: 0 }}
+                  component="a"
+                  href="#terms"
+                >
+                  Terms of Service
+                </Button>
+                <Button
+                  sx={{ justifyContent: 'flex-start', color: 'text.secondary', textTransform: 'none', px: 0, minWidth: 0 }}
+                  component="a"
+                  href="#license"
+                >
+                  License
+                </Button>
+              </Box>
+            </Box>
+
+            {/* Connect Section */}
+            <Box sx={{ flex: '0 0 auto' }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2, color: 'text.primary' }}>
+                Connect
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <IconButton
+                  size="small"
+                  sx={{ color: 'text.secondary', '&:hover': { color: 'primary.main' } }}
+                  component="a"
+                  href="https://github.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="GitHub"
+                >
+                  <GitHubIcon />
+                </IconButton>
+                <IconButton
+                  size="small"
+                  sx={{ color: 'text.secondary', '&:hover': { color: 'primary.main' } }}
+                  component="a"
+                  href="https://linkedin.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="LinkedIn"
+                >
+                  <LinkedInIcon />
+                </IconButton>
+                <IconButton
+                  size="small"
+                  sx={{ color: 'text.secondary', '&:hover': { color: 'primary.main' } }}
+                  component="a"
+                  href="https://twitter.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Twitter"
+                >
+                  <TwitterIcon />
+                </IconButton>
+                <IconButton
+                  size="small"
+                  sx={{ color: 'text.secondary', '&:hover': { color: 'primary.main' } }}
+                  component="a"
+                  href="mailto:contact@example.com"
+                  aria-label="Email"
+                >
+                  <EmailIcon />
+                </IconButton>
+              </Box>
+            </Box>
+          </Box>
+
+          <Divider sx={{ my: 4 }} />
+
+          {/* Bottom Row */}
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', sm: 'row' },
+              justifyContent: 'space-between',
+              alignItems: { xs: 'flex-start', sm: 'center' },
+              gap: 2,
+            }}
+          >
+            <Typography variant="body2" color="text.secondary">
+              © {new Date().getFullYear()} S.A.G.E. All rights reserved.
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Built with AI-powered synthetic audience technology
+            </Typography>
+          </Box>
         </Container>
       </Box>
     </Box>

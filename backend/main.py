@@ -193,7 +193,7 @@ class ApplySSRRequest(BaseModel):
 class RunSurveyRequest(BaseModel):
     survey_id: str
     num_profiles: int = Field(default=100, ge=10, le=500)
-    llm_provider: str = Field(default="openai", pattern="^(openai|anthropic)$")
+    llm_provider: str = Field(default="openai", pattern="^(openai|anthropic|ollama)$")
     model: str = "gpt-4"
     llm_temperature: float = Field(default=0.7, ge=0.0, le=2.0)
     ssr_temperature: float = Field(default=1.0, ge=0.1, le=5.0)
@@ -205,7 +205,7 @@ class CreateGroundTruthFromSSRRequest(BaseModel):
     name: str
     description: str
     num_profiles: int = Field(default=500, ge=10, le=2000)
-    llm_provider: str = Field(default="openai", pattern="^(openai|anthropic)$")
+    llm_provider: str = Field(default="openai", pattern="^(openai|anthropic|ollama)$")
     model: str = "gpt-4"
     llm_temperature: float = Field(default=0.7, ge=0.0, le=2.0)
     ssr_temperature: float = Field(default=1.0, ge=0.1, le=5.0)
@@ -217,6 +217,21 @@ class UploadGroundTruthRequest(BaseModel):
     name: str
     description: str
     distributions: Dict[str, Any]
+
+# Settings Models
+class ProviderConfig(BaseModel):
+    enabled: bool
+    api_key: Optional[str] = None
+    models: List[str] = Field(default_factory=list)
+
+class SystemSettings(BaseModel):
+    providers: Dict[str, ProviderConfig]
+
+class UpdateProviderRequest(BaseModel):
+    provider: str
+    enabled: bool
+    api_key: Optional[str] = None
+    models: List[str] = Field(default_factory=list)
 
 # ===================
 # Helper Functions
@@ -258,24 +273,61 @@ def save_survey_run(run_result: dict) -> None:
     run_path = results_dir / f"{run_result['run_id']}.json"
     run_path.write_text(json.dumps(run_result, indent=2))
 
-    # Update index
-    index_path = results_dir / "runs_index.json"
-    if index_path.exists():
-        index = json.loads(index_path.read_text())
-    else:
-        index = []
+def get_settings_path() -> Path:
+    """Get path to settings file"""
+    backend_dir = Path(__file__).parent
+    return backend_dir / "settings.json"
 
-    # Add metadata to index
-    index.append({
-        "run_id": run_result["run_id"],
-        "survey_id": run_result["survey_id"],
-        "timestamp": run_result.get("timestamp", datetime.now().isoformat()),
-        "num_profiles": run_result["num_profiles"],
-        "num_responses": run_result["num_responses"],
-        "config": run_result["config"]
-    })
+def load_settings() -> SystemSettings:
+    """Load settings from file or return defaults"""
+    settings_path = get_settings_path()
 
-    index_path.write_text(json.dumps(index, indent=2))
+    if settings_path.exists():
+        try:
+            with open(settings_path, 'r') as f:
+                data = json.load(f)
+                return SystemSettings(**data)
+        except Exception as e:
+            logger.warning(f"Error loading settings: {e}, using defaults")
+
+    # Return default settings
+    return SystemSettings(
+        providers={
+            "openai": ProviderConfig(enabled=False, api_key=None, models=[]),
+            "anthropic": ProviderConfig(enabled=False, api_key=None, models=[]),
+            "gemini": ProviderConfig(enabled=False, api_key=None, models=[]),
+            "ollama": ProviderConfig(enabled=True, api_key=None, models=["gemma3:latest"]),
+        }
+    )
+
+def save_settings(settings: SystemSettings) -> None:
+    """Save settings to file"""
+    settings_path = get_settings_path()
+    with open(settings_path, 'w') as f:
+        json.dump(settings.dict(), f, indent=2)
+
+def get_api_key_for_provider(provider: str) -> Optional[str]:
+    """Get API key for a provider from settings or environment"""
+    import os
+
+    # First check settings file
+    settings = load_settings()
+    if provider in settings.providers:
+        provider_config = settings.providers[provider]
+        if provider_config.api_key:
+            return provider_config.api_key
+
+    # Fallback to environment variables
+    env_var_map = {
+        "openai": "OPENAI_API_KEY",
+        "anthropic": "ANTHROPIC_API_KEY",
+        "gemini": "GEMINI_API_KEY",
+    }
+
+    if provider in env_var_map:
+        return os.getenv(env_var_map[provider])
+
+    return None
 
 def aggregate_distributions_by_question(distributions: List[RatingDistribution], responses: List[Response]) -> Dict:
     """Aggregate individual respondent distributions into per-question averages"""
@@ -1331,6 +1383,86 @@ async def process_webpage_url(media_url: str = Form(...)):
     except Exception as e:
         logger.error(f"Error processing webpage URL: {e}")
         raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}")
+# ===================
+# Settings API Endpoints
+# ===================
+
+@app.get("/api/settings")
+async def get_settings():
+    """Get current system settings (with masked API keys)"""
+    try:
+        settings = load_settings()
+
+        # Mask API keys in response (show only last 4 characters)
+        masked_settings = settings.dict()
+        for provider, config in masked_settings["providers"].items():
+            if config["api_key"]:
+                key = config["api_key"]
+                if len(key) > 4:
+                    masked_settings["providers"][provider]["api_key"] = "****" + key[-4:]
+                else:
+                    masked_settings["providers"][provider]["api_key"] = "****"
+
+        return masked_settings
+    except Exception as e:
+        logger.error(f"Error loading settings: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.put("/api/settings/provider")
+async def update_provider_settings(request: UpdateProviderRequest):
+    """Update settings for a specific provider"""
+    try:
+        # Load current settings
+        settings = load_settings()
+
+        # Validate provider
+        if request.provider not in settings.providers:
+            raise HTTPException(status_code=400, detail=f"Invalid provider: {request.provider}")
+
+        # Update provider config
+        settings.providers[request.provider] = ProviderConfig(
+            enabled=request.enabled,
+            api_key=request.api_key,
+            models=request.models
+        )
+
+        # Save settings
+        save_settings(settings)
+
+        logger.info(f"Updated settings for provider: {request.provider}")
+
+        return {"message": f"Settings updated for {request.provider}", "success": True}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating provider settings: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/settings/reset")
+async def reset_settings():
+    """Reset settings to defaults"""
+    try:
+        default_settings = SystemSettings(
+            providers={
+                "openai": ProviderConfig(enabled=False, api_key=None, models=[]),
+                "anthropic": ProviderConfig(enabled=False, api_key=None, models=[]),
+                "gemini": ProviderConfig(enabled=False, api_key=None, models=[]),
+                "ollama": ProviderConfig(enabled=True, api_key=None, models=["gemma3:latest"]),
+            }
+        )
+
+        save_settings(default_settings)
+
+        logger.info("Settings reset to defaults")
+
+        return {"message": "Settings reset to defaults", "success": True}
+
+    except Exception as e:
+        logger.error(f"Error resetting settings: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # WebSocket endpoint for real-time progress (future enhancement)

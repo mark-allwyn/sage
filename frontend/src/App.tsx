@@ -11,7 +11,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
-import { Box } from '@mui/material';
 import { theme } from './theme';
 
 // Layout components
@@ -27,6 +26,8 @@ import SurveyHistoryPage from './pages/SurveyHistoryPage';
 import SurveyRunDetailPage from './pages/SurveyRunDetailPage';
 import GroundTruthTestingPage from './pages/GroundTruthTestingPage';
 import SystemOverviewPage from './pages/SystemOverviewPage';
+import DocumentationPage from './pages/DocumentationPage';
+import SettingsPage from './pages/SettingsPage';
 
 // Create React Query client
 const queryClient = new QueryClient({
@@ -50,7 +51,10 @@ const App: React.FC = () => {
               {/* Home page */}
               <Route path="/" element={<HomePage />} />
 
-              {/* System Overview - understand the workflow */}
+              {/* Documentation - user guide and how-to */}
+              <Route path="/documentation" element={<DocumentationPage />} />
+
+              {/* System Overview - technical documentation */}
               <Route path="/overview" element={<SystemOverviewPage />} />
 
               {/* Survey Builder - create/edit surveys */}
@@ -74,6 +78,9 @@ const App: React.FC = () => {
 
               {/* Ground Truth Testing - experimentation */}
               <Route path="/ground-truth" element={<GroundTruthTestingPage />} />
+
+              {/* Settings - system configuration and status */}
+              <Route path="/settings" element={<SettingsPage />} />
 
               {/* Redirect unknown routes to home */}
               <Route path="*" element={<Navigate to="/" replace />} />
