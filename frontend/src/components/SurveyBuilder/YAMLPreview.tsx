@@ -82,9 +82,21 @@ const YAMLPreview: React.FC<YAMLPreviewProps> = ({ surveyData }) => {
           yaml.push(`        []`);
         }
         yaml.push(`      target_demographics:`);
-        yaml.push(`        gender: [${pg.target_demographics.gender.map(g => `"${g}"`).join(', ')}]`);
-        yaml.push(`        age_group: [${pg.target_demographics.age_group.map(a => `"${a}"`).join(', ')}]`);
-        yaml.push(`        occupation: [${pg.target_demographics.occupation.map(o => `"${o}"`).join(', ')}]`);
+        if (pg.target_demographics.gender) {
+          yaml.push(`        gender: [${pg.target_demographics.gender.map(g => `"${g}"`).join(', ')}]`);
+        }
+        if (pg.target_demographics.age_group) {
+          yaml.push(`        age_group: [${pg.target_demographics.age_group.map(a => `"${a}"`).join(', ')}]`);
+        }
+        if (pg.target_demographics.occupation) {
+          yaml.push(`        occupation: [${pg.target_demographics.occupation.map(o => `"${o}"`).join(', ')}]`);
+        }
+        if (pg.target_demographics.income_level) {
+          yaml.push(`        income_level: [${pg.target_demographics.income_level.map(il => `"${il}"`).join(', ')}]`);
+        }
+        if (pg.target_demographics.tech_comfort_level) {
+          yaml.push(`        tech_comfort_level: [${pg.target_demographics.tech_comfort_level.map(tcl => `"${tcl}"`).join(', ')}]`);
+        }
       });
     } else {
       yaml.push(`    []`);

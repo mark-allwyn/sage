@@ -13,13 +13,17 @@ interface RunProgressProps {
 
 const RunProgress: React.FC<RunProgressProps> = ({ progress, messages }) => {
   return (
-    <Paper sx={{ p: 3 }}>
+    <Paper sx={{ p: 3 }} role="status" aria-live="polite" aria-atomic="true">
       <Typography variant="h5" gutterBottom>
         Running Survey...
       </Typography>
       <Box sx={{ my: 3 }}>
-        <LinearProgress variant="determinate" value={progress} />
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 1, textAlign: 'right' }}>
+        <LinearProgress
+          variant="determinate"
+          value={progress}
+          aria-label={`Survey progress: ${progress}%`}
+        />
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 1, textAlign: 'right' }} aria-hidden="true">
           {progress}%
         </Typography>
       </Box>
@@ -35,6 +39,7 @@ const RunProgress: React.FC<RunProgressProps> = ({ progress, messages }) => {
           borderRadius: 1,
           p: 1
         }}
+        aria-label="Survey execution progress messages"
       >
         {messages.map((message, index) => (
           <ListItem key={index}>

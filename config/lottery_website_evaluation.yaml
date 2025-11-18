@@ -1,0 +1,289 @@
+survey:
+  name: Online Lottery Platform Website Evaluation
+  description: Survey evaluating an online lottery platform website with URL viewing
+  context: 'We are evaluating a new online lottery platform and website experience.
+
+    WEBSITE TO EVALUATE: https://www.national-lottery.co.uk.com
+
+    Please review the website thoroughly before answering the evaluation questions.
+    All questions are based on your assessment of this specific website.
+
+    NATIONAL LOTTERY UK - Online Gaming Platform
+
+    A new comprehensive online lottery platform offering multiple game types, account
+    management, and seamless mobile and desktop play.
+
+    Platform Features: - Play all state lottery games online - Purchase tickets for
+    Powerball, Mega Millions, and state games - Instant win digital games available
+    24/7 - Automatic notifications for wins - Digital wallet for deposits and winnings
+    - Subscription management (auto-play your favorite numbers) - Responsible gaming
+    tools and limits
+
+    Website Capabilities: - Secure account creation and login - Quick number selection
+    or random quick pick - Purchase history and winning tickets tracking - Prize claim
+    assistance - Results and drawing information - Mobile app available (iOS and Android)
+
+    Key Pages to Review: - Homepage and featured games - How to Play section - Account
+    registration/login process - Game selection and ticket purchase flow - Mobile
+    app information - Security and licensing information '
+  sample_size: 200
+  demographics:
+  - age_group
+  - gender
+  - income_level
+  - tech_comfort_level
+  - persona_group
+  questions:
+  - id: website_visit_confirmation
+    text: 'Please visit the following website and explore for at least 2-3 minutes
+      before continuing:
+
+      Website: https://www.lottery-central-demo.com
+
+      (Note: This is a demo site for evaluation purposes)
+
+      Key pages to review: - Homepage and featured games - How to Play section - Account
+      registration/login process - Game selection and ticket purchase flow - Mobile
+      app information
+
+      Have you visited and reviewed the website? '
+    type: yes_no
+  - id: website_visual_appeal
+    text: The website design is visually appealing and modern
+    type: likert_5
+    scale:
+      1: Strongly disagree
+      2: Disagree
+      3: Neither agree nor disagree
+      4: Agree
+      5: Strongly agree
+  - id: website_easy_navigation
+    text: The website is easy to navigate and find what I'm looking for
+    type: likert_5
+    scale:
+      1: Strongly disagree
+      2: Disagree
+      3: Neither agree nor disagree
+      4: Agree
+      5: Strongly agree
+  - id: website_mobile_friendly
+    text: The website appears to be mobile-friendly (if viewed on mobile, or based
+      on design)
+    type: likert_5
+    scale:
+      1: Strongly disagree
+      2: Disagree
+      3: Neither agree nor disagree
+      4: Agree
+      5: Strongly agree
+  - id: information_clarity
+    text: The information about games, odds, and prizes is clear and easy to understand
+    type: likert_5
+    scale:
+      1: Strongly disagree
+      2: Disagree
+      3: Neither agree nor disagree
+      4: Agree
+      5: Strongly agree
+  - id: website_trustworthy
+    text: The website looks trustworthy and legitimate
+    type: likert_5
+    scale:
+      1: Strongly disagree
+      2: Disagree
+      3: Neither agree nor disagree
+      4: Agree
+      5: Strongly agree
+  - id: security_confidence
+    text: I would feel confident entering payment information on this website
+    type: likert_5
+    scale:
+      1: Strongly disagree
+      2: Disagree
+      3: Neither agree nor disagree
+      4: Agree
+      5: Strongly agree
+  - id: security_features_visible
+    text: Security features (SSL, encryption, licensed operator info) are clearly
+      visible
+    type: likert_5
+    scale:
+      1: Strongly disagree
+      2: Disagree
+      3: Neither agree nor disagree
+      4: Agree
+      5: Strongly agree
+  - id: purchase_process_simple
+    text: The ticket purchase process appears simple and straightforward
+    type: likert_5
+    scale: &id001
+      1: Strongly disagree
+      2: Disagree
+      3: Neither agree nor disagree
+      4: Agree
+      5: Strongly agree
+  - id: registration_reasonable
+    text: The account registration requirements seem reasonable
+    type: likert_5
+    scale: *id001
+  - id: auto_notification_valuable
+    text: Automatic win notifications would be a valuable feature for me
+    type: likert_5
+    scale: *id001
+  - id: digital_wallet_appealing
+    text: Having a digital wallet for deposits and winnings is appealing
+    type: likert_5
+    scale: *id001
+  - id: subscription_interest
+    text: The subscription/auto-play feature for favorite numbers interests me
+    type: likert_5
+    scale: *id001
+  - id: responsible_gaming_important
+    text: Seeing responsible gaming tools makes me view the platform more positively
+    type: likert_5
+    scale: *id001
+  - id: platform_usage_likelihood
+    text: How likely would you be to use this online lottery platform?
+    type: likert_5
+    scale: *id001
+  - id: prefer_online_vs_retail
+    text: I would prefer to buy lottery tickets online rather than at retail stores
+    type: likert_5
+    scale: *id001
+  - id: overall_website_rating
+    text: Overall, how would you rate this lottery website?
+    type: likert_7
+    scale:
+      1: Extremely poor
+      2: Poor
+      3: Below average
+      4: Average
+      5: Above average
+      6: Good
+      7: Excellent
+  - id: best_website_feature
+    text: What did you like MOST about the website? (Based on your review)
+    type: multiple_choice
+    options:
+    - Visual design and modern look
+    - Easy navigation and user interface
+    - Clear game information and odds
+    - Simple purchase process
+    - Mobile compatibility
+    - Security features and trust indicators
+    - Account and wallet features
+    - Responsible gaming tools
+    - Nothing stood out positively
+  - id: biggest_website_concern
+    text: What is your biggest concern or hesitation about using this platform?
+    type: multiple_choice
+    options:
+    - Security and protecting my payment information
+    - Legitimacy and trustworthiness of operator
+    - Complexity of registration or purchase process
+    - Prefer buying tickets in person
+    - Concerned about spending too much too easily
+    - Website design or usability issues
+    - Lack of features I want
+    - No major concerns
+  - id: improvement_suggestion
+    text: What would most improve your likelihood of using this platform?
+    type: multiple_choice
+    options:
+    - Stronger security and trust indicators
+    - Simpler registration process
+    - Better mobile app experience
+    - More game variety
+    - Better odds or promotions
+    - More detailed how-to guides
+    - Live customer support chat
+    - Nothing would make me more likely to use it
+  - id: current_ticket_purchase_method
+    text: How do you currently purchase lottery tickets (if at all)?
+    type: multiple_choice
+    options:
+    - I don't play lottery
+    - Always in person at retail stores
+    - Usually in person, occasionally online
+    - Mix of in-person and online
+    - Usually online, occasionally in person
+    - Always online
+  - id: online_lottery_experience
+    text: Have you ever purchased lottery tickets online before?
+    type: yes_no
+  persona_groups:
+  - name: Digital Adopters
+    description: Tech-savvy users comfortable with online transactions
+    weight: 0.3
+    personas:
+    - A 28-year-old who does everything online. Banking, shopping, entertainment all
+      digital.
+    - A 35-year-old early adopter. Prefers apps and websites to physical interactions.
+    - A 42-year-old tech professional. Values convenience and efficiency of online
+      platforms.
+    target_demographics:
+      gender:
+      - Male
+      - Female
+      age_group:
+      - 21-24
+      - 25-34
+      - 35-44
+      income_level:
+      - $50k-$75k
+      - $75k-$100k
+      - $100k+
+  - name: Cautious Evaluators
+    description: Open to online but need reassurance on security and legitimacy
+    weight: 0.25
+    personas:
+    - A 46-year-old who shops online but carefully. Looks for trust signals and reviews.
+    - A 52-year-old concerned about online security. Needs visible protection indicators.
+    - A 58-year-old willing to try online lottery if trustworthy. Wants clear information.
+    target_demographics:
+      gender:
+      - Male
+      - Female
+      age_group:
+      - 35-44
+      - 45-54
+      - 55-64
+      income_level:
+      - $50k-$75k
+      - $75k-$100k
+  - name: Traditional Retail Loyalists
+    description: Prefer in-person transactions, skeptical of online lottery
+    weight: 0.25
+    personas:
+    - A 54-year-old who buys tickets at their local store. Part of their routine.
+    - A 61-year-old who doesn't trust online gaming. Wants physical tickets.
+    - A 68-year-old who prefers face-to-face transactions. Uncomfortable with websites.
+    target_demographics:
+      gender:
+      - Male
+      - Female
+      age_group:
+      - 45-54
+      - 55-64
+      - 65+
+      income_level:
+      - $25k-$50k
+      - $50k-$75k
+  - name: Non-Players
+    description: Don't play lottery online or offline
+    weight: 0.2
+    personas:
+    - A 25-year-old who thinks lottery is a waste regardless of platform.
+    - A 32-year-old focused on saving money. No interest in gambling.
+    - A 39-year-old who doesn't see value in lottery. Website won't change their mind.
+    target_demographics:
+      gender:
+      - Male
+      - Female
+      age_group:
+      - 21-24
+      - 25-34
+      - 35-44
+      income_level:
+      - Under $25k
+      - $25k-$50k

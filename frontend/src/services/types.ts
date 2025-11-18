@@ -41,9 +41,11 @@ export interface PersonaGroup {
   description: string;
   personas: string[];
   target_demographics: {
-    gender: string[];
-    age_group: string[];
-    occupation: string[];
+    gender?: string[];
+    age_group?: string[];
+    occupation?: string[];
+    income_level?: string[];
+    tech_comfort_level?: string[];
   };
   weight: number;
 }
@@ -263,7 +265,7 @@ export const OCCUPATIONS = [
   'Other',
 ];
 
-export const DEMOGRAPHICS_OPTIONS = ['age_group', 'gender', 'occupation', 'persona_group'];
+export const DEMOGRAPHICS_OPTIONS = ['age_group', 'gender', 'occupation', 'income_level', 'tech_comfort_level', 'persona_group'];
 
 // Survey History Types
 export interface SurveyRunMetadata {

@@ -337,6 +337,8 @@ def save_ground_truth(ground_truth: dict) -> None:
         "survey_id": ground_truth["survey_id"],
         "source": ground_truth["source"],
         "created_at": ground_truth["created_at"],
+        "num_profiles": ground_truth.get("num_profiles"),
+        "num_responses": ground_truth.get("num_responses"),
         "generation_config": ground_truth.get("generation_config")
     })
 
@@ -1090,6 +1092,8 @@ async def create_ground_truth_from_ssr(request: CreateGroundTruthFromSSRRequest)
             "survey_name": survey.name,
             "source": "ssr_generated",
             "created_at": datetime.now().isoformat(),
+            "num_profiles": request.num_profiles,
+            "num_responses": len(responses),
             "generation_config": {
                 "num_profiles": request.num_profiles,
                 "llm_provider": request.llm_provider,

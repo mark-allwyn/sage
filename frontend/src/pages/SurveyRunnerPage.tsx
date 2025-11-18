@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -18,22 +18,28 @@ import {
   Grid,
   Button,
   Snackbar,
+  Tooltip,
+  IconButton,
+  Divider,
 } from '@mui/material';
-import { PlayArrow as PlayArrowIcon } from '@mui/icons-material';
+import { PlayArrow as PlayArrowIcon, HelpOutline as HelpIcon, CreateOutlined as CreateIcon, Visibility as VisibilityIcon } from '@mui/icons-material';
 import { useSurveys, useSurvey } from '../services/hooks';
 import RunConfigPanel from '../components/SurveyRunner/RunConfigPanel';
 import RunProgress from '../components/SurveyRunner/RunProgress';
 import ResponseDataset from '../components/SurveyRunner/ResponseDataset';
 import { RunSurveyConfig, RunSurveyResponse } from '../services/types';
+import { SurveyRunnerSkeleton } from '../components/LoadingSkeleton';
+import { EmptyState } from '../components/EmptyState';
 
 const SurveyRunnerPage: React.FC = () => {
+  const navigate = useNavigate();
   const { surveyId: urlSurveyId } = useParams<{ surveyId?: string }>();
   const [selectedSurveyId, setSelectedSurveyId] = useState<string>(urlSurveyId || '');
   const [runConfig, setRunConfig] = useState<RunSurveyConfig>({
     survey_id: '',
     num_profiles: 50,
     llm_provider: 'openai',
-    model: 'gpt-3.5-turbo',
+    model: 'gpt-4o-mini',
     llm_temperature: 0.7,
     ssr_temperature: 1.0,
     normalize_method: 'paper',
@@ -61,6 +67,9 @@ const SurveyRunnerPage: React.FC = () => {
   const [isStreaming, setIsStreaming] = useState(false);
 
   const handleRunSurvey = async () => {
+    console.log('=== STARTING SURVEY RUN ===');
+    console.log('Selected Survey ID:', selectedSurveyId);
+
     if (!selectedSurveyId) {
       setSnackbar({
         open: true,
@@ -70,7 +79,7 @@ const SurveyRunnerPage: React.FC = () => {
       return;
     }
 
-    // Validate configuration before sending
+    // Validation
     const validationErrors: string[] = [];
     if (runConfig.num_profiles < 10 || runConfig.num_profiles > 500) {
       validationErrors.push('Number of profiles must be between 10 and 500');
@@ -87,7 +96,6 @@ const SurveyRunnerPage: React.FC = () => {
     if (!['openai', 'anthropic'].includes(runConfig.llm_provider)) {
       validationErrors.push('Invalid LLM provider');
     }
-    // Normalize method is always 'paper' (from research paper arXiv:2510.08338v2)
     if (runConfig.normalize_method !== 'paper') {
       validationErrors.push('Normalization method must be "paper"');
     }
@@ -115,7 +123,6 @@ const SurveyRunnerPage: React.FC = () => {
         body: JSON.stringify({ ...runConfig, survey_id: selectedSurveyId }),
       });
 
-      // Handle non-200 responses
       if (!response.ok) {
         if (response.status === 422) {
           const errorData = await response.json();
@@ -132,7 +139,7 @@ const SurveyRunnerPage: React.FC = () => {
 
       if (!reader) throw new Error('No reader available');
 
-      let buffer = ''; // Buffer for incomplete lines
+      let buffer = '';
 
       while (true) {
         const { done, value } = await reader.read();
@@ -142,54 +149,59 @@ const SurveyRunnerPage: React.FC = () => {
         buffer += chunk;
 
         const lines = buffer.split('\n');
-        // Keep the last incomplete line in the buffer
         buffer = lines.pop() || '';
 
         for (const line of lines) {
           if (line.trim() && line.startsWith('data: ')) {
             try {
-              const data = JSON.parse(line.slice(6));
+              const jsonStr = line.substring(6);
+              const data = JSON.parse(jsonStr);
+              console.log('Received SSE data:', data);
 
-              if (data.message) {
-                setProgressMessages(prev => [...prev, data.message]);
-              }
-              if (data.progress !== undefined) {
-                setCurrentProgress(data.progress);
-              }
+              if (data.status === 'progress' || data.status === 'running' || data.status === 'starting') {
+                setProgressMessages((prev) => [...prev, data.message]);
+                setCurrentProgress(data.progress || 0);
+              } else if (data.status === 'complete' || data.status === 'completed') {
+                console.log('Survey completed! Data:', data);
+                console.log('Run ID:', data.result?.run_id);
 
-              if (data.status === 'complete' && data.result) {
-                setRunResult(data.result);
+                // Show success message and navigate immediately
                 setSnackbar({
                   open: true,
-                  message: `Survey completed! Generated ${data.result.num_responses} responses.`,
+                  message: 'Survey completed! Opening results...',
                   severity: 'success',
                 });
+
+                // Navigate to results page
+                const runId = data.result?.run_id;
+                if (runId) {
+                  console.log('Navigating to:', `/history/${runId}?completed=true`);
+                  // Use a small delay to let the success message show
+                  setTimeout(() => {
+                    navigate(`/history/${runId}?completed=true`);
+                  }, 1000);
+                } else {
+                  console.error('No run_id in result:', data);
+                }
               } else if (data.status === 'error') {
-                setSnackbar({
-                  open: true,
-                  message: data.message,
-                  severity: 'error',
-                });
+                throw new Error(data.message || 'Unknown error occurred');
               }
             } catch (parseError) {
-              console.error('Failed to parse SSE message:', line, parseError);
+              console.error('Failed to parse SSE message:', parseError);
             }
           }
         }
       }
     } catch (error: any) {
+      console.error('Survey run error:', error);
       setSnackbar({
         open: true,
-        message: `Error: ${error.message}`,
+        message: `Error: ${error.message || 'Failed to run survey'}`,
         severity: 'error',
       });
     } finally {
       setIsStreaming(false);
     }
-  };
-
-  const handleCloseSnackbar = () => {
-    setSnackbar({ ...snackbar, open: false });
   };
 
   return (
@@ -200,31 +212,56 @@ const SurveyRunnerPage: React.FC = () => {
           Run Survey
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          Execute the complete SSR pipeline: generate profiles, collect LLM responses, and apply semantic similarity rating.
+          Execute the complete SSR pipeline
         </Typography>
       </Box>
 
+      {/* Empty State - No Surveys */}
+      {!surveysLoading && surveys && surveys.length === 0 && (
+        <Paper sx={{ mb: 3 }}>
+          <EmptyState
+            icon={<CreateIcon />}
+            title="No surveys available"
+            description="You need to create a survey first before you can run it. Head to the Survey Builder to get started."
+            actions={[
+              { label: "Create Survey", primary: true, href: "/builder" },
+              { label: "View Examples", href: "/overview" }
+            ]}
+          />
+        </Paper>
+      )}
+
       {/* Survey Selector */}
-      <Paper sx={{ p: 3, mb: 3 }}>
-        <FormControl fullWidth>
-          <InputLabel>Select Survey</InputLabel>
-          <Select
-            value={selectedSurveyId}
-            label="Select Survey"
-            onChange={handleSurveyChange}
-            disabled={surveysLoading || isStreaming}
-          >
-            <MenuItem value="">
-              <em>Choose a survey...</em>
-            </MenuItem>
-            {surveys?.map((s) => (
-              <MenuItem key={s.id} value={s.id}>
-                {s.name} ({s.num_questions} questions)
+      {!surveysLoading && surveys && surveys.length > 0 && (
+        <Paper sx={{ p: 4, mb: 3 }}>
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="h5" gutterBottom>
+              Select Survey
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Choose a survey configuration you've created in the Survey Builder
+            </Typography>
+          </Box>
+          <FormControl fullWidth>
+            <InputLabel>Survey</InputLabel>
+            <Select
+              value={selectedSurveyId}
+              label="Survey"
+              onChange={handleSurveyChange}
+              disabled={surveysLoading || isStreaming}
+            >
+              <MenuItem value="">
+                <em>Choose a survey...</em>
               </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      </Paper>
+              {surveys?.map((s) => (
+                <MenuItem key={s.id} value={s.id}>
+                  {s.name} ({s.num_questions} questions)
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Paper>
+      )}
 
       {/* Loading States */}
       {surveysLoading && (
@@ -246,90 +283,25 @@ const SurveyRunnerPage: React.FC = () => {
         </Alert>
       )}
 
-      {/* Survey Details */}
+      {/* Survey Overview - Compact */}
       {survey && !surveyLoading && (
         <Paper sx={{ p: 4, mb: 3 }}>
           <Box sx={{ mb: 3 }}>
-            <Typography variant="h4" gutterBottom>
+            <Typography variant="h5" gutterBottom>
               {survey.name}
             </Typography>
-
             {survey.description && (
-              <Typography variant="body1" color="text.secondary" sx={{ mt: 2 }}>
+              <Typography variant="body2" color="text.secondary">
                 {survey.description}
               </Typography>
             )}
           </Box>
 
-          {survey.context && (
-            <Box sx={{ mb: 4, p: 3, bgcolor: 'background.default', borderRadius: 2 }}>
-              <Typography variant="subtitle1" fontWeight="bold" color="primary" gutterBottom>
-                Survey Context
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {survey.context}
-              </Typography>
-            </Box>
-          )}
-
-          {/* Categories with Media */}
-          {survey.categories && survey.categories.length > 0 && (
-            <Box sx={{ mb: 4 }}>
-              <Typography variant="subtitle1" fontWeight="bold" color="primary" gutterBottom sx={{ mb: 2 }}>
-                Categories ({survey.categories.length})
-              </Typography>
-              <Grid container spacing={2}>
-                {survey.categories.map((category, index) => (
-                  <Grid item xs={12} md={6} key={index}>
-                    <Box sx={{ bgcolor: 'background.default', borderRadius: 2, p: 2.5, height: '100%' }}>
-                      <Typography variant="body1" fontWeight="bold" gutterBottom>
-                        {category.name}
-                      </Typography>
-                      {category.description && (
-                        <Typography variant="body2" color="text.secondary" display="block" gutterBottom sx={{ mb: 2 }}>
-                          {category.description}
-                        </Typography>
-                      )}
-
-                      {/* Display image if present */}
-                      {category.media_type === 'image' && (category.media_url || category.media_path) && (
-                        <Box sx={{ mt: 2 }}>
-                          <img
-                            src={category.media_url || category.media_path}
-                            alt={category.name}
-                            style={{
-                              width: '100%',
-                              maxHeight: '200px',
-                              objectFit: 'cover',
-                              borderRadius: '8px',
-                            }}
-                          />
-                        </Box>
-                      )}
-
-                      {/* Display webpage URL if present */}
-                      {category.media_type === 'webpage' && category.media_url && (
-                        <Box sx={{ mt: 2, p: 2, backgroundColor: 'info.light', borderRadius: 1 }}>
-                          <Typography variant="caption" fontWeight="bold" display="block" gutterBottom>
-                            Webpage URL:
-                          </Typography>
-                          <Typography variant="caption" sx={{ wordBreak: 'break-all' }}>
-                            {category.media_url}
-                          </Typography>
-                        </Box>
-                      )}
-                    </Box>
-                  </Grid>
-                ))}
-              </Grid>
-            </Box>
-          )}
-
-          {/* Summary Stats Row */}
-          <Grid container spacing={3} sx={{ mb: 3 }}>
-            <Grid item xs={6} sm={3}>
-              <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'background.default', borderRadius: 2 }}>
-                <Typography variant="h4" color="primary" fontWeight="bold">
+          {/* Summary Stats - Compact */}
+          <Grid container spacing={2}>
+            <Grid item xs={3}>
+              <Box sx={{ textAlign: 'center' }}>
+                <Typography variant="h5" color="primary" fontWeight="bold">
                   {survey.questions.length}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
@@ -337,19 +309,19 @@ const SurveyRunnerPage: React.FC = () => {
                 </Typography>
               </Box>
             </Grid>
-            <Grid item xs={6} sm={3}>
-              <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'background.default', borderRadius: 2 }}>
-                <Typography variant="h4" color="primary" fontWeight="bold">
+            <Grid item xs={3}>
+              <Box sx={{ textAlign: 'center' }}>
+                <Typography variant="h5" color="primary" fontWeight="bold">
                   {survey.persona_groups.length}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Persona Groups
+                  Personas
                 </Typography>
               </Box>
             </Grid>
-            <Grid item xs={6} sm={3}>
-              <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'background.default', borderRadius: 2 }}>
-                <Typography variant="h4" color="primary" fontWeight="bold">
+            <Grid item xs={3}>
+              <Box sx={{ textAlign: 'center' }}>
+                <Typography variant="h5" color="primary" fontWeight="bold">
                   {survey.categories?.length || 0}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
@@ -357,9 +329,9 @@ const SurveyRunnerPage: React.FC = () => {
                 </Typography>
               </Box>
             </Grid>
-            <Grid item xs={6} sm={3}>
-              <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'background.default', borderRadius: 2 }}>
-                <Typography variant="h4" color="primary" fontWeight="bold">
+            <Grid item xs={3}>
+              <Box sx={{ textAlign: 'center' }}>
+                <Typography variant="h5" color="primary" fontWeight="bold">
                   {survey.sample_size}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
@@ -368,77 +340,34 @@ const SurveyRunnerPage: React.FC = () => {
               </Box>
             </Grid>
           </Grid>
-
-          <Grid container spacing={3}>
-            {/* Questions */}
-            <Grid item xs={12} md={6}>
-              <Typography variant="subtitle1" fontWeight="bold" color="primary" gutterBottom>
-                Questions
-              </Typography>
-              <Box sx={{ maxHeight: 300, overflow: 'auto', bgcolor: 'background.default', borderRadius: 2, p: 2.5 }}>
-                {survey.questions.map((q, index) => (
-                  <Box key={q.id} sx={{ mb: 2.5, pb: 2.5, borderBottom: index < survey.questions.length - 1 ? '1px solid rgba(0,0,0,0.08)' : 'none' }}>
-                    <Typography variant="body2" fontWeight="600">
-                      Q{index + 1}. {q.text}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
-                      Type: {q.type.replace('_', ' ')}
-                    </Typography>
-                    {q.options && (
-                      <Box sx={{ mt: 1.5, ml: 1 }}>
-                        {q.options.map((option, optIndex) => (
-                          <Typography key={optIndex} variant="caption" color="text.secondary" display="block" sx={{ mb: 0.5 }}>
-                            • {option}
-                          </Typography>
-                        ))}
-                      </Box>
-                    )}
-                    {q.scale && (
-                      <Box sx={{ mt: 1.5, ml: 1 }}>
-                        {Object.entries(q.scale).map(([value, label]) => (
-                          <Typography key={value} variant="caption" color="text.secondary" display="block" sx={{ mb: 0.5 }}>
-                            {value}: {label}
-                          </Typography>
-                        ))}
-                      </Box>
-                    )}
-                  </Box>
-                ))}
-              </Box>
-            </Grid>
-
-            {/* Persona Groups */}
-            <Grid item xs={12} md={6}>
-              <Typography variant="subtitle1" fontWeight="bold" color="primary" gutterBottom>
-                Persona Groups
-              </Typography>
-              <Box sx={{ maxHeight: 300, overflow: 'auto', bgcolor: 'background.default', borderRadius: 2, p: 2.5 }}>
-                {survey.persona_groups.map((group, index) => (
-                  <Box key={index} sx={{ mb: 2.5, pb: 2.5, borderBottom: index < survey.persona_groups.length - 1 ? '1px solid rgba(0,0,0,0.08)' : 'none' }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', mb: 1 }}>
-                      <Typography variant="body2" fontWeight="600">
-                        {group.name}
-                      </Typography>
-                      <Typography variant="caption" color="primary" fontWeight="bold">
-                        Weight: {group.weight}
-                      </Typography>
-                    </Box>
-                    <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
-                      {group.description}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
-                      {group.personas.length} persona(s)
-                    </Typography>
-                  </Box>
-                ))}
-              </Box>
-            </Grid>
-          </Grid>
         </Paper>
       )}
 
-      {/* Configuration Panel */}
-      {survey && !surveyLoading && !runResult && (
+      {/* Configuration Panel - Compact Single Column */}
+      {survey && !surveyLoading && !runResult && !isStreaming && (
+        <Box>
+          <RunConfigPanel
+            config={runConfig}
+            setConfig={setRunConfig}
+            disabled={isStreaming}
+          />
+          <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
+            <Button
+              variant="contained"
+              size="large"
+              startIcon={<PlayArrowIcon />}
+              onClick={handleRunSurvey}
+              disabled={!selectedSurveyId}
+              sx={{ px: 8, py: 1.5, fontSize: '1.1rem' }}
+            >
+              Run Survey
+            </Button>
+          </Box>
+        </Box>
+      )}
+
+      {/* Running State - Split Layout */}
+      {survey && !surveyLoading && !runResult && isStreaming && (
         <Grid container spacing={3}>
           <Grid item xs={12} lg={4}>
             <RunConfigPanel
@@ -446,34 +375,9 @@ const SurveyRunnerPage: React.FC = () => {
               setConfig={setRunConfig}
               disabled={isStreaming}
             />
-            <Box sx={{ mt: 2 }}>
-              <Button
-                fullWidth
-                variant="contained"
-                size="large"
-                startIcon={isStreaming ? <CircularProgress size={20} /> : <PlayArrowIcon />}
-                onClick={handleRunSurvey}
-                disabled={isStreaming || !selectedSurveyId}
-              >
-                {isStreaming ? 'Running...' : 'Run Survey'}
-              </Button>
-            </Box>
           </Grid>
-
           <Grid item xs={12} lg={8}>
-            {/* Progress Indicator */}
-            {isStreaming && (
-              <RunProgress progress={currentProgress} messages={progressMessages} />
-            )}
-
-            {/* Empty State */}
-            {!runResult && !isStreaming && (
-              <Paper sx={{ p: 6, textAlign: 'center' }}>
-                <Typography variant="h6" color="text.secondary">
-                  Configure the settings and click "Run Survey" to execute the pipeline
-                </Typography>
-              </Paper>
-            )}
+            <RunProgress progress={currentProgress} messages={progressMessages} />
           </Grid>
         </Grid>
       )}
@@ -481,31 +385,56 @@ const SurveyRunnerPage: React.FC = () => {
       {/* Results Display - Full Width */}
       {runResult && !isStreaming && survey && (
         <Box>
-          <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant="h5">Survey Results</Typography>
-            <Button
-              variant="outlined"
-              onClick={() => {
-                setRunResult(null);
-                setProgressMessages([]);
-                setCurrentProgress(0);
-              }}
-            >
-              Run Another Survey
-            </Button>
-          </Box>
-          <ResponseDataset result={runResult} survey={survey} />
+          <Paper sx={{ p: 4, mb: 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+              <Typography variant="h5" gutterBottom>
+                Survey Results
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <Button
+                  variant="contained"
+                  startIcon={<VisibilityIcon />}
+                  onClick={() => navigate(`/history/${runResult.run_id}`)}
+                >
+                  View Full Details
+                </Button>
+                <Button
+                  variant="outlined"
+                  onClick={() => {
+                    setRunResult(null);
+                    setProgressMessages([]);
+                    setCurrentProgress(0);
+                  }}
+                >
+                  Run Another Survey
+                </Button>
+              </Box>
+            </Box>
+            <Alert severity="success" sx={{ mb: 3 }}>
+              <Typography variant="body2" fontWeight="medium" gutterBottom>
+                Survey completed successfully!
+              </Typography>
+              <Typography variant="body2">
+                Run ID: <code style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>{runResult.run_id}</code>
+                {' • '}
+                {runResult.num_responses} responses collected from {runResult.num_profiles} profiles
+              </Typography>
+            </Alert>
+            <ResponseDataset
+              result={runResult}
+              survey={survey}
+            />
+          </Paper>
         </Box>
       )}
 
-      {/* Snackbar for notifications */}
+      {/* Snackbar */}
       <Snackbar
         open={snackbar.open}
         autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
       >
-        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%' }}>
+        <Alert severity={snackbar.severity} onClose={() => setSnackbar({ ...snackbar, open: false })}>
           {snackbar.message}
         </Alert>
       </Snackbar>

@@ -1,6 +1,6 @@
 /**
  * Home Page
- * Landing page with overview and quick actions
+ * Minimal Apple-like landing page
  */
 
 import React from 'react';
@@ -11,20 +11,15 @@ import {
   Grid,
   Card,
   CardContent,
-  CardActions,
   Button,
-  Paper,
   Alert,
+  Divider,
 } from '@mui/material';
 import {
-  Create as CreateIcon,
-  Visibility as VisibilityIcon,
-  PlayArrow as PlayArrowIcon,
-  Science as ScienceIcon,
-  History as HistoryIcon,
-  CompareArrows as CompareArrowsIcon,
+  ArrowForward as ArrowForwardIcon,
 } from '@mui/icons-material';
 import { useHealthCheck } from '../services/hooks';
+import { HeroSkeleton } from '../components/LoadingSkeleton';
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
@@ -32,345 +27,361 @@ const HomePage: React.FC = () => {
 
   return (
     <Box>
-      {/* Header */}
-      <Box sx={{ mb: 4, textAlign: 'center' }}>
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 2, mb: 2 }}>
-          <ScienceIcon sx={{ fontSize: 48, color: 'primary.main' }} />
-          <Typography variant="h2" component="h1">
-            S.A.G.E
-          </Typography>
-        </Box>
-        <Typography variant="h5" color="text.secondary" gutterBottom>
+      {/* Hero Section - Minimal and centered */}
+      <Box sx={{
+        textAlign: 'center',
+        pt: { xs: 8, md: 12 },
+        pb: { xs: 6, md: 10 },
+        maxWidth: 980,
+        mx: 'auto',
+      }}>
+        <Typography
+          variant="h1"
+          sx={{
+            mb: 3,
+            fontSize: { xs: '2.5rem', md: '3.5rem' },
+            fontWeight: 600,
+            letterSpacing: '-0.02em',
+          }}
+        >
           Synthetic Audience Generation Engine
         </Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ mt: 2, maxWidth: 800, mx: 'auto' }}>
-          Generate synthetic survey audiences and transform qualitative responses into quantitative
-          probability distributions using advanced semantic similarity techniques powered by large language models.
+        <Typography
+          variant="h5"
+          color="text.secondary"
+          sx={{
+            mb: 5,
+            fontSize: { xs: '1.125rem', md: '1.5rem' },
+            fontWeight: 400,
+            lineHeight: 1.5,
+            maxWidth: 720,
+            mx: 'auto',
+          }}
+        >
+          Transform qualitative research into quantitative insights using advanced semantic
+          analysis and large language models.
         </Typography>
-      </Box>
 
-      {/* API Status */}
-      <Box sx={{ mb: 4 }}>
-        {isLoading && (
-          <Alert severity="info">Checking API connection...</Alert>
-        )}
-        {isError && (
-          <Alert severity="error">
-            Cannot connect to API backend. Please ensure the FastAPI server is running on http://localhost:8000
-          </Alert>
-        )}
-        {health && (
-          <Alert severity="success">
-            API Connected - Version {health.version}
-          </Alert>
-        )}
-      </Box>
-
-      {/* Quick Actions */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" gutterBottom>
-          Quick Actions
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Get started with the most common tasks
-        </Typography>
-      </Box>
-      <Grid container spacing={3} sx={{ mb: 6 }}>
-        <Grid item xs={12} md={4}>
-          <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-            <CardContent sx={{ flexGrow: 1 }}>
-              <CreateIcon sx={{ fontSize: 40, color: 'primary.main', mb: 2 }} />
-              <Typography variant="h5" component="h2" gutterBottom>
-                Survey Builder
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Create and configure surveys with questions, persona groups, and categories.
-                Define demographic targets and rating scales.
-              </Typography>
-            </CardContent>
-            <CardActions>
-              <Button
-                size="large"
-                variant="contained"
-                fullWidth
-                onClick={() => navigate('/builder')}
-              >
-                Build Survey
-              </Button>
-            </CardActions>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} md={4}>
-          <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-            <CardContent sx={{ flexGrow: 1 }}>
-              <VisibilityIcon sx={{ fontSize: 40, color: 'primary.main', mb: 2 }} />
-              <Typography variant="h5" component="h2" gutterBottom>
-                Survey Preview
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                View and explore existing survey configurations. See questions, categories,
-                and persona group definitions.
-              </Typography>
-            </CardContent>
-            <CardActions>
-              <Button
-                size="large"
-                variant="contained"
-                fullWidth
-                onClick={() => navigate('/preview')}
-              >
-                Preview Surveys
-              </Button>
-            </CardActions>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} md={4}>
-          <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-            <CardContent sx={{ flexGrow: 1 }}>
-              <PlayArrowIcon sx={{ fontSize: 40, color: 'primary.main', mb: 2 }} />
-              <Typography variant="h5" component="h2" gutterBottom>
-                Run Survey
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Execute the complete pipeline: generate profiles, collect LLM responses,
-                and apply SSR to produce probability distributions.
-              </Typography>
-            </CardContent>
-            <CardActions>
-              <Button
-                size="large"
-                variant="contained"
-                fullWidth
-                onClick={() => navigate('/runner')}
-              >
-                Run Survey
-              </Button>
-            </CardActions>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} md={6}>
-          <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-            <CardContent sx={{ flexGrow: 1 }}>
-              <HistoryIcon sx={{ fontSize: 40, color: 'secondary.main', mb: 2 }} />
-              <Typography variant="h5" component="h2" gutterBottom>
-                Survey History
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                View all previously run surveys. Filter, search, and explore past results.
-                Compare runs and export data for analysis.
-              </Typography>
-            </CardContent>
-            <CardActions>
-              <Button
-                size="large"
-                variant="outlined"
-                fullWidth
-                onClick={() => navigate('/history')}
-              >
-                View History
-              </Button>
-            </CardActions>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} md={6}>
-          <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-            <CardContent sx={{ flexGrow: 1 }}>
-              <CompareArrowsIcon sx={{ fontSize: 40, color: 'secondary.main', mb: 2 }} />
-              <Typography variant="h5" component="h2" gutterBottom>
-                Ground Truth Testing
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Create ground truths and run experiments to validate synthetic data quality.
-                Compare distributions and calculate statistical metrics.
-              </Typography>
-            </CardContent>
-            <CardActions>
-              <Button
-                size="large"
-                variant="outlined"
-                fullWidth
-                onClick={() => navigate('/ground-truth')}
-              >
-                Run Experiments
-              </Button>
-            </CardActions>
-          </Card>
-        </Grid>
-      </Grid>
-
-      {/* How It Works */}
-      <Paper sx={{ p: 4, mb: 4 }}>
-        <Box sx={{ mb: 3 }}>
-          <Typography variant="h4" gutterBottom>
-            How It Works
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Four simple steps to generate synthetic survey data
-          </Typography>
+        {/* API Status - Minimal */}
+        <Box sx={{ mb: 6, maxWidth: 600, mx: 'auto' }}>
+          {isLoading && (
+            <Alert severity="info" sx={{ border: 'none' }}>
+              Connecting to API...
+            </Alert>
+          )}
+          {isError && (
+            <Alert severity="error" sx={{ border: 'none' }}>
+              Cannot connect to API. Please ensure the server is running on port 8000.
+            </Alert>
+          )}
+          {health && (
+            <Alert severity="success" sx={{ border: 'none' }}>
+              API Connected · Version {health.version}
+            </Alert>
+          )}
         </Box>
-        <Grid container spacing={3} sx={{ mt: 1 }}>
-          <Grid item xs={12} md={3}>
-            <Box sx={{ textAlign: 'center', p: 3, bgcolor: 'background.default', borderRadius: 2, height: '100%' }}>
-              <Box sx={{
-                width: 48,
-                height: 48,
-                borderRadius: '50%',
-                bgcolor: 'primary.main',
-                color: 'white',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 24,
-                fontWeight: 'bold',
-                margin: '0 auto 16px'
-              }}>
-                1
-              </Box>
-              <Typography variant="h6" fontWeight="bold" gutterBottom>
-                Define Survey
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Create questions, categories, and persona groups that represent your target demographics.
-              </Typography>
-            </Box>
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <Box sx={{ textAlign: 'center', p: 3, bgcolor: 'background.default', borderRadius: 2, height: '100%' }}>
-              <Box sx={{
-                width: 48,
-                height: 48,
-                borderRadius: '50%',
-                bgcolor: 'primary.main',
-                color: 'white',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 24,
-                fontWeight: 'bold',
-                margin: '0 auto 16px'
-              }}>
-                2
-              </Box>
-              <Typography variant="h6" fontWeight="bold" gutterBottom>
-                Generate Profiles
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Automatically create diverse respondent profiles based on persona groups and demographic targets.
-              </Typography>
-            </Box>
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <Box sx={{ textAlign: 'center', p: 3, bgcolor: 'background.default', borderRadius: 2, height: '100%' }}>
-              <Box sx={{
-                width: 48,
-                height: 48,
-                borderRadius: '50%',
-                bgcolor: 'primary.main',
-                color: 'white',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 24,
-                fontWeight: 'bold',
-                margin: '0 auto 16px'
-              }}>
-                3
-              </Box>
-              <Typography variant="h6" fontWeight="bold" gutterBottom>
-                Collect Responses
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Use LLMs (GPT-5, Claude 4) to generate natural language responses from each profile.
-              </Typography>
-            </Box>
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <Box sx={{ textAlign: 'center', p: 3, bgcolor: 'background.default', borderRadius: 2, height: '100%' }}>
-              <Box sx={{
-                width: 48,
-                height: 48,
-                borderRadius: '50%',
-                bgcolor: 'primary.main',
-                color: 'white',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 24,
-                fontWeight: 'bold',
-                margin: '0 auto 16px'
-              }}>
-                4
-              </Box>
-              <Typography variant="h6" fontWeight="bold" gutterBottom>
-                Apply SSR
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Convert text responses to probability distributions using semantic similarity rating.
-              </Typography>
-            </Box>
-          </Grid>
-        </Grid>
-      </Paper>
 
-      {/* Features */}
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" gutterBottom>
-          Key Features
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Everything you need for synthetic survey research
-        </Typography>
+        {/* Primary CTA */}
+        <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
+          <Button
+            size="large"
+            variant="contained"
+            onClick={() => navigate('/builder')}
+            sx={{ px: 4, py: 1.5, fontSize: '1.0625rem' }}
+          >
+            Create Survey
+          </Button>
+          <Button
+            size="large"
+            variant="outlined"
+            onClick={() => navigate('/overview')}
+            sx={{ px: 4, py: 1.5, fontSize: '1.0625rem' }}
+          >
+            Learn More
+          </Button>
+        </Box>
       </Box>
-      <Grid container spacing={3} sx={{ mt: 1 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Paper sx={{ p: 3, height: '100%', textAlign: 'center' }}>
-            <Box sx={{ fontSize: 48, mb: 2 }}>📊</Box>
-            <Typography variant="h6" fontWeight="bold" gutterBottom>
-              Multi-Modal Support
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Include images and webpage URLs in your surveys with vision-capable models.
-            </Typography>
-          </Paper>
+
+      <Divider sx={{ mb: 10 }} />
+
+      {/* Workflow Section - Minimal grid */}
+      <Box sx={{ mb: 12, maxWidth: 1200, mx: 'auto' }}>
+        <Typography
+          variant="h3"
+          sx={{
+            textAlign: 'center',
+            mb: 6,
+            fontSize: { xs: '1.875rem', md: '2.5rem' },
+            fontWeight: 600,
+          }}
+        >
+          How it works
+        </Typography>
+
+        <Grid container spacing={4}>
+          {[
+            {
+              number: '01',
+              title: 'Define',
+              description: 'Create survey questions and target demographics with flexible question types and persona groups.',
+            },
+            {
+              number: '02',
+              title: 'Generate',
+              description: 'Automatically generate diverse respondent profiles using AI-powered demographic modeling.',
+            },
+            {
+              number: '03',
+              title: 'Collect',
+              description: 'Gather natural language responses from language models representing each synthetic profile.',
+            },
+            {
+              number: '04',
+              title: 'Analyze',
+              description: 'Convert text responses to probability distributions using semantic similarity rating.',
+            },
+          ].map((step) => (
+            <Grid item xs={12} sm={6} md={3} key={step.number}>
+              <Box>
+                <Typography
+                  variant="overline"
+                  sx={{
+                    color: 'primary.main',
+                    fontWeight: 600,
+                    fontSize: '0.6875rem',
+                    mb: 2,
+                    display: 'block',
+                  }}
+                >
+                  {step.number}
+                </Typography>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    mb: 1.5,
+                    fontWeight: 600,
+                  }}
+                >
+                  {step.title}
+                </Typography>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ lineHeight: 1.6 }}
+                >
+                  {step.description}
+                </Typography>
+              </Box>
+            </Grid>
+          ))}
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Paper sx={{ p: 3, height: '100%', textAlign: 'center' }}>
-            <Box sx={{ fontSize: 48, mb: 2 }}>❓</Box>
-            <Typography variant="h6" fontWeight="bold" gutterBottom>
-              Flexible Questions
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Yes/No, Likert scales, multiple choice, and preference comparisons.
-            </Typography>
-          </Paper>
+      </Box>
+
+      <Divider sx={{ mb: 10 }} />
+
+      {/* Actions Grid - 2-Tier Hierarchy */}
+      <Box sx={{ maxWidth: 1200, mx: 'auto', mb: 12 }}>
+        <Typography
+          variant="h3"
+          sx={{
+            textAlign: 'center',
+            mb: 6,
+            fontSize: { xs: '1.875rem', md: '2.5rem' },
+            fontWeight: 600,
+          }}
+        >
+          Get started
+        </Typography>
+
+        {/* Primary Actions - Large Cards */}
+        <Grid container spacing={3} sx={{ mb: 4 }}>
+          {[
+            {
+              title: 'Create Survey',
+              description: 'Build and configure surveys with questions, categories, and demographic targets. Define your research objectives.',
+              action: 'Start Building',
+              path: '/builder',
+              primary: true,
+            },
+            {
+              title: 'Run Survey',
+              description: 'Execute the complete SSR pipeline and generate synthetic audience responses with LLM-powered personas.',
+              action: 'Run Now',
+              path: '/runner',
+              primary: true,
+            },
+          ].map((item) => (
+            <Grid item xs={12} md={6} key={item.path}>
+              <Card
+                sx={{
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                  cursor: 'pointer',
+                  border: '2px solid',
+                  borderColor: 'primary.main',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: 6,
+                  },
+                  '&:active': {
+                    transform: 'translateY(-2px)',
+                  },
+                }}
+                onClick={() => navigate(item.path)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    navigate(item.path);
+                  }
+                }}
+              >
+                <CardContent sx={{ flexGrow: 1, p: 4 }}>
+                  <Typography
+                    variant="h5"
+                    sx={{
+                      mb: 2,
+                      fontWeight: 600,
+                    }}
+                  >
+                    {item.title}
+                  </Typography>
+                  <Typography
+                    variant="body1"
+                    color="text.secondary"
+                    sx={{ mb: 3, lineHeight: 1.6 }}
+                  >
+                    {item.description}
+                  </Typography>
+                  <Button
+                    variant="contained"
+                    size="large"
+                    endIcon={<ArrowForwardIcon />}
+                    fullWidth
+                    sx={{ mt: 'auto' }}
+                  >
+                    {item.action}
+                  </Button>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Paper sx={{ p: 3, height: '100%', textAlign: 'center' }}>
-            <Box sx={{ fontSize: 48, mb: 2 }}>👥</Box>
-            <Typography variant="h6" fontWeight="bold" gutterBottom>
-              Persona Sampling
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Target specific demographics with weighted persona groups.
-            </Typography>
-          </Paper>
+
+        {/* Secondary Actions - Smaller Cards */}
+        <Typography
+          variant="h6"
+          sx={{
+            textAlign: 'center',
+            mb: 3,
+            fontWeight: 500,
+            color: 'text.secondary',
+          }}
+        >
+          Additional Tools
+        </Typography>
+
+        <Grid container spacing={2}>
+          {[
+            {
+              title: 'Results',
+              description: 'View and analyze completed survey runs',
+              path: '/history',
+            },
+            {
+              title: 'Ground Truth',
+              description: 'Validate data quality with experiments',
+              path: '/ground-truth',
+            },
+            {
+              title: 'System Overview',
+              description: 'Learn how S.A.G.E works',
+              path: '/overview',
+            },
+          ].map((item) => (
+            <Grid item xs={12} sm={4} key={item.path}>
+              <Card
+                sx={{
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                  cursor: 'pointer',
+                  '&:hover': {
+                    bgcolor: 'action.hover',
+                  },
+                  '&:active': {
+                    transform: 'scale(0.98)',
+                  },
+                }}
+                onClick={() => navigate(item.path)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    navigate(item.path);
+                  }
+                }}
+              >
+                <CardContent sx={{ flexGrow: 1, p: 3 }}>
+                  <Typography
+                    variant="subtitle1"
+                    sx={{
+                      mb: 1,
+                      fontWeight: 600,
+                    }}
+                  >
+                    {item.title}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ lineHeight: 1.5 }}
+                  >
+                    {item.description}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <Paper sx={{ p: 3, height: '100%', textAlign: 'center' }}>
-            <Box sx={{ fontSize: 48, mb: 2 }}>🤖</Box>
-            <Typography variant="h6" fontWeight="bold" gutterBottom>
-              Latest LLM Models
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              OpenAI GPT-5 and Anthropic Claude 4 with vision support.
-            </Typography>
-          </Paper>
-        </Grid>
-      </Grid>
+      </Box>
+
+      {/* Footer CTA */}
+      <Box sx={{
+        textAlign: 'center',
+        py: 8,
+        mb: 8,
+      }}>
+        <Typography
+          variant="h4"
+          sx={{
+            mb: 3,
+            fontWeight: 600,
+          }}
+        >
+          Ready to get started?
+        </Typography>
+        <Typography
+          variant="body1"
+          color="text.secondary"
+          sx={{ mb: 4, maxWidth: 600, mx: 'auto' }}
+        >
+          Create your first synthetic audience survey in minutes.
+        </Typography>
+        <Button
+          size="large"
+          variant="contained"
+          onClick={() => navigate('/builder')}
+          sx={{ px: 5, py: 1.5, fontSize: '1.0625rem' }}
+        >
+          Create Survey
+        </Button>
+      </Box>
     </Box>
   );
 };

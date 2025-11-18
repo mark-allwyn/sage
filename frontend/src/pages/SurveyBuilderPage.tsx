@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -26,12 +27,13 @@ import {
   DialogContentText,
   DialogActions,
 } from '@mui/material';
-import { Save as SaveIcon, Code as CodeIcon, Delete as DeleteIcon, Add as AddIcon } from '@mui/icons-material';
+import { Save as SaveIcon, Code as CodeIcon, Delete as DeleteIcon, Add as AddIcon, Visibility as VisibilityIcon, PlayArrow as PlayArrowIcon } from '@mui/icons-material';
 import SurveyForm from '../components/SurveyBuilder/SurveyForm';
 import YAMLPreview from '../components/SurveyBuilder/YAMLPreview';
 import { useCreateSurvey, useUpdateSurvey, useDeleteSurvey, useSurveys, useSurvey } from '../services/hooks';
 import { getErrorMessage } from '../services/api';
 import { SurveyBuilderState } from '../services/types';
+import { SurveyBuilderSkeleton } from '../components/LoadingSkeleton';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -48,6 +50,7 @@ const TabPanel: React.FC<TabPanelProps> = ({ children, value, index }) => {
 };
 
 const SurveyBuilderPage: React.FC = () => {
+  const navigate = useNavigate();
   const [tabValue, setTabValue] = useState(0);
   const [mode, setMode] = useState<'create' | 'edit'>('create');
   const [selectedSurveyId, setSelectedSurveyId] = useState<string>('');
@@ -64,6 +67,10 @@ const SurveyBuilderPage: React.FC = () => {
   const [filename, setFilename] = useState('');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [lastSavedTime, setLastSavedTime] = useState<Date | null>(null);
+  const [successDialogOpen, setSuccessDialogOpen] = useState(false);
+  const [lastCreatedSurveyId, setLastCreatedSurveyId] = useState<string>('');
 
   const { data: surveys, isLoading: surveysLoading } = useSurveys();
   const { data: selectedSurvey, isLoading: surveyLoading } = useSurvey(selectedSurveyId, {
@@ -89,11 +96,8 @@ const SurveyBuilderPage: React.FC = () => {
 
   const createSurveyMutation = useCreateSurvey({
     onSuccess: (data) => {
-      setSnackbar({
-        open: true,
-        message: `Survey created successfully: ${data.survey_id}`,
-        severity: 'success',
-      });
+      setLastCreatedSurveyId(data.survey_id);
+      setSuccessDialogOpen(true);
       // Reset form
       setSurveyData({
         name: '',
@@ -262,16 +266,16 @@ const SurveyBuilderPage: React.FC = () => {
                 borderColor: mode === 'create' ? 'primary.main' : 'divider',
                 borderRadius: 2,
                 cursor: 'pointer',
-                bgcolor: mode === 'create' ? 'primary.light' : 'transparent',
+                bgcolor: mode === 'create' ? 'action.selected' : 'transparent',
                 transition: 'all 0.2s',
                 '&:hover': {
                   borderColor: 'primary.main',
-                  bgcolor: mode === 'create' ? 'primary.light' : 'action.hover',
+                  bgcolor: mode === 'create' ? 'action.selected' : 'action.hover',
                 },
               }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <AddIcon sx={{ fontSize: 40, color: mode === 'create' ? 'primary.dark' : 'primary.main', mr: 2 }} />
+                <AddIcon sx={{ fontSize: 40, color: 'primary.main', mr: 2 }} />
                 <Typography variant="h6">Create New Survey</Typography>
               </Box>
               <Typography variant="body2" color="text.secondary">
@@ -288,16 +292,16 @@ const SurveyBuilderPage: React.FC = () => {
                 borderColor: mode === 'edit' ? 'primary.main' : 'divider',
                 borderRadius: 2,
                 cursor: 'pointer',
-                bgcolor: mode === 'edit' ? 'primary.light' : 'transparent',
+                bgcolor: mode === 'edit' ? 'action.selected' : 'transparent',
                 transition: 'all 0.2s',
                 '&:hover': {
                   borderColor: 'primary.main',
-                  bgcolor: mode === 'edit' ? 'primary.light' : 'action.hover',
+                  bgcolor: mode === 'edit' ? 'action.selected' : 'action.hover',
                 },
               }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <CodeIcon sx={{ fontSize: 40, color: mode === 'edit' ? 'primary.dark' : 'primary.main', mr: 2 }} />
+                <CodeIcon sx={{ fontSize: 40, color: 'primary.main', mr: 2 }} />
                 <Typography variant="h6">Edit Existing Survey</Typography>
               </Box>
               <Typography variant="body2" color="text.secondary">
@@ -320,6 +324,13 @@ const SurveyBuilderPage: React.FC = () => {
                 label="Survey"
                 onChange={(e) => handleSurveySelect(e.target.value)}
                 disabled={surveysLoading}
+                MenuProps={{
+                  PaperProps: {
+                    style: {
+                      maxHeight: 500,
+                    },
+                  },
+                }}
               >
                 <MenuItem value="">
                   <em>Choose a survey...</em>
@@ -372,7 +383,7 @@ const SurveyBuilderPage: React.FC = () => {
               />
             </Grid>
             <Grid item xs={12}>
-              <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+              <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
                 {mode === 'edit' && (
                   <Button
                     variant="outlined"
@@ -383,6 +394,17 @@ const SurveyBuilderPage: React.FC = () => {
                     disabled={isLoading}
                   >
                     Delete Survey
+                  </Button>
+                )}
+                {mode === 'edit' && selectedSurveyId && (
+                  <Button
+                    variant="outlined"
+                    size="large"
+                    startIcon={<VisibilityIcon />}
+                    onClick={() => navigate(`/preview/${selectedSurveyId}`)}
+                    disabled={isLoading}
+                  >
+                    Preview Survey
                   </Button>
                 )}
                 <Button
@@ -445,6 +467,63 @@ const SurveyBuilderPage: React.FC = () => {
             {isLoading ? 'Deleting...' : 'Delete'}
           </Button>
         </DialogActions>
+      </Dialog>
+
+      {/* Success Dialog with Next Steps */}
+      <Dialog
+        open={successDialogOpen}
+        onClose={() => setSuccessDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Survey Created Successfully!</DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ mb: 3 }}>
+            Your survey has been created. What would you like to do next?
+          </DialogContentText>
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <Button
+                variant="contained"
+                size="large"
+                fullWidth
+                startIcon={<PlayArrowIcon />}
+                onClick={() => {
+                  setSuccessDialogOpen(false);
+                  navigate(`/runner/${lastCreatedSurveyId}`);
+                }}
+                sx={{ py: 1.5 }}
+              >
+                Run This Survey Now
+              </Button>
+            </Grid>
+            <Grid item xs={6}>
+              <Button
+                variant="outlined"
+                size="large"
+                fullWidth
+                startIcon={<VisibilityIcon />}
+                onClick={() => {
+                  setSuccessDialogOpen(false);
+                  navigate(`/preview/${lastCreatedSurveyId}`);
+                }}
+              >
+                Preview
+              </Button>
+            </Grid>
+            <Grid item xs={6}>
+              <Button
+                variant="outlined"
+                size="large"
+                fullWidth
+                startIcon={<AddIcon />}
+                onClick={() => setSuccessDialogOpen(false)}
+              >
+                Create Another
+              </Button>
+            </Grid>
+          </Grid>
+        </DialogContent>
       </Dialog>
 
       {/* Snackbar for notifications */}
@@ -520,9 +599,21 @@ const generateYAML = (data: SurveyBuilderState): string => {
       yaml.push(`        - "${p}"`);
     });
     yaml.push(`      target_demographics:`);
-    yaml.push(`        gender: [${pg.target_demographics.gender.map(g => `"${g}"`).join(', ')}]`);
-    yaml.push(`        age_group: [${pg.target_demographics.age_group.map(a => `"${a}"`).join(', ')}]`);
-    yaml.push(`        occupation: [${pg.target_demographics.occupation.map(o => `"${o}"`).join(', ')}]`);
+    if (pg.target_demographics.gender) {
+      yaml.push(`        gender: [${pg.target_demographics.gender.map(g => `"${g}"`).join(', ')}]`);
+    }
+    if (pg.target_demographics.age_group) {
+      yaml.push(`        age_group: [${pg.target_demographics.age_group.map(a => `"${a}"`).join(', ')}]`);
+    }
+    if (pg.target_demographics.occupation) {
+      yaml.push(`        occupation: [${pg.target_demographics.occupation.map(o => `"${o}"`).join(', ')}]`);
+    }
+    if (pg.target_demographics.income_level) {
+      yaml.push(`        income_level: [${pg.target_demographics.income_level.map(il => `"${il}"`).join(', ')}]`);
+    }
+    if (pg.target_demographics.tech_comfort_level) {
+      yaml.push(`        tech_comfort_level: [${pg.target_demographics.tech_comfort_level.map(tcl => `"${tcl}"`).join(', ')}]`);
+    }
   });
 
   return yaml.join('\n');

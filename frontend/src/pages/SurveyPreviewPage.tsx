@@ -51,7 +51,15 @@ const SurveyPreviewPage: React.FC = () => {
       </Box>
 
       {/* Survey Selector */}
-      <Paper sx={{ p: 3, mb: 3 }}>
+      <Paper sx={{ p: 4, mb: 3 }}>
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="h5" gutterBottom>
+            Select Survey
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Choose a survey to view its details and configuration
+          </Typography>
+        </Box>
         <FormControl fullWidth>
           <InputLabel>Select Survey</InputLabel>
           <Select
@@ -127,7 +135,7 @@ const SurveyPreviewPage: React.FC = () => {
 
       {/* Empty State */}
       {!selectedSurveyId && !surveysLoading && surveys && surveys.length > 0 && (
-        <Paper sx={{ p: 6, textAlign: 'center' }}>
+        <Paper sx={{ p: 4, textAlign: 'center' }}>
           <Typography variant="h6" color="text.secondary">
             Select a survey from the dropdown above to view its details
           </Typography>

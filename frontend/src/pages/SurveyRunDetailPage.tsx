@@ -30,6 +30,7 @@ import {
   ArrowBack as ArrowBackIcon,
   Download as DownloadIcon,
   CompareArrows as CompareArrowsIcon,
+  CheckCircle as CheckCircleIcon,
 } from '@mui/icons-material';
 import { useSurveyRun, useSurvey, useGroundTruths, useCompareToGroundTruth } from '../services/hooks';
 import ResponseDataset from '../components/SurveyRunner/ResponseDataset';
@@ -39,6 +40,10 @@ const SurveyRunDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const [compareDialogOpen, setCompareDialogOpen] = useState(false);
   const [selectedGroundTruth, setSelectedGroundTruth] = useState('');
+
+  // Check if we just completed this run (from URL params)
+  const [searchParams, setSearchParams] = React.useState(new URLSearchParams(window.location.search));
+  const justCompleted = searchParams.get('completed') === 'true';
 
   const { data: run, isLoading, error } = useSurveyRun(runId || '');
   const { data: survey } = useSurvey(run?.survey_id || '', { enabled: !!run });
@@ -114,10 +119,23 @@ const SurveyRunDetailPage: React.FC = () => {
           onClick={() => navigate('/history')}
           sx={{ textDecoration: 'none', cursor: 'pointer' }}
         >
-          Survey History
+          Results
         </Link>
         <Typography color="text.primary">{run.run_id}</Typography>
       </Breadcrumbs>
+
+      {/* Success Banner - Shows when just completed */}
+      {justCompleted && (
+        <Alert severity="success" sx={{ mb: 3 }} icon={<CheckCircleIcon />}>
+          <Typography variant="body2" fontWeight="medium" gutterBottom>
+            Survey Run Completed Successfully!
+          </Typography>
+          <Typography variant="body2">
+            Your survey has been executed and {run.num_responses} responses have been collected from {run.num_profiles} profiles.
+            Review the detailed results below.
+          </Typography>
+        </Alert>
+      )}
 
       {/* Header */}
       <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
