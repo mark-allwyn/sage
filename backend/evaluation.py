@@ -17,6 +17,7 @@ from deepeval.metrics import (
 )
 from deepeval.test_case import LLMTestCase
 from deepeval import evaluate
+from deepeval.evaluate import AsyncConfig
 
 logger = logging.getLogger(__name__)
 
@@ -114,11 +115,11 @@ class ResponseEvaluator:
             # Get metrics
             metrics = self._get_metrics()
 
-            # Run evaluation
+            # Run evaluation with async disabled (fixes uvloop conflict)
             results = evaluate(
                 test_cases=[test_case],
                 metrics=metrics,
-                run_async=False,
+                async_config=AsyncConfig(run_async=False),
             )
 
             # Extract scores
