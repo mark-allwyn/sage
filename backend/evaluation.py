@@ -159,6 +159,7 @@ class ResponseEvaluator:
         responses: List[Dict[str, Any]],
         questions: List[Dict[str, Any]],
         sample_size: Optional[int] = None,
+        survey_context: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Evaluate multiple survey responses
@@ -168,6 +169,7 @@ class ResponseEvaluator:
             responses: List of response objects with text_response and question_id
             questions: List of question objects with id and text
             sample_size: Optional number of responses to sample (default: 10% or all if <10)
+            survey_context: Optional survey context describing what's being evaluated
 
         Returns:
             Aggregated evaluation results
@@ -190,9 +192,15 @@ class ResponseEvaluator:
             question = question_map.get(question_id, {})
             question_text = question.get("text", "")
 
-            # Build rich context from question and response metadata
-            # This provides grounding information for hallucination detection
+            # Build rich context from survey context, question, and response metadata
+            # This provides proper grounding information for hallucination detection
             context = []
+
+            # Include survey context (the most important context for hallucination detection)
+            if survey_context:
+                context.append(f"Survey Context: {survey_context}")
+
+            # Add question and metadata
             if question_text:
                 context.append(f"Question: {question_text}")
             if "category" in response:
@@ -200,7 +208,7 @@ class ResponseEvaluator:
             if "persona" in response:
                 context.append(f"Respondent persona: {response['persona']}")
 
-            # Ensure we have at least some context
+            # Ensure we have at least some context (fallback)
             if not context:
                 context = ["Survey response evaluation"]
 

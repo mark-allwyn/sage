@@ -1547,11 +1547,16 @@ async def evaluate_responses(request: EvaluateResponsesRequest):
         # Run evaluation
         # Convert Survey object questions to dict format expected by evaluator
         questions_dict = [{"id": q.id, "text": q.text} for q in survey_config.questions]
+
+        # Pass survey context for proper hallucination detection
+        survey_context = survey_config.context if hasattr(survey_config, 'context') else None
+
         result = evaluator.evaluate_survey_responses(
             survey_id=request.survey_id,
             responses=responses,
             questions=questions_dict,
             sample_size=request.sample_size,
+            survey_context=survey_context,
         )
 
         logger.info(f"Evaluation complete for survey {request.survey_id}")
