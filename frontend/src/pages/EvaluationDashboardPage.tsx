@@ -665,41 +665,72 @@ const EvaluationDashboardPage: React.FC = () => {
               {/* Individual Evaluations */}
               <Accordion>
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                  <Typography variant="h6">Individual Evaluations ({selectedEvaluation.individual_evaluations.length})</Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography variant="h6">Individual Evaluations ({selectedEvaluation.individual_evaluations.length})</Typography>
+                    <Tooltip title="Detailed results for each evaluated response, including per-metric scores and AI-generated reasoning">
+                      <InfoIcon sx={{ fontSize: 20, color: 'text.secondary', cursor: 'help' }} />
+                    </Tooltip>
+                  </Box>
                 </AccordionSummary>
                 <AccordionDetails>
-                  <TableContainer>
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Question ID</TableCell>
-                          <TableCell>Respondent ID</TableCell>
-                          <TableCell>Overall Score</TableCell>
-                          <TableCell>Status</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {selectedEvaluation.individual_evaluations.map((evalResult, idx) => (
-                          <TableRow key={idx}>
-                            <TableCell>{evalResult.question_id}</TableCell>
-                            <TableCell>{evalResult.respondent_id}</TableCell>
-                            <TableCell>
-                              {evalResult.overall_score !== undefined
-                                ? `${(evalResult.overall_score * 100).toFixed(1)}%`
-                                : 'N/A'}
-                            </TableCell>
-                            <TableCell>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    {selectedEvaluation.individual_evaluations.map((evalResult, idx) => (
+                      <Paper key={idx} sx={{ p: 2 }} variant="outlined">
+                        <Grid container spacing={2}>
+                          {/* Header Row */}
+                          <Grid item xs={12}>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                              <Box>
+                                <Typography variant="subtitle2" color="text.secondary">
+                                  Question: <strong>{evalResult.question_id}</strong> | Respondent: <strong>{evalResult.respondent_id}</strong>
+                                </Typography>
+                              </Box>
                               <Chip
                                 label={evalResult.success ? 'Success' : 'Failed'}
                                 color={evalResult.success ? 'success' : 'error'}
                                 size="small"
                               />
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
+                            </Box>
+                          </Grid>
+
+                          {/* Overall Score */}
+                          <Grid item xs={12} md={3}>
+                            <Typography variant="caption" color="text.secondary">
+                              Overall Score
+                            </Typography>
+                            <Typography variant="h5" color={getScoreColor(evalResult.overall_score || 0)}>
+                              {evalResult.overall_score !== undefined
+                                ? `${(evalResult.overall_score * 100).toFixed(1)}%`
+                                : 'N/A'}
+                            </Typography>
+                          </Grid>
+
+                          {/* Metric Scores with Reasoning */}
+                          <Grid item xs={12} md={9}>
+                            {evalResult.scores && Object.entries(evalResult.scores).map(([metricName, metricData]: [string, any]) => (
+                              <Box key={metricName} sx={{ mb: 2, '&:last-child': { mb: 0 } }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                                  <Typography variant="body2" fontWeight="600" sx={{ textTransform: 'capitalize' }}>
+                                    {metricName.replace(/_/g, ' ')}
+                                  </Typography>
+                                  <Chip
+                                    label={`${(metricData.score * 100).toFixed(1)}%`}
+                                    size="small"
+                                    color={getScoreColor(metricData.score) as any}
+                                  />
+                                </Box>
+                                {metricData.reason && (
+                                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontStyle: 'italic' }}>
+                                    {metricData.reason}
+                                  </Typography>
+                                )}
+                              </Box>
+                            ))}
+                          </Grid>
+                        </Grid>
+                      </Paper>
+                    ))}
+                  </Box>
                 </AccordionDetails>
               </Accordion>
             </Box>
