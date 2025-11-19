@@ -37,6 +37,7 @@ import {
   Twitter as TwitterIcon,
   Email as EmailIcon,
   Assessment as AssessmentIcon,
+  AdminPanelSettings as AdminPanelSettingsIcon,
 } from '@mui/icons-material';
 import { AppBreadcrumbs } from '../Breadcrumbs';
 
@@ -46,23 +47,26 @@ interface LayoutProps {
 
 interface NavItem {
   label: string;
-  path: string;
+  path?: string;
   icon: React.ReactElement;
   badge?: 'primary' | 'beta';
   description?: string;
+  isSection?: boolean;
 }
 
 // Ultra-streamlined navigation: core workflow items
 // Removed: Overview (accessible from Home page)
 // Focus: Home → Create → Run → Results → Advanced
+// Admin section requires authentication (will be added later)
 const navItems: NavItem[] = [
   { label: 'Home', path: '/', icon: <HomeIcon />, description: 'Start here' },
   { label: 'Create', path: '/builder', icon: <CreateIcon />, description: 'Build surveys' },
   { label: 'Run', path: '/runner', icon: <PlayArrowIcon />, description: 'Execute surveys' },
   { label: 'Results', path: '/history', icon: <HistoryIcon />, description: 'View data' },
-  { label: 'Evaluations', path: '/evaluations', icon: <AssessmentIcon />, badge: 'beta', description: 'LLM quality monitoring' },
   { label: 'Experiments', path: '/ground-truth', icon: <ScienceIcon />, badge: 'beta', description: 'Ground truth testing' },
   { label: 'Settings', path: '/settings', icon: <SettingsIcon />, description: 'System configuration' },
+  { label: 'Admin', icon: <AdminPanelSettingsIcon />, isSection: true, description: 'Administrator tools' },
+  { label: 'Evaluations', path: '/evaluations', icon: <AssessmentIcon />, badge: 'beta', description: 'LLM quality monitoring' },
 ];
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
@@ -102,50 +106,86 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       </Box>
       <Divider />
       <List sx={{ px: 2, py: 2 }}>
-        {navItems.map((item) => (
-          <ListItem key={item.path} disablePadding sx={{ mb: 0.5 }}>
-            <ListItemButton
-              selected={location.pathname === item.path}
-              onClick={() => handleNavigation(item.path)}
-              aria-label={`Navigate to ${item.label}`}
-              aria-current={location.pathname === item.path ? 'page' : undefined}
-              sx={{
-                minHeight: 48,
-                borderRadius: 1.5,
-                '& .MuiListItemIcon-root': {
-                  minWidth: 40,
-                  color: location.pathname === item.path ? 'primary.main' : 'text.secondary',
-                },
-              }}
-            >
-              <ListItemIcon sx={{ fontSize: 22 }}>{item.icon}</ListItemIcon>
-              <ListItemText
-                primary={item.label}
-                secondary={item.description}
-                primaryTypographyProps={{
-                  fontSize: '0.9375rem',
-                  fontWeight: location.pathname === item.path ? 600 : 400,
+        {navItems.map((item, index) => {
+          if (item.isSection) {
+            // Render section header
+            return (
+              <React.Fragment key={item.label}>
+                {index > 0 && <Divider sx={{ my: 2 }} />}
+                <ListItem disablePadding sx={{ mb: 1 }}>
+                  <ListItemButton disabled sx={{ cursor: 'default', '&:hover': { bgcolor: 'transparent' } }}>
+                    <ListItemIcon sx={{ fontSize: 22, minWidth: 40, color: 'text.secondary' }}>
+                      {item.icon}
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={item.label}
+                      secondary={item.description}
+                      primaryTypographyProps={{
+                        fontSize: '0.875rem',
+                        fontWeight: 600,
+                        color: 'text.secondary',
+                        textTransform: 'uppercase',
+                        letterSpacing: 0.5,
+                      }}
+                      secondaryTypographyProps={{
+                        fontSize: '0.7rem',
+                      }}
+                    />
+                  </ListItemButton>
+                </ListItem>
+              </React.Fragment>
+            );
+          }
+
+          // Check if this item is under a section (comes after a section header)
+          const isUnderSection = index > 0 && navItems[index - 1]?.isSection;
+
+          return (
+            <ListItem key={item.path} disablePadding sx={{ mb: 0.5 }}>
+              <ListItemButton
+                selected={location.pathname === item.path}
+                onClick={() => handleNavigation(item.path!)}
+                aria-label={`Navigate to ${item.label}`}
+                aria-current={location.pathname === item.path ? 'page' : undefined}
+                sx={{
+                  minHeight: 48,
+                  borderRadius: 1.5,
+                  pl: isUnderSection ? 4 : 2,
+                  '& .MuiListItemIcon-root': {
+                    minWidth: 40,
+                    color: location.pathname === item.path ? 'primary.main' : 'text.secondary',
+                  },
                 }}
-                secondaryTypographyProps={{
-                  fontSize: '0.75rem',
-                }}
-              />
-              {item.badge && (
-                <Chip
-                  label={item.badge}
-                  size="small"
-                  sx={{
-                    height: 20,
-                    fontSize: '0.65rem',
-                    fontWeight: 600,
-                    bgcolor: item.badge === 'primary' ? 'primary.main' : 'secondary.main',
-                    color: 'white',
+              >
+                <ListItemIcon sx={{ fontSize: 22 }}>{item.icon}</ListItemIcon>
+                <ListItemText
+                  primary={item.label}
+                  secondary={item.description}
+                  primaryTypographyProps={{
+                    fontSize: '0.9375rem',
+                    fontWeight: location.pathname === item.path ? 600 : 400,
+                  }}
+                  secondaryTypographyProps={{
+                    fontSize: '0.75rem',
                   }}
                 />
-              )}
-            </ListItemButton>
-          </ListItem>
-        ))}
+                {item.badge && (
+                  <Chip
+                    label={item.badge}
+                    size="small"
+                    sx={{
+                      height: 20,
+                      fontSize: '0.65rem',
+                      fontWeight: 600,
+                      bgcolor: item.badge === 'primary' ? 'primary.main' : 'secondary.main',
+                      color: 'white',
+                    }}
+                  />
+                )}
+              </ListItemButton>
+            </ListItem>
+          );
+        })}
       </List>
     </Box>
   );
@@ -197,53 +237,77 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               alignItems: 'center',
             }}
           >
-            {navItems.map((item) => (
-              <Box key={item.path} sx={{ position: 'relative' }}>
-                <Button
-                  onClick={() => handleNavigation(item.path)}
-                  aria-label={`Navigate to ${item.label}`}
-                  aria-current={location.pathname === item.path ? 'page' : undefined}
-                  startIcon={item.icon}
-                  sx={{
-                    color: location.pathname === item.path ? 'primary.main' : 'text.primary',
-                    bgcolor: location.pathname === item.path ? 'action.selected' : 'transparent',
-                    fontWeight: location.pathname === item.path ? 600 : 400,
-                    px: 2,
-                    py: 1,
-                    borderRadius: 2,
-                    textTransform: 'none',
-                    fontSize: '0.9375rem',
-                    '&:hover': {
-                      bgcolor: location.pathname === item.path ? 'action.selected' : 'action.hover',
-                    },
-                    '& .MuiButton-startIcon': {
-                      mr: 1,
-                    },
-                  }}
-                >
-                  {item.label}
-                </Button>
-                {item.badge && (
-                  <Chip
-                    label={item.badge}
-                    size="small"
+            {navItems.map((item, index) => {
+              if (item.isSection) {
+                // Render section divider with label
+                return (
+                  <Box key={item.label} sx={{ display: 'flex', alignItems: 'center', mx: 1 }}>
+                    <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: 'text.secondary',
+                        fontWeight: 600,
+                        textTransform: 'uppercase',
+                        fontSize: '0.7rem',
+                        letterSpacing: 0.5,
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {item.label}
+                    </Typography>
+                  </Box>
+                );
+              }
+
+              return (
+                <Box key={item.path} sx={{ position: 'relative' }}>
+                  <Button
+                    onClick={() => handleNavigation(item.path!)}
+                    aria-label={`Navigate to ${item.label}`}
+                    aria-current={location.pathname === item.path ? 'page' : undefined}
+                    startIcon={item.icon}
                     sx={{
-                      position: 'absolute',
-                      top: -8,
-                      right: -8,
-                      height: 18,
-                      fontSize: '0.65rem',
-                      fontWeight: 600,
-                      bgcolor: item.badge === 'primary' ? 'primary.main' : 'secondary.main',
-                      color: 'white',
-                      '& .MuiChip-label': {
-                        px: 0.75,
-                      }
+                      color: location.pathname === item.path ? 'primary.main' : 'text.primary',
+                      bgcolor: location.pathname === item.path ? 'action.selected' : 'transparent',
+                      fontWeight: location.pathname === item.path ? 600 : 400,
+                      px: 2,
+                      py: 1,
+                      borderRadius: 2,
+                      textTransform: 'none',
+                      fontSize: '0.9375rem',
+                      '&:hover': {
+                        bgcolor: location.pathname === item.path ? 'action.selected' : 'action.hover',
+                      },
+                      '& .MuiButton-startIcon': {
+                        mr: 1,
+                      },
                     }}
-                  />
-                )}
-              </Box>
-            ))}
+                  >
+                    {item.label}
+                  </Button>
+                  {item.badge && (
+                    <Chip
+                      label={item.badge}
+                      size="small"
+                      sx={{
+                        position: 'absolute',
+                        top: -8,
+                        right: -8,
+                        height: 18,
+                        fontSize: '0.65rem',
+                        fontWeight: 600,
+                        bgcolor: item.badge === 'primary' ? 'primary.main' : 'secondary.main',
+                        color: 'white',
+                        '& .MuiChip-label': {
+                          px: 0.75,
+                        }
+                      }}
+                    />
+                  )}
+                </Box>
+              );
+            })}
           </Box>
 
           {/* Mobile Menu Button */}

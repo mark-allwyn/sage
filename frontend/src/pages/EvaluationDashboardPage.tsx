@@ -60,6 +60,7 @@ import {
   useEvaluation,
   useEvaluateResponses,
   useDeleteEvaluation,
+  useCompareEvaluations,
   useSurveys,
   useSurveyRuns,
 } from '../services/hooks';
