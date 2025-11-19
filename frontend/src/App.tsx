@@ -28,6 +28,7 @@ import GroundTruthTestingPage from './pages/GroundTruthTestingPage';
 import SystemOverviewPage from './pages/SystemOverviewPage';
 import DocumentationPage from './pages/DocumentationPage';
 import SettingsPage from './pages/SettingsPage';
+import AdminPage from './pages/AdminPage';
 import EvaluationDashboardPage from './pages/EvaluationDashboardPage';
 
 // Create React Query client
@@ -79,6 +80,9 @@ const App: React.FC = () => {
 
               {/* Ground Truth Testing - experimentation */}
               <Route path="/ground-truth" element={<GroundTruthTestingPage />} />
+
+              {/* Admin - administrative dashboard */}
+              <Route path="/admin" element={<AdminPage />} />
 
               {/* Evaluation Dashboard - LLM response quality monitoring */}
               <Route path="/evaluations" element={<EvaluationDashboardPage />} />
