@@ -1503,21 +1503,18 @@ async def evaluate_responses(request: EvaluateResponsesRequest):
     try:
         logger.info(f"Starting evaluation for survey {request.survey_id}")
 
-        # Load survey configuration
-        survey_path = SURVEYS_DIR / f"{request.survey_id}.yaml"
-        if not survey_path.exists():
-            raise HTTPException(status_code=404, detail=f"Survey {request.survey_id} not found")
-
-        survey_config = load_survey(survey_path)
+        # Load survey configuration (load_survey expects survey_id, not path)
+        survey_config = load_survey(request.survey_id)
 
         # Load responses - either from specific run or latest run
+        results_dir = get_results_dir()
         if request.run_id:
-            run_file = RESULTS_DIR / f"{request.run_id}.json"
+            run_file = results_dir / f"{request.run_id}.json"
             if not run_file.exists():
                 raise HTTPException(status_code=404, detail=f"Run {request.run_id} not found")
         else:
             # Find latest run for this survey
-            run_files = list(RESULTS_DIR.glob(f"{request.survey_id}_*.json"))
+            run_files = list(results_dir.glob(f"{request.survey_id}_*.json"))
             if not run_files:
                 raise HTTPException(status_code=404, detail=f"No runs found for survey {request.survey_id}")
             run_file = max(run_files, key=lambda p: p.stat().st_mtime)
@@ -1548,10 +1545,12 @@ async def evaluate_responses(request: EvaluateResponsesRequest):
         )
 
         # Run evaluation
+        # Convert Survey object questions to dict format expected by evaluator
+        questions_dict = [{"id": q.id, "text": q.text} for q in survey_config.questions]
         result = evaluator.evaluate_survey_responses(
             survey_id=request.survey_id,
             responses=responses,
-            questions=survey_config.get("questions", []),
+            questions=questions_dict,
             sample_size=request.sample_size,
         )
 

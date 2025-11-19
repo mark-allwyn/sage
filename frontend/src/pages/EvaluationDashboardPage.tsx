@@ -104,6 +104,10 @@ const EvaluationDashboardPage: React.FC = () => {
       setOpenRunDialog(false);
       refetchEvaluations();
     },
+    onError: (error) => {
+      console.error('Evaluation error:', error);
+      alert(`Evaluation failed: ${error.message}`);
+    },
   });
   const deleteMutation = useDeleteEvaluation({
     onSuccess: () => {
@@ -114,14 +118,16 @@ const EvaluationDashboardPage: React.FC = () => {
   const evaluations = evaluationsData?.evaluations || [];
 
   const handleRunEvaluation = () => {
-    evaluateMutation.mutate({
+    const payload = {
       survey_id: runConfig.survey_id,
       run_id: runConfig.run_id || undefined,
       sample_size: runConfig.sample_size,
       metrics: runConfig.metrics,
       evaluator_model: runConfig.evaluator_model,
       threshold: runConfig.threshold,
-    });
+    };
+    console.log('Running evaluation with payload:', payload);
+    evaluateMutation.mutate(payload);
   };
 
   const handleDeleteEvaluation = (evaluationId: string) => {
@@ -426,6 +432,14 @@ const EvaluationDashboardPage: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
+          <Box sx={{ flexGrow: 1, pl: 2 }}>
+            {!runConfig.survey_id && (
+              <Typography variant="caption" color="error">Please select a survey</Typography>
+            )}
+            {runConfig.survey_id && runConfig.metrics.length === 0 && (
+              <Typography variant="caption" color="error">Please select at least one metric</Typography>
+            )}
+          </Box>
           <Button onClick={() => setOpenRunDialog(false)}>Cancel</Button>
           <Button
             variant="contained"
