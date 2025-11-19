@@ -51,6 +51,7 @@ import {
   Assessment as AssessmentIcon,
   CompareArrows as CompareIcon,
   Info as InfoIcon,
+  HelpOutline as HelpIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '../components/PageHeader';
@@ -168,6 +169,21 @@ const EvaluationDashboardPage: React.FC = () => {
     return new Date(timestamp).toLocaleString();
   };
 
+  const getMetricExplanation = (metricName: string): string => {
+    const explanations: Record<string, string> = {
+      'answerrelevancy': 'Measures how well the response addresses the specific question asked. Higher scores indicate responses that stay on topic and provide relevant information.',
+      'bias': 'Detects potential biases in responses including gender, racial, political, or other stereotypes. Lower scores indicate more neutral, unbiased responses.',
+      'hallucination': 'Identifies when the LLM generates information not grounded in the provided context. Lower scores indicate more factual, context-based responses.',
+    };
+    return explanations[metricName.toLowerCase()] || 'No description available';
+  };
+
+  const getScoreInterpretation = (score: number): string => {
+    if (score >= 0.8) return 'Excellent - High quality response';
+    if (score >= 0.6) return 'Good - Acceptable quality with room for improvement';
+    return 'Needs Improvement - Review and refine prompts or model settings';
+  };
+
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
       <PageHeader
@@ -175,6 +191,20 @@ const EvaluationDashboardPage: React.FC = () => {
         subtitle="Monitor and evaluate LLM response quality using DeepEval metrics"
         icon={<AssessmentIcon />}
       />
+
+      {/* How It Works Section */}
+      <Alert severity="info" sx={{ mb: 3 }} icon={<InfoIcon />}>
+        <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 600 }}>
+          How LLM Evaluation Works
+        </Typography>
+        <Typography variant="body2">
+          DeepEval uses an "LLM-as-a-Judge" approach where a powerful evaluator model (like GPT-4)
+          assesses the quality of responses from your survey LLMs. Each response is scored on multiple
+          metrics including relevancy, bias, and hallucination. Scores range from 0 to 1 (0-100%),
+          with higher scores indicating better quality. This helps you identify issues, compare model
+          versions, and ensure consistent response quality across your surveys.
+        </Typography>
+      </Alert>
 
       {/* Controls */}
       <Paper sx={{ p: 3, mb: 3 }}>
@@ -260,9 +290,14 @@ const EvaluationDashboardPage: React.FC = () => {
                   </Typography>
 
                   <Box sx={{ my: 2 }}>
-                    <Typography variant="body2" color="text.secondary" gutterBottom>
-                      Overall Score
-                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        Overall Score
+                      </Typography>
+                      <Tooltip title={getScoreInterpretation(evaluation.overall_score)}>
+                        <InfoIcon sx={{ fontSize: 16, color: 'text.secondary', cursor: 'help' }} />
+                      </Tooltip>
+                    </Box>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <LinearProgress
                         variant="determinate"
@@ -303,7 +338,12 @@ const EvaluationDashboardPage: React.FC = () => {
 
       {/* Run Evaluation Dialog */}
       <Dialog open={openRunDialog} onClose={() => setOpenRunDialog(false)} maxWidth="md" fullWidth>
-        <DialogTitle>Run New Evaluation</DialogTitle>
+        <DialogTitle>
+          Run New Evaluation
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            Evaluate your LLM survey responses for quality, bias, and accuracy
+          </Typography>
+        </DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 2 }}>
             {evaluateMutation.error && (
@@ -349,21 +389,31 @@ const EvaluationDashboardPage: React.FC = () => {
               </Grid>
 
               <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  type="number"
-                  label="Sample Size"
-                  value={runConfig.sample_size}
-                  onChange={(e) => setRunConfig({ ...runConfig, sample_size: parseInt(e.target.value) || 10 })}
-                  helperText="Number of responses to evaluate (leave blank for 10% sample)"
-                  InputProps={{ inputProps: { min: 1 } }}
-                />
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                  <TextField
+                    fullWidth
+                    type="number"
+                    label="Sample Size"
+                    value={runConfig.sample_size}
+                    onChange={(e) => setRunConfig({ ...runConfig, sample_size: parseInt(e.target.value) || 10 })}
+                    helperText="Number of responses to evaluate. Smaller samples are faster but less comprehensive."
+                    InputProps={{ inputProps: { min: 1 } }}
+                  />
+                  <Tooltip title="Evaluating responses costs API credits. For large surveys, start with a small sample (10-50) to test, then increase for comprehensive analysis. DeepEval calls the evaluator model for each response.">
+                    <InfoIcon sx={{ color: 'text.secondary', cursor: 'help' }} />
+                  </Tooltip>
+                </Box>
               </Grid>
 
               <Grid item xs={12}>
-                <Typography variant="subtitle2" gutterBottom>
-                  Evaluation Metrics
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                  <Typography variant="subtitle2">
+                    Evaluation Metrics
+                  </Typography>
+                  <Tooltip title="Select one or more metrics to evaluate. Each metric measures a different aspect of response quality. Running multiple metrics provides a more comprehensive quality assessment.">
+                    <InfoIcon sx={{ fontSize: 18, color: 'text.secondary', cursor: 'help' }} />
+                  </Tooltip>
+                </Box>
                 <FormGroup>
                   {EVALUATION_METRICS.map((metric) => (
                     <FormControlLabel
@@ -388,45 +438,55 @@ const EvaluationDashboardPage: React.FC = () => {
               </Grid>
 
               <Grid item xs={12} md={6}>
-                <FormControl fullWidth>
-                  <InputLabel>Evaluator Model</InputLabel>
-                  <Select
-                    value={runConfig.evaluator_model}
-                    onChange={(e: SelectChangeEvent) => setRunConfig({ ...runConfig, evaluator_model: e.target.value })}
-                    label="Evaluator Model"
-                  >
-                    <MenuItem disabled>OpenAI</MenuItem>
-                    {OPENAI_MODELS.map((model) => (
-                      <MenuItem key={model.value} value={model.value}>
-                        {model.label}
-                      </MenuItem>
-                    ))}
-                    <MenuItem disabled>Anthropic</MenuItem>
-                    {ANTHROPIC_MODELS.map((model) => (
-                      <MenuItem key={model.value} value={model.value}>
-                        {model.label}
-                      </MenuItem>
-                    ))}
-                    <MenuItem disabled>Google Gemini</MenuItem>
-                    {GEMINI_MODELS.map((model) => (
-                      <MenuItem key={model.value} value={model.value}>
-                        {model.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                  <FormControl fullWidth>
+                    <InputLabel>Evaluator Model</InputLabel>
+                    <Select
+                      value={runConfig.evaluator_model}
+                      onChange={(e: SelectChangeEvent) => setRunConfig({ ...runConfig, evaluator_model: e.target.value })}
+                      label="Evaluator Model"
+                    >
+                      <MenuItem disabled>OpenAI</MenuItem>
+                      {OPENAI_MODELS.map((model) => (
+                        <MenuItem key={model.value} value={model.value}>
+                          {model.label}
+                        </MenuItem>
+                      ))}
+                      <MenuItem disabled>Anthropic</MenuItem>
+                      {ANTHROPIC_MODELS.map((model) => (
+                        <MenuItem key={model.value} value={model.value}>
+                          {model.label}
+                        </MenuItem>
+                      ))}
+                      <MenuItem disabled>Google Gemini</MenuItem>
+                      {GEMINI_MODELS.map((model) => (
+                        <MenuItem key={model.value} value={model.value}>
+                          {model.label}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                  <Tooltip title="The LLM model used to evaluate responses. GPT-4o Mini offers the best balance of cost and quality. More powerful models like GPT-4o may provide more nuanced evaluations but cost more.">
+                    <InfoIcon sx={{ color: 'text.secondary', cursor: 'help', mt: 1 }} />
+                  </Tooltip>
+                </Box>
               </Grid>
 
               <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  type="number"
-                  label="Threshold"
-                  value={runConfig.threshold}
-                  onChange={(e) => setRunConfig({ ...runConfig, threshold: parseFloat(e.target.value) || 0.5 })}
-                  helperText="Success threshold (0-1)"
-                  InputProps={{ inputProps: { min: 0, max: 1, step: 0.1 } }}
-                />
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                  <TextField
+                    fullWidth
+                    type="number"
+                    label="Success Threshold"
+                    value={runConfig.threshold}
+                    onChange={(e) => setRunConfig({ ...runConfig, threshold: parseFloat(e.target.value) || 0.5 })}
+                    helperText="Minimum score to consider successful (0-1)"
+                    InputProps={{ inputProps: { min: 0, max: 1, step: 0.1 } }}
+                  />
+                  <Tooltip title="Responses scoring above this threshold are considered successful. Default 0.5 means responses must score at least 50% to pass. Adjust based on your quality standards.">
+                    <InfoIcon sx={{ color: 'text.secondary', cursor: 'help', mt: 1 }} />
+                  </Tooltip>
+                </Box>
               </Grid>
             </Grid>
           </Box>
@@ -478,45 +538,75 @@ const EvaluationDashboardPage: React.FC = () => {
               <Paper sx={{ p: 2, mb: 3 }}>
                 <Grid container spacing={2}>
                   <Grid item xs={12} md={3}>
-                    <Typography variant="body2" color="text.secondary">
-                      Overall Score
-                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        Overall Score
+                      </Typography>
+                      <Tooltip title="Average score across all metrics and evaluated responses">
+                        <InfoIcon sx={{ fontSize: 14, color: 'text.secondary', cursor: 'help' }} />
+                      </Tooltip>
+                    </Box>
                     <Typography variant="h4" color={getScoreColor(selectedEvaluation.overall_mean_score)}>
                       {(selectedEvaluation.overall_mean_score * 100).toFixed(1)}%
                     </Typography>
                   </Grid>
                   <Grid item xs={12} md={3}>
-                    <Typography variant="body2" color="text.secondary">
-                      Total Responses
-                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        Total Responses
+                      </Typography>
+                      <Tooltip title="Total number of responses in the survey run">
+                        <InfoIcon sx={{ fontSize: 14, color: 'text.secondary', cursor: 'help' }} />
+                      </Tooltip>
+                    </Box>
                     <Typography variant="h6">{selectedEvaluation.total_responses}</Typography>
                   </Grid>
                   <Grid item xs={12} md={3}>
-                    <Typography variant="body2" color="text.secondary">
-                      Evaluated
-                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        Evaluated
+                      </Typography>
+                      <Tooltip title="Number of responses sampled for evaluation (based on sample size setting)">
+                        <InfoIcon sx={{ fontSize: 14, color: 'text.secondary', cursor: 'help' }} />
+                      </Tooltip>
+                    </Box>
                     <Typography variant="h6">{selectedEvaluation.evaluated_responses}</Typography>
                   </Grid>
                   <Grid item xs={12} md={3}>
-                    <Typography variant="body2" color="text.secondary">
-                      Successful
-                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        Successful
+                      </Typography>
+                      <Tooltip title="Number of evaluations that completed without errors. Failed evaluations may indicate API issues or malformed responses.">
+                        <InfoIcon sx={{ fontSize: 14, color: 'text.secondary', cursor: 'help' }} />
+                      </Tooltip>
+                    </Box>
                     <Typography variant="h6">{selectedEvaluation.successful_evaluations}</Typography>
                   </Grid>
                 </Grid>
               </Paper>
 
               {/* Metric Scores */}
-              <Typography variant="h6" gutterBottom>
-                Metric Scores
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                <Typography variant="h6">
+                  Metric Scores
+                </Typography>
+                <Tooltip title="Average scores for each evaluation metric across all sampled responses. Higher scores generally indicate better quality, though interpretation varies by metric.">
+                  <InfoIcon sx={{ fontSize: 20, color: 'text.secondary', cursor: 'help' }} />
+                </Tooltip>
+              </Box>
               <Grid container spacing={2} sx={{ mb: 3 }}>
                 {Object.entries(selectedEvaluation.aggregated_scores).map(([metricName, scores]) => (
                   <Grid item xs={12} md={4} key={metricName}>
                     <Paper sx={{ p: 2 }}>
-                      <Typography variant="subtitle2" gutterBottom sx={{ textTransform: 'capitalize' }}>
-                        {metricName.replace(/_/g, ' ')}
-                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1 }}>
+                        <Typography variant="subtitle2" sx={{ textTransform: 'capitalize' }}>
+                          {metricName.replace(/_/g, ' ')}
+                        </Typography>
+                        <Tooltip title={getMetricExplanation(metricName)}>
+                          <InfoIcon sx={{ fontSize: 16, color: 'text.secondary', cursor: 'help' }} />
+                        </Tooltip>
+                      </Box>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                         <LinearProgress
                           variant="determinate"
@@ -530,6 +620,9 @@ const EvaluationDashboardPage: React.FC = () => {
                       </Box>
                       <Typography variant="caption" color="text.secondary">
                         Min: {(scores.min * 100).toFixed(1)}% | Max: {(scores.max * 100).toFixed(1)}% | Count: {scores.count}
+                      </Typography>
+                      <Typography variant="caption" display="block" color="text.secondary" sx={{ mt: 0.5, fontStyle: 'italic' }}>
+                        {getScoreInterpretation(scores.mean)}
                       </Typography>
                     </Paper>
                   </Grid>
