@@ -77,6 +77,9 @@ const EvaluationDashboardPage: React.FC = () => {
   const [selectedEvaluationId, setSelectedEvaluationId] = useState<string>('');
   const [openRunDialog, setOpenRunDialog] = useState(false);
   const [openDetailDialog, setOpenDetailDialog] = useState(false);
+  const [openCompareDialog, setOpenCompareDialog] = useState(false);
+  const [selectedEvaluationsForCompare, setSelectedEvaluationsForCompare] = useState<string[]>([]);
+  const [compareMode, setCompareMode] = useState(false);
 
   // Run evaluation form state
   const [runConfig, setRunConfig] = useState({
@@ -100,6 +103,7 @@ const EvaluationDashboardPage: React.FC = () => {
   const { data: surveyRuns } = useSurveyRuns(runConfig.survey_id || undefined);
 
   // Mutations
+  const compareMutation = useCompareEvaluations();
   const evaluateMutation = useEvaluateResponses({
     onSuccess: () => {
       setOpenRunDialog(false);
@@ -157,6 +161,28 @@ const EvaluationDashboardPage: React.FC = () => {
         ? prev.metrics.filter(m => m !== metric)
         : [...prev.metrics, metric],
     }));
+  };
+
+  const handleToggleCompareMode = () => {
+    setCompareMode(!compareMode);
+    setSelectedEvaluationsForCompare([]);
+  };
+
+  const handleSelectEvaluationForCompare = (evaluationId: string) => {
+    setSelectedEvaluationsForCompare(prev =>
+      prev.includes(evaluationId)
+        ? prev.filter(id => id !== evaluationId)
+        : [...prev, evaluationId]
+    );
+  };
+
+  const handleCompare = () => {
+    if (selectedEvaluationsForCompare.length < 2) {
+      alert('Please select at least 2 evaluations to compare');
+      return;
+    }
+    compareMutation.mutate(selectedEvaluationsForCompare);
+    setOpenCompareDialog(true);
   };
 
   const getScoreColor = (score: number): string => {
@@ -226,7 +252,7 @@ const EvaluationDashboardPage: React.FC = () => {
               </Select>
             </FormControl>
           </Grid>
-          <Grid item xs={12} md={8} sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+          <Grid item xs={12} md={8} sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
             <Button
               variant="outlined"
               startIcon={<RefreshIcon />}
@@ -234,17 +260,55 @@ const EvaluationDashboardPage: React.FC = () => {
             >
               Refresh
             </Button>
-            <Button
-              variant="contained"
-              startIcon={<PlayIcon />}
-              onClick={handleOpenRunDialog}
-              disabled={!surveys || surveys.length === 0}
-            >
-              Run New Evaluation
-            </Button>
+            {compareMode ? (
+              <>
+                <Button
+                  variant="outlined"
+                  onClick={handleToggleCompareMode}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="contained"
+                  startIcon={<CompareIcon />}
+                  onClick={handleCompare}
+                  disabled={selectedEvaluationsForCompare.length < 2}
+                >
+                  Compare ({selectedEvaluationsForCompare.length})
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  variant="outlined"
+                  startIcon={<CompareIcon />}
+                  onClick={handleToggleCompareMode}
+                  disabled={evaluations.length < 2}
+                >
+                  Compare Evaluations
+                </Button>
+                <Button
+                  variant="contained"
+                  startIcon={<PlayIcon />}
+                  onClick={handleOpenRunDialog}
+                  disabled={!surveys || surveys.length === 0}
+                >
+                  Run New Evaluation
+                </Button>
+              </>
+            )}
           </Grid>
         </Grid>
       </Paper>
+
+      {/* Compare Mode Alert */}
+      {compareMode && (
+        <Alert severity="info" sx={{ mb: 3 }}>
+          <Typography variant="body2">
+            Select 2 or more evaluations to compare. Click on evaluation cards to select them.
+          </Typography>
+        </Alert>
+      )}
 
       {/* Evaluations List */}
       {loadingEvaluations ? (
@@ -270,9 +334,24 @@ const EvaluationDashboardPage: React.FC = () => {
         </Paper>
       ) : (
         <Grid container spacing={3}>
-          {evaluations.map((evaluation) => (
+          {evaluations.map((evaluation) => {
+            const isSelected = selectedEvaluationsForCompare.includes(evaluation.evaluation_id);
+            return (
             <Grid item xs={12} md={6} lg={4} key={evaluation.evaluation_id}>
-              <Card>
+              <Card
+                onClick={() => compareMode && handleSelectEvaluationForCompare(evaluation.evaluation_id)}
+                sx={{
+                  cursor: compareMode ? 'pointer' : 'default',
+                  border: isSelected ? 2 : 0,
+                  borderColor: isSelected ? 'primary.main' : 'transparent',
+                  bgcolor: isSelected ? 'action.selected' : 'background.paper',
+                  transition: 'all 0.2s',
+                  '&:hover': compareMode ? {
+                    boxShadow: 4,
+                    transform: 'translateY(-2px)',
+                  } : {},
+                }}
+              >
                 <CardContent>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                     <Typography variant="h6" component="div">
@@ -316,23 +395,31 @@ const EvaluationDashboardPage: React.FC = () => {
                   </Typography>
                 </CardContent>
                 <CardActions>
-                  <Button
-                    size="small"
-                    onClick={() => handleViewDetails(evaluation.evaluation_id)}
-                  >
-                    View Details
-                  </Button>
-                  <IconButton
-                    size="small"
-                    onClick={() => handleDeleteEvaluation(evaluation.evaluation_id)}
-                    color="error"
-                  >
-                    <DeleteIcon />
-                  </IconButton>
+                  {!compareMode && (
+                    <>
+                      <Button
+                        size="small"
+                        onClick={() => handleViewDetails(evaluation.evaluation_id)}
+                      >
+                        View Details
+                      </Button>
+                      <IconButton
+                        size="small"
+                        onClick={() => handleDeleteEvaluation(evaluation.evaluation_id)}
+                        color="error"
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </>
+                  )}
+                  {compareMode && isSelected && (
+                    <Chip label="Selected" color="primary" size="small" />
+                  )}
                 </CardActions>
               </Card>
             </Grid>
-          ))}
+            );
+          })}
         </Grid>
       )}
 
@@ -740,6 +827,85 @@ const EvaluationDashboardPage: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenDetailDialog(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Comparison Dialog */}
+      <Dialog
+        open={openCompareDialog}
+        onClose={() => setOpenCompareDialog(false)}
+        maxWidth="lg"
+        fullWidth
+      >
+        <DialogTitle>
+          Evaluation Comparison
+          <Typography variant="caption" display="block" color="text.secondary">
+            Comparing {selectedEvaluationsForCompare.length} evaluations
+          </Typography>
+        </DialogTitle>
+        <DialogContent>
+          {compareMutation.isPending ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+              <CircularProgress />
+            </Box>
+          ) : compareMutation.data ? (
+            <Box sx={{ pt: 2 }}>
+              <Alert severity="info" sx={{ mb: 3 }}>
+                <Typography variant="body2">
+                  This comparison shows metric trends across {compareMutation.data.num_evaluations} evaluations.
+                  Use this to track quality improvements over time or compare different model configurations.
+                </Typography>
+              </Alert>
+
+              {/* Metrics Comparison */}
+              {Object.entries(compareMutation.data.metrics || {}).map(([metricName, metricDataArray]: [string, any]) => (
+                <Paper key={metricName} sx={{ p: 3, mb: 3 }}>
+                  <Typography variant="h6" gutterBottom sx={{ textTransform: 'capitalize' }}>
+                    {metricName.replace(/_/g, ' ')}
+                  </Typography>
+                  <TableContainer>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Evaluation</TableCell>
+                          <TableCell>Timestamp</TableCell>
+                          <TableCell>Model</TableCell>
+                          <TableCell align="right">Mean Score</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {metricDataArray.map((data: any, idx: number) => (
+                          <TableRow key={idx}>
+                            <TableCell>#{idx + 1}</TableCell>
+                            <TableCell>{data.timestamp ? new Date(data.timestamp).toLocaleString() : 'N/A'}</TableCell>
+                            <TableCell>{data.model || 'N/A'}</TableCell>
+                            <TableCell align="right">
+                              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1 }}>
+                                <LinearProgress
+                                  variant="determinate"
+                                  value={data.mean_score * 100}
+                                  color={getScoreColor(data.mean_score) as any}
+                                  sx={{ width: 100, height: 6, borderRadius: 1 }}
+                                />
+                                <Typography variant="body2" fontWeight="bold" sx={{ minWidth: 50 }}>
+                                  {(data.mean_score * 100).toFixed(1)}%
+                                </Typography>
+                              </Box>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Paper>
+              ))}
+            </Box>
+          ) : (
+            <Alert severity="info">Select evaluations and click Compare to see results</Alert>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenCompareDialog(false)}>Close</Button>
         </DialogActions>
       </Dialog>
     </Container>
