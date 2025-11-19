@@ -54,7 +54,6 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '../components/PageHeader';
-import LoadingSkeleton from '../components/LoadingSkeleton';
 import {
   useEvaluations,
   useEvaluation,
@@ -213,7 +212,9 @@ const EvaluationDashboardPage: React.FC = () => {
 
       {/* Evaluations List */}
       {loadingEvaluations ? (
-        <LoadingSkeleton />
+        <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+          <CircularProgress />
+        </Box>
       ) : evaluations.length === 0 ? (
         <Paper sx={{ p: 4, textAlign: 'center' }}>
           <Typography variant="h6" color="text.secondary" gutterBottom>
