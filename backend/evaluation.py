@@ -104,15 +104,21 @@ class ResponseEvaluator:
             Dictionary with evaluation results
         """
         try:
+            # Ensure we have non-empty context for hallucination metric
+            # If no context provided, use the input as context
+            context = retrieval_context or []
+            if not context or all(not c.strip() for c in context):
+                context = [input_text] if input_text else ["No context available"]
+
             # Create test case
             test_case = LLMTestCase(
                 input=input_text,
                 actual_output=actual_output,
                 expected_output=expected_output,
-                retrieval_context=retrieval_context or [],
+                retrieval_context=context,
             )
 
-            # Get metrics
+            # Get metrics - filter out hallucination if no meaningful context
             metrics = self._get_metrics()
 
             # Run evaluation with async disabled (fixes uvloop conflict)
@@ -184,10 +190,19 @@ class ResponseEvaluator:
             question = question_map.get(question_id, {})
             question_text = question.get("text", "")
 
-            # Build context from question and category info
-            context = [question_text]
+            # Build rich context from question and response metadata
+            # This provides grounding information for hallucination detection
+            context = []
+            if question_text:
+                context.append(f"Question: {question_text}")
             if "category" in response:
                 context.append(f"Category: {response['category']}")
+            if "persona" in response:
+                context.append(f"Respondent persona: {response['persona']}")
+
+            # Ensure we have at least some context
+            if not context:
+                context = ["Survey response evaluation"]
 
             result = self.evaluate_response(
                 input_text=question_text,
