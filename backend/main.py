@@ -1396,20 +1396,34 @@ def parse_ground_truth_csv(csv_content: str, survey: Survey):
                 total = len(answers_list)
                 freq_probs = [answer_counts.get(i+1, 0) / total for i in range(num_ratings)]
 
-                # Calculate statistics
+                # Calculate statistics from answers
                 mean_answer = float(np.mean(answers_list))
                 std_answer = float(np.std(answers_list))
                 mode_answer = int(max(answer_counts.items(), key=lambda x: x[1])[0]) if answer_counts else 0
 
+                # Calculate expected value from frequency distribution
+                mean_expected_value = float(sum((i+1) * freq_probs[i] for i in range(len(freq_probs))))
+
+                # Calculate entropy from frequency distribution
+                mean_entropy = float(-sum(p * np.log(p + 1e-10) for p in freq_probs if p > 0))
+
+                # Calculate std of probabilities (variance across rating options)
+                # For ground truth, this represents variability in population preferences
+                std_probs = [0.0] * num_ratings  # No per-rating std for simple answers
+
+                # Store in SSR-compatible format
                 aggregated_distributions[category][question_id] = {
-                    "answer_frequencies": freq_probs,  # Frequency distribution
-                    "answer_counts": dict(answer_counts),  # Raw counts
+                    "mean_probabilities": freq_probs,  # Matches SSR format!
+                    "std_probabilities": std_probs,  # Placeholder for compatibility
                     "sample_size": total,
+                    "mean_mode": float(mode_answer),  # Mode of actual answers
+                    "mean_expected_value": mean_expected_value,
+                    "mean_entropy": mean_entropy,
+                    # Additional metadata for ground truth
+                    "answer_counts": dict(answer_counts),
                     "mean_answer": mean_answer,
                     "std_answer": std_answer,
-                    "mode_answer": mode_answer,
-                    "min_answer": int(min(answers_list)),
-                    "max_answer": int(max(answers_list))
+                    "source": "uploaded_answers"  # Flag to identify this as answer-based
                 }
 
     # Create sample data for preview
