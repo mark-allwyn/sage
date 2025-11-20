@@ -74,14 +74,13 @@ import {
   useCompareEvaluations,
   useSurveys,
   useSurveyRuns,
+  useSettings,
 } from '../services/hooks';
 import {
   EvaluationListItem,
   EVALUATION_METRICS,
-  OPENAI_MODELS,
-  ANTHROPIC_MODELS,
-  GEMINI_MODELS,
 } from '../services/types';
+import { getEnabledProviders, getEnabledModelsForProvider } from '../utils/providerFilters';
 
 const EvaluationDashboardPage: React.FC = () => {
   const navigate = useNavigate();
@@ -114,6 +113,13 @@ const EvaluationDashboardPage: React.FC = () => {
   );
   const { data: surveyRuns } = useSurveyRuns(runConfig.survey_id || undefined);
   const { data: allSurveyRuns } = useSurveyRuns(); // Fetch all survey runs to check availability
+  const { data: settings } = useSettings();
+
+  const enabledProviders = getEnabledProviders(settings);
+  const enabledOpenAIModels = getEnabledModelsForProvider('openai', settings);
+  const enabledAnthropicModels = getEnabledModelsForProvider('anthropic', settings);
+  const enabledGeminiModels = getEnabledModelsForProvider('gemini', settings);
+  const enabledOllamaModels = getEnabledModelsForProvider('ollama', settings);
 
   // Mutations
   const compareMutation = useCompareEvaluations();
@@ -539,31 +545,40 @@ const EvaluationDashboardPage: React.FC = () => {
 
               <Grid item xs={12} md={6}>
                 <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                  <FormControl fullWidth>
+                  <FormControl fullWidth disabled={enabledProviders.length === 0}>
                     <InputLabel>Evaluator Model</InputLabel>
                     <Select
                       value={runConfig.evaluator_model}
                       onChange={(e: SelectChangeEvent) => setRunConfig({ ...runConfig, evaluator_model: e.target.value })}
                       label="Evaluator Model"
                     >
-                      <MenuItem disabled>OpenAI</MenuItem>
-                      {OPENAI_MODELS.map((model) => (
+                      {enabledOpenAIModels.length > 0 && <MenuItem disabled>OpenAI</MenuItem>}
+                      {enabledOpenAIModels.map((model) => (
                         <MenuItem key={model.value} value={model.value}>
                           {model.label}
                         </MenuItem>
                       ))}
-                      <MenuItem disabled>Anthropic</MenuItem>
-                      {ANTHROPIC_MODELS.map((model) => (
+                      {enabledAnthropicModels.length > 0 && <MenuItem disabled>Anthropic</MenuItem>}
+                      {enabledAnthropicModels.map((model) => (
                         <MenuItem key={model.value} value={model.value}>
                           {model.label}
                         </MenuItem>
                       ))}
-                      <MenuItem disabled>Google Gemini</MenuItem>
-                      {GEMINI_MODELS.map((model) => (
+                      {enabledGeminiModels.length > 0 && <MenuItem disabled>Google Gemini</MenuItem>}
+                      {enabledGeminiModels.map((model) => (
                         <MenuItem key={model.value} value={model.value}>
                           {model.label}
                         </MenuItem>
                       ))}
+                      {enabledOllamaModels.length > 0 && <MenuItem disabled>Ollama</MenuItem>}
+                      {enabledOllamaModels.map((model) => (
+                        <MenuItem key={model.value} value={model.value}>
+                          {model.label}
+                        </MenuItem>
+                      ))}
+                      {enabledProviders.length === 0 && (
+                        <MenuItem disabled>No providers enabled - check Settings</MenuItem>
+                      )}
                     </Select>
                   </FormControl>
                   <Tooltip title="The LLM model used to evaluate responses. GPT-4o Mini offers the best balance of cost and quality. More powerful models like GPT-4o may provide more nuanced evaluations but cost more.">

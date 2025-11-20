@@ -73,11 +73,13 @@ import {
   useRunSurvey,
   useSurveyRuns,
   useCompareToGroundTruth,
+  useSettings,
 } from '../services/hooks';
-import { CreateGroundTruthFromSSRRequest, RunSurveyRequest, LLM_PROVIDERS, OPENAI_MODELS, ANTHROPIC_MODELS, UploadGroundTruthCSVResponse } from '../services/types';
+import { CreateGroundTruthFromSSRRequest, RunSurveyRequest, UploadGroundTruthCSVResponse } from '../services/types';
 import { EmptyState } from '../components/EmptyState';
 import PageHeader from '../components/PageHeader';
 import { uploadGroundTruthCSV, getErrorMessage } from '../services/api';
+import { getEnabledProviders, getEnabledModelsForProvider, getDefaultProvider, getDefaultModel } from '../utils/providerFilters';
 
 const GroundTruthTestingPage: React.FC = () => {
   const [activeStep, setActiveStep] = useState(0);
@@ -136,6 +138,47 @@ const GroundTruthTestingPage: React.FC = () => {
   const { data: viewingGroundTruth } = useGroundTruth(viewingGroundTruthId || '', {
     enabled: !!viewingGroundTruthId,
   });
+  const { data: settings } = useSettings();
+
+  const enabledProviders = getEnabledProviders(settings);
+  const enabledSSRModels = getEnabledModelsForProvider(ssrConfig.llm_provider, settings);
+  const enabledExperimentModels = getEnabledModelsForProvider(experimentConfig.llm_provider, settings);
+
+  // Auto-select default provider for SSR config if current one is not enabled
+  React.useEffect(() => {
+    if (settings && enabledProviders.length > 0) {
+      const currentProviderEnabled = enabledProviders.some(p => p.value === ssrConfig.llm_provider);
+      if (!currentProviderEnabled) {
+        const defaultProvider = getDefaultProvider(settings);
+        const defaultModel = defaultProvider ? getDefaultModel(defaultProvider, settings) : null;
+        if (defaultProvider && defaultModel) {
+          setSSRConfig({
+            ...ssrConfig,
+            llm_provider: defaultProvider,
+            model: defaultModel
+          });
+        }
+      }
+    }
+  }, [settings, enabledProviders]);
+
+  // Auto-select default provider for experiment config if current one is not enabled
+  React.useEffect(() => {
+    if (settings && enabledProviders.length > 0) {
+      const currentProviderEnabled = enabledProviders.some(p => p.value === experimentConfig.llm_provider);
+      if (!currentProviderEnabled) {
+        const defaultProvider = getDefaultProvider(settings);
+        const defaultModel = defaultProvider ? getDefaultModel(defaultProvider, settings) : null;
+        if (defaultProvider && defaultModel) {
+          setExperimentConfig({
+            ...experimentConfig,
+            llm_provider: defaultProvider,
+            model: defaultModel
+          });
+        }
+      }
+    }
+  }, [settings, enabledProviders]);
 
   const createSSRMutation = useCreateGroundTruthFromSSR({
     onSuccess: () => {
@@ -389,14 +432,6 @@ const GroundTruthTestingPage: React.FC = () => {
 
   const formatDate = (timestamp: string) => {
     return new Date(timestamp).toLocaleString();
-  };
-
-  const getModelOptions = () => {
-    return ssrConfig.llm_provider === 'openai' ? OPENAI_MODELS : ANTHROPIC_MODELS;
-  };
-
-  const getExperimentModelOptions = () => {
-    return experimentConfig.llm_provider === 'openai' ? OPENAI_MODELS : ANTHROPIC_MODELS;
   };
 
   const formatMetric = (value: number | null | undefined): string => {
@@ -718,6 +753,12 @@ const GroundTruthTestingPage: React.FC = () => {
                       </Box>
                     </Box>
 
+                    {enabledProviders.length === 0 && (
+                      <Alert severity="warning" sx={{ mb: 2 }}>
+                        No LLM providers are enabled. Please go to Settings to configure at least one provider (OpenAI, Anthropic, Gemini, or Ollama).
+                      </Alert>
+                    )}
+
                     <Alert severity="info" sx={{ mb: 3 }}>
                       Comparing against: <strong>{groundTruths?.find(gt => gt.id === selectedGroundTruth)?.name}</strong>
                     </Alert>
@@ -806,20 +847,23 @@ const GroundTruthTestingPage: React.FC = () => {
                       <AccordionDetails>
                         <Grid container spacing={2}>
                           <Grid item xs={12} md={6}>
-                            <FormControl fullWidth>
+                            <FormControl fullWidth disabled={enabledProviders.length === 0}>
                               <InputLabel>LLM Provider</InputLabel>
                               <Select
                                 value={experimentConfig.llm_provider}
                                 label="LLM Provider"
-                                onChange={(e) =>
+                                onChange={(e) => {
+                                  // Update provider and model atomically
+                                  const newProvider = e.target.value as 'openai' | 'anthropic' | 'gemini' | 'ollama';
+                                  const newModel = getDefaultModel(newProvider, settings);
                                   setExperimentConfig({
                                     ...experimentConfig,
-                                    llm_provider: e.target.value as 'openai' | 'anthropic',
-                                    model: e.target.value === 'openai' ? 'gpt-4o-mini' : 'claude-3-haiku-20240307',
-                                  })
-                                }
+                                    llm_provider: newProvider,
+                                    model: newModel || ''
+                                  });
+                                }}
                               >
-                                {LLM_PROVIDERS.map((provider) => (
+                                {enabledProviders.map((provider) => (
                                   <MenuItem key={provider.value} value={provider.value}>
                                     {provider.label}
                                   </MenuItem>
@@ -828,14 +872,14 @@ const GroundTruthTestingPage: React.FC = () => {
                             </FormControl>
                           </Grid>
                           <Grid item xs={12} md={6}>
-                            <FormControl fullWidth>
+                            <FormControl fullWidth disabled={enabledExperimentModels.length === 0}>
                               <InputLabel>Model</InputLabel>
                               <Select
                                 value={experimentConfig.model}
                                 label="Model"
                                 onChange={(e) => setExperimentConfig({ ...experimentConfig, model: e.target.value })}
                               >
-                                {getExperimentModelOptions().map((model) => (
+                                {enabledExperimentModels.map((model) => (
                                   <MenuItem key={model.value} value={model.value}>
                                     {model.label}
                                   </MenuItem>
@@ -1366,6 +1410,12 @@ const GroundTruthTestingPage: React.FC = () => {
         <DialogTitle>Generate Ground Truth via SSR Pipeline</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 2 }}>
+            {enabledProviders.length === 0 && (
+              <Alert severity="warning" sx={{ mb: 2 }}>
+                No LLM providers are enabled. Please go to Settings to configure at least one provider (OpenAI, Anthropic, Gemini, or Ollama).
+              </Alert>
+            )}
+
             <Alert severity="info" sx={{ mb: 3 }}>
               This will run the full SSR pipeline using your survey's persona groups to generate a
               high-quality ground truth baseline. Higher profile counts produce better results but take longer.
@@ -1431,20 +1481,23 @@ const GroundTruthTestingPage: React.FC = () => {
               </Grid>
 
               <Grid item xs={12} md={6}>
-                <FormControl fullWidth required>
+                <FormControl fullWidth required disabled={enabledProviders.length === 0}>
                   <InputLabel>LLM Provider</InputLabel>
                   <Select
                     value={ssrConfig.llm_provider}
                     label="LLM Provider"
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      // Update provider and model atomically
+                      const newProvider = e.target.value as 'openai' | 'anthropic' | 'gemini' | 'ollama';
+                      const newModel = getDefaultModel(newProvider, settings);
                       setSSRConfig({
                         ...ssrConfig,
-                        llm_provider: e.target.value as 'openai' | 'anthropic',
-                        model: e.target.value === 'openai' ? 'gpt-4o-mini' : 'claude-3-haiku-20240307',
-                      })
-                    }
+                        llm_provider: newProvider,
+                        model: newModel || ''
+                      });
+                    }}
                   >
-                    {LLM_PROVIDERS.map((provider) => (
+                    {enabledProviders.map((provider) => (
                       <MenuItem key={provider.value} value={provider.value}>
                         {provider.label}
                       </MenuItem>
@@ -1454,14 +1507,14 @@ const GroundTruthTestingPage: React.FC = () => {
               </Grid>
 
               <Grid item xs={12} md={6}>
-                <FormControl fullWidth required>
+                <FormControl fullWidth required disabled={enabledSSRModels.length === 0}>
                   <InputLabel>Model</InputLabel>
                   <Select
                     value={ssrConfig.model}
                     label="Model"
                     onChange={(e) => setSSRConfig({ ...ssrConfig, model: e.target.value })}
                   >
-                    {getModelOptions().map((model) => (
+                    {enabledSSRModels.map((model) => (
                       <MenuItem key={model.value} value={model.value}>
                         {model.label}
                       </MenuItem>

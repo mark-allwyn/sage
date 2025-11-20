@@ -18,9 +18,12 @@ import {
   Box,
   Tooltip,
   IconButton,
+  Alert,
 } from '@mui/material';
 import { HelpOutline as HelpIcon } from '@mui/icons-material';
-import { RunSurveyConfig, LLM_PROVIDERS, OPENAI_MODELS, ANTHROPIC_MODELS, GEMINI_MODELS, OLLAMA_MODELS } from '../../services/types';
+import { RunSurveyConfig } from '../../services/types';
+import { useSettings } from '../../services/hooks';
+import { getEnabledProviders, getEnabledModelsForProvider, getDefaultProvider, getDefaultModel } from '../../utils/providerFilters';
 
 interface RunConfigPanelProps {
   config: RunSurveyConfig;
@@ -29,16 +32,32 @@ interface RunConfigPanelProps {
 }
 
 const RunConfigPanel: React.FC<RunConfigPanelProps> = ({ config, setConfig, disabled }) => {
+  const { data: settings } = useSettings();
+
   const handleChange = (field: keyof RunSurveyConfig, value: any) => {
     setConfig({ ...config, [field]: value });
   };
 
-  const getModelOptions = () => {
-    if (config.llm_provider === 'openai') return OPENAI_MODELS;
-    if (config.llm_provider === 'anthropic') return ANTHROPIC_MODELS;
-    if (config.llm_provider === 'gemini') return GEMINI_MODELS;
-    return OLLAMA_MODELS;
-  };
+  const enabledProviders = getEnabledProviders(settings);
+  const enabledModels = getEnabledModelsForProvider(config.llm_provider, settings);
+
+  // Auto-select default provider if current one is not enabled
+  React.useEffect(() => {
+    if (settings && enabledProviders.length > 0) {
+      const currentProviderEnabled = enabledProviders.some(p => p.value === config.llm_provider);
+      if (!currentProviderEnabled) {
+        const defaultProvider = getDefaultProvider(settings);
+        const defaultModel = defaultProvider ? getDefaultModel(defaultProvider, settings) : null;
+        if (defaultProvider && defaultModel) {
+          setConfig({
+            ...config,
+            llm_provider: defaultProvider,
+            model: defaultModel
+          });
+        }
+      }
+    }
+  }, [settings, enabledProviders]);
 
   return (
     <Paper sx={{ p: 3 }}>
@@ -52,6 +71,12 @@ const RunConfigPanel: React.FC<RunConfigPanelProps> = ({ config, setConfig, disa
           </IconButton>
         </Tooltip>
       </Box>
+
+      {enabledProviders.length === 0 && (
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          No LLM providers are enabled. Please go to Settings to configure at least one provider (OpenAI, Anthropic, Gemini, or Ollama).
+        </Alert>
+      )}
 
       <Grid container spacing={3}>
         {/* Sample Size */}
@@ -92,7 +117,7 @@ const RunConfigPanel: React.FC<RunConfigPanelProps> = ({ config, setConfig, disa
         {/* LLM Provider */}
         <Grid item xs={12} md={6}>
           <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-            <FormControl fullWidth disabled={disabled}>
+            <FormControl fullWidth disabled={disabled || enabledProviders.length === 0}>
               <InputLabel>LLM Provider</InputLabel>
               <Select
                 value={config.llm_provider}
@@ -100,19 +125,15 @@ const RunConfigPanel: React.FC<RunConfigPanelProps> = ({ config, setConfig, disa
                 onChange={(e) => {
                   // Update provider and model atomically
                   const newProvider = e.target.value as 'openai' | 'anthropic' | 'gemini' | 'ollama';
-                  let newModels;
-                  if (newProvider === 'openai') newModels = OPENAI_MODELS;
-                  else if (newProvider === 'anthropic') newModels = ANTHROPIC_MODELS;
-                  else if (newProvider === 'gemini') newModels = GEMINI_MODELS;
-                  else newModels = OLLAMA_MODELS;
+                  const newModel = getDefaultModel(newProvider, settings);
                   setConfig({
                     ...config,
                     llm_provider: newProvider,
-                    model: newModels[0].value
+                    model: newModel || ''
                   });
                 }}
               >
-                {LLM_PROVIDERS.map((provider) => (
+                {enabledProviders.map((provider) => (
                   <MenuItem key={provider.value} value={provider.value}>
                     {provider.label}
                   </MenuItem>
@@ -130,14 +151,14 @@ const RunConfigPanel: React.FC<RunConfigPanelProps> = ({ config, setConfig, disa
         {/* Model */}
         <Grid item xs={12} md={6}>
           <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-            <FormControl fullWidth disabled={disabled}>
+            <FormControl fullWidth disabled={disabled || enabledModels.length === 0}>
               <InputLabel>Model</InputLabel>
               <Select
                 value={config.model}
                 label="Model"
                 onChange={(e) => handleChange('model', e.target.value)}
               >
-                {getModelOptions().map((model) => (
+                {enabledModels.map((model) => (
                   <MenuItem key={model.value} value={model.value}>
                     {model.label}
                   </MenuItem>
