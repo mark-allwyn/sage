@@ -20,7 +20,7 @@ import {
   IconButton,
 } from '@mui/material';
 import { HelpOutline as HelpIcon } from '@mui/icons-material';
-import { RunSurveyConfig, LLM_PROVIDERS, OPENAI_MODELS, ANTHROPIC_MODELS, OLLAMA_MODELS } from '../../services/types';
+import { RunSurveyConfig, LLM_PROVIDERS, OPENAI_MODELS, ANTHROPIC_MODELS, GEMINI_MODELS, OLLAMA_MODELS } from '../../services/types';
 
 interface RunConfigPanelProps {
   config: RunSurveyConfig;
@@ -36,6 +36,7 @@ const RunConfigPanel: React.FC<RunConfigPanelProps> = ({ config, setConfig, disa
   const getModelOptions = () => {
     if (config.llm_provider === 'openai') return OPENAI_MODELS;
     if (config.llm_provider === 'anthropic') return ANTHROPIC_MODELS;
+    if (config.llm_provider === 'gemini') return GEMINI_MODELS;
     return OLLAMA_MODELS;
   };
 
@@ -98,10 +99,11 @@ const RunConfigPanel: React.FC<RunConfigPanelProps> = ({ config, setConfig, disa
                 label="LLM Provider"
                 onChange={(e) => {
                   // Update provider and model atomically
-                  const newProvider = e.target.value as 'openai' | 'anthropic' | 'ollama';
+                  const newProvider = e.target.value as 'openai' | 'anthropic' | 'gemini' | 'ollama';
                   let newModels;
                   if (newProvider === 'openai') newModels = OPENAI_MODELS;
                   else if (newProvider === 'anthropic') newModels = ANTHROPIC_MODELS;
+                  else if (newProvider === 'gemini') newModels = GEMINI_MODELS;
                   else newModels = OLLAMA_MODELS;
                   setConfig({
                     ...config,
@@ -117,7 +119,7 @@ const RunConfigPanel: React.FC<RunConfigPanelProps> = ({ config, setConfig, disa
                 ))}
               </Select>
             </FormControl>
-            <Tooltip title="Select between OpenAI (GPT models), Anthropic (Claude models), or Ollama (Local models like Gemma 3). Make sure you have API keys configured for cloud providers, or Ollama running locally.">
+            <Tooltip title="Select between OpenAI (GPT models), Anthropic (Claude models), Google Gemini, or Ollama (Local models like Gemma 3). Make sure you have API keys configured for cloud providers, or Ollama running locally.">
               <IconButton size="small" sx={{ mt: 1 }}>
                 <HelpIcon fontSize="small" />
               </IconButton>
