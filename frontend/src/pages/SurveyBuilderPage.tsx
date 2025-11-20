@@ -63,7 +63,6 @@ const SurveyBuilderPage: React.FC = () => {
     persona_groups: [],
     categories: [],
     demographics: ['age_group', 'gender', 'occupation'],
-    sample_size: 100,
   });
   const [filename, setFilename] = useState('');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
@@ -92,7 +91,6 @@ const SurveyBuilderPage: React.FC = () => {
         persona_groups: selectedSurvey.persona_groups,
         categories: selectedSurvey.categories || [],
         demographics: selectedSurvey.demographics || ['age_group', 'gender', 'occupation'],
-        sample_size: selectedSurvey.sample_size || 100,
       });
       setFilename(selectedSurveyId + '.yaml');
     }
@@ -163,7 +161,6 @@ const SurveyBuilderPage: React.FC = () => {
         persona_groups: [],
         categories: [],
         demographics: ['age_group', 'gender', 'occupation'],
-        sample_size: 100,
       });
       setFilename('');
     },
@@ -211,7 +208,6 @@ const SurveyBuilderPage: React.FC = () => {
         persona_groups: [],
         categories: [],
         demographics: ['age_group', 'gender', 'occupation'],
-        sample_size: 100,
       });
       setFilename('');
       // Refresh surveys list to update dropdown
@@ -242,7 +238,6 @@ const SurveyBuilderPage: React.FC = () => {
         persona_groups: [],
         categories: [],
         demographics: ['age_group', 'gender', 'occupation'],
-        sample_size: 100,
       });
       setFilename('');
     }
@@ -639,7 +634,6 @@ const generateYAML = (data: SurveyBuilderState): string => {
   yaml.push(`  name: "${data.name}"`);
   yaml.push(`  description: "${data.description}"`);
   yaml.push(`  context: "${data.context}"`);
-  yaml.push(`  sample_size: ${data.sample_size}`);
 
   // Demographics
   yaml.push('  demographics:');

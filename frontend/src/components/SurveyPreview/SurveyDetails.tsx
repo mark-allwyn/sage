@@ -37,15 +37,7 @@ const SurveyDetails: React.FC<SurveyDetailsProps> = ({ survey }) => {
       </Box>
 
       <Grid container spacing={2}>
-        <Grid item xs={12} md={3}>
-          <Typography variant="subtitle2" color="text.secondary">
-            Sample Size
-          </Typography>
-          <Typography variant="h6">
-            {survey.sample_size}
-          </Typography>
-        </Grid>
-        <Grid item xs={12} md={3}>
+        <Grid item xs={12} md={4}>
           <Typography variant="subtitle2" color="text.secondary">
             Questions
           </Typography>

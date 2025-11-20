@@ -12,7 +12,6 @@ export interface Survey {
   persona_groups: PersonaGroup[];
   categories?: Category[];
   demographics: string[];
-  sample_size: number;
 }
 
 export interface SurveyListItem {
@@ -182,7 +181,6 @@ export interface SurveyBuilderState {
   persona_groups: PersonaGroup[];
   categories: Category[];
   demographics: string[];
-  sample_size: number;
 }
 
 export interface RunSurveyConfig {

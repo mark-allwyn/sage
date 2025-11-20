@@ -175,31 +175,6 @@ const SurveyForm: React.FC<SurveyFormProps> = ({ surveyData, setSurveyData }) =>
               </Tooltip>
             </Box>
           </Grid>
-          <Grid item xs={12} md={6}>
-            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-              <TextField
-                fullWidth
-                type="number"
-                label="Sample Size"
-                value={surveyData.sample_size}
-                onChange={(e) => handleChange('sample_size', parseInt(e.target.value) || 100)}
-                inputProps={{ min: 10, max: 1000 }}
-                helperText="Number of synthetic respondents (10-1000)"
-              />
-              <Tooltip title="The total number of synthetic respondents to generate. Larger samples provide more statistical power but take longer to run. Start with 100-200 for testing." arrow placement="right">
-                <IconButton
-                  size="medium"
-                  sx={{
-                    mt: 1,
-                    minWidth: 44,
-                    minHeight: 44,
-                  }}
-                >
-                  <HelpIcon />
-                </IconButton>
-              </Tooltip>
-            </Box>
-          </Grid>
         </Grid>
       </Paper>
         </AccordionDetails>

@@ -26,7 +26,6 @@ const YAMLPreview: React.FC<YAMLPreviewProps> = ({ surveyData }) => {
     yaml.push(`  name: "${escapeYAMLString(surveyData.name || 'Untitled Survey')}"`);
     yaml.push(`  description: "${escapeYAMLString(surveyData.description || 'No description')}"`);
     yaml.push(`  context: "${escapeYAMLString(surveyData.context || 'No context provided')}"`);
-    yaml.push(`  sample_size: ${surveyData.sample_size}`);
 
     // Demographics
     yaml.push('  demographics:');

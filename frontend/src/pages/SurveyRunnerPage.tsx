@@ -327,16 +327,6 @@ const SurveyRunnerPage: React.FC = () => {
                 </Typography>
               </Box>
             </Grid>
-            <Grid item xs={3}>
-              <Box sx={{ textAlign: 'center' }}>
-                <Typography variant="h5" color="primary" fontWeight="bold">
-                  {survey.sample_size}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Target Sample
-                </Typography>
-              </Box>
-            </Grid>
           </Grid>
         </Paper>
       )}
