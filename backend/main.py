@@ -489,7 +489,10 @@ async def get_surveys():
                 has_categories=survey.has_categories()
             ))
         except Exception as e:
-            # Skip invalid survey files
+            # Log and skip invalid survey files
+            logger.error(f"Failed to load survey from {yaml_file.name}: {str(e)}")
+            import traceback
+            logger.error(traceback.format_exc())
             continue
 
     return surveys

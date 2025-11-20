@@ -1,259 +1,243 @@
 survey:
   name: "Multi-Product Lottery Comparison"
   description: "Compare three different lottery game formats: traditional draw, instant scratch, and digital app-based"
-
-  context: |
-    We are conducting research to understand player preferences across different lottery game formats.
-    Please evaluate all three options carefully when answering the questions.
-
-  sample_size: 150
-
+  context: "We are conducting research to understand player preferences across different lottery game formats.
+Please evaluate all three options carefully when answering the questions.
+"
   demographics:
     - age_group
     - gender
     - income_level
     - persona_group
-
   categories:
     - id: traditional_powerball
       name: "Traditional Powerball Draw Game"
       description: "Classic lottery with bi-weekly drawings and large jackpots"
-      context: |
-        **POWERBALL - Traditional Draw Game**
+      context: "**POWERBALL - Traditional Lottery Draw Game**
 
-        - Ticket Price: $2 per play ($3 with Power Play multiplier)
-        - Drawings: Twice weekly (Wednesday and Saturday nights)
-        - Starting Jackpot: $20 million (rolls over until won)
-        - Record Jackpot: $2.04 billion
-        - Overall Odds of Winning Any Prize: 1 in 24.9
-        - Odds of Jackpot: 1 in 292.2 million
+- Ticket Price: $2 per play
+- Drawing Schedule: Twice weekly (Wednesday & Saturday nights at 10:59 PM ET)
+- Current Jackpot: $180 million (grows until won)
+- Overall Odds of Winning Any Prize: 1 in 24.9
+- Must match numbers from two separate pools to win jackpot
 
-        How to Play:
-        - Choose 5 numbers from 1-69 and 1 Powerball from 1-26
-        - Match all 6 numbers to win the jackpot
-        - 9 prize tiers from $4 to jackpot
-        - Can add Power Play for 2x-10x prize multiplier
+How to Play:
+- Choose 5 numbers from 1 to 69 (white balls)
+- Choose 1 Powerball number from 1 to 26 (red ball)
+- Quick Pick option available for random number selection
+- Purchase tickets up to 1 hour before draw time
 
-        Prize Structure:
-        - Match 5 + Powerball: Jackpot (1 in 292M)
-        - Match 5: $1 million (1 in 11.7M)
-        - Match 4 + Powerball: $50,000 (1 in 913K)
-        - Match 4: $100 (1 in 36.5K)
-        - Smaller prizes down to $4
+Prize Tiers:
+- Match 5 + Powerball: Jackpot (minimum $20 million)
+- Match 5: $1 million
+- Match 4 + Powerball: $50,000
+- Match 4: $100
+- Match 3 + Powerball: $100
+- Match 3: $7
+- Match 2 + Powerball: $7
+- Match 1 + Powerball: $4
+- Match Powerball only: $4
 
+Special Features:
+- Power Play: Multiply non-jackpot prizes 2x-5x for extra $1
+- Annuity option: 30 graduated payments over 29 years
+- Cash option: Lump sum payment (approximately 50% of advertised jackpot)
+- Multi-draw: Purchase up to 26 consecutive draws in advance
+"
     - id: instant_scratch_card
       name: "Instant Win Scratch Card"
       description: "Immediate results with instant gratification"
-      context: |
-        **LUCKY 7s - Instant Scratch Card**
+      context: "**LUCKY 7s - Instant Scratch Card**
 
-        - Ticket Price: $5 per card
-        - Results: Instant - know immediately if you won
-        - Top Prize: $250,000 cash
-        - Overall Odds of Winning: 1 in 3.2
-        - Multiple chances to win on each card
+- Ticket Price: $5 per card
+- Results: Instant - know immediately if you won
+- Top Prize: $250,000 cash
+- Overall Odds of Winning: 1 in 3.2
+- Multiple chances to win on each card
 
-        How to Play:
-        - Scratch off the play area to reveal symbols
-        - Match three 7s to win prizes
-        - Bonus multiplier section can increase wins up to 5x
-        - Fun themed designs with metallic inks
+How to Play:
+- Scratch off the play area to reveal symbols
+- Match three 7s to win prizes
+- Bonus multiplier section can increase wins up to 5x
+- Fun themed designs with metallic inks
 
-        Prize Structure:
-        - $250,000: 1 in 1.2 million
-        - $10,000: 1 in 240,000
-        - $1,000: 1 in 24,000
-        - $100: 1 in 600
-        - $20: 1 in 60
-        - $5: 1 in 10
+Prize Structure:
+- $250,000: 1 in 1.2 million
+- $10,000: 1 in 240,000
+- $1,000: 1 in 24,000
+- $100: 1 in 600
+- $20: 1 in 60
+- $5: 1 in 10
 
-        Special Features:
-        - Bonus game on every card
-        - Second chance drawing for non-winners
-        - Can play immediately, no waiting for draw
-
+Special Features:
+- Bonus game on every card
+- Second chance drawing for non-winners
+- Can play immediately, no waiting for draw
+"
     - id: digital_lottery_app
       name: "Digital Lottery Mobile App"
       description: "Modern app-based lottery with daily games and instant notifications"
-      context: |
-        **LOTTO DAILY - Digital Mobile App Game**
+      context: "**LOTTO DAILY - Digital Mobile App Game**
 
-        - Play Cost: $1-$10 per game (player chooses)
-        - Games: Multiple daily games (morning, afternoon, evening)
-        - Jackpots: $10,000-$100,000 depending on participation
-        - Overall Odds: 1 in 5 to 1 in 15 (varies by game)
-        - Instant Notification: Get alerts immediately if you win
+- Play Cost: $1-$10 per game (player chooses)
+- Games: Multiple daily games (morning, afternoon, evening)
+- Jackpots: $10,000-$100,000 depending on participation
+- Overall Odds: 1 in 5 to 1 in 15 (varies by game)
+- Instant Notification: Get alerts immediately if you win
 
-        How to Play:
-        - Download free app, register account
-        - Choose from 5 different daily game styles
-        - Quick pick or select your own numbers
-        - Auto-play subscription options available
-        - Winnings deposited directly to app wallet or bank
+How to Play:
+- Download free app, register account
+- Choose from 5 different daily game styles
+- Quick pick or select your own numbers
+- Auto-play subscription options available
+- Winnings deposited directly to app wallet or bank
 
-        Game Types:
-        - Daily 3: Pick 3 numbers, draws every 4 hours
-        - Lucky Match: Match symbols, instant win style
-        - Jackpot Builder: Progressive jackpot, daily draw
-        - Speed Pick: 5-minute quick games
-        - Weekend Mega: Larger prizes, weekend draws
+Game Types:
+- Daily 3: Pick 3 numbers, draws every 4 hours
+- Lucky Match: Match symbols, instant win style
+- Jackpot Builder: Progressive jackpot, daily draw
+- Speed Pick: 5-minute quick games
+- Weekend Mega: Larger prizes, weekend draws
 
-        Digital Features:
-        - Save favorite numbers
-        - Purchase history and win tracking
-        - Social sharing and group play
-        - Responsible gaming tools (spending limits)
-        - Cashless, convenient, secure
-
+Digital Features:
+- Save favorite numbers
+- Purchase history and win tracking
+- Social sharing and group play
+- Responsible gaming tools (spending limits)
+- Cashless, convenient, secure
+"
   questions:
-    # Traditional Powerball Questions
-    - id: "pb_purchase_intent"
+    - id: pb_purchase_intent
       text: "How likely would you be to play this traditional Powerball game?"
-      type: "likert_5"
-      category: "traditional_powerball"
+      type: likert_5
+      category: traditional_powerball
       scale:
-        1: "Very Unlikely"
+        1: "Very unlikely"
         2: "Unlikely"
         3: "Neutral"
         4: "Likely"
-        5: "Very Likely"
-
-    - id: "pb_value"
+        5: "Very likely"
+    - id: pb_value
       text: "The $2 ticket price represents good value for this game"
-      type: "likert_5"
-      category: "traditional_powerball"
+      type: likert_5
+      category: traditional_powerball
       scale:
-        1: "Strongly Disagree"
+        1: "Strongly disagree"
         2: "Disagree"
         3: "Neutral"
         4: "Agree"
-        5: "Strongly Agree"
-
-    - id: "pb_excitement"
+        5: "Strongly agree"
+    - id: pb_excitement
       text: "The anticipation of waiting for the drawing is exciting"
-      type: "likert_5"
-      category: "traditional_powerball"
+      type: likert_5
+      category: traditional_powerball
       scale:
-        1: "Strongly Disagree"
+        1: "Strongly disagree"
         2: "Disagree"
         3: "Neutral"
         4: "Agree"
-        5: "Strongly Agree"
-
-    - id: "pb_jackpot_appeal"
+        5: "Strongly agree"
+    - id: pb_jackpot_appeal
       text: "The large jackpot potential is the main appeal of this game"
-      type: "likert_5"
-      category: "traditional_powerball"
+      type: likert_5
+      category: traditional_powerball
       scale:
-        1: "Strongly Disagree"
+        1: "Strongly disagree"
         2: "Disagree"
         3: "Neutral"
         4: "Agree"
-        5: "Strongly Agree"
-
-    # Instant Scratch Card Questions
-    - id: "sc_purchase_intent"
+        5: "Strongly agree"
+    - id: sc_purchase_intent
       text: "How likely would you be to purchase this $5 scratch card?"
-      type: "likert_5"
-      category: "instant_scratch_card"
+      type: likert_5
+      category: instant_scratch_card
       scale:
-        1: "Very Unlikely"
+        1: "Very unlikely"
         2: "Unlikely"
         3: "Neutral"
         4: "Likely"
-        5: "Very Likely"
-
-    - id: "sc_value"
+        5: "Very likely"
+    - id: sc_value
       text: "The $5 price for instant results is good value"
-      type: "likert_5"
-      category: "instant_scratch_card"
+      type: likert_5
+      category: instant_scratch_card
       scale:
-        1: "Strongly Disagree"
+        1: "Strongly disagree"
         2: "Disagree"
         3: "Neutral"
         4: "Agree"
-        5: "Strongly Agree"
-
-    - id: "sc_instant_gratification"
+        5: "Strongly agree"
+    - id: sc_instant_gratification
       text: "I prefer knowing immediately if I won rather than waiting for a drawing"
-      type: "likert_5"
-      category: "instant_scratch_card"
+      type: likert_5
+      category: instant_scratch_card
       scale:
-        1: "Strongly Disagree"
+        1: "Strongly disagree"
         2: "Disagree"
         3: "Neutral"
         4: "Agree"
-        5: "Strongly Agree"
-
-    - id: "sc_odds_appeal"
+        5: "Strongly agree"
+    - id: sc_odds_appeal
       text: "The better odds (1 in 3.2) make this more appealing than draw games"
-      type: "likert_5"
-      category: "instant_scratch_card"
+      type: likert_5
+      category: instant_scratch_card
       scale:
-        1: "Strongly Disagree"
+        1: "Strongly disagree"
         2: "Disagree"
         3: "Neutral"
         4: "Agree"
-        5: "Strongly Agree"
-
-    # Digital App Questions
-    - id: "app_purchase_intent"
+        5: "Strongly agree"
+    - id: app_purchase_intent
       text: "How likely would you be to use this digital lottery app?"
-      type: "likert_5"
-      category: "digital_lottery_app"
+      type: likert_5
+      category: digital_lottery_app
       scale:
-        1: "Very Unlikely"
+        1: "Very unlikely"
         2: "Unlikely"
         3: "Neutral"
         4: "Likely"
-        5: "Very Likely"
-
-    - id: "app_convenience"
+        5: "Very likely"
+    - id: app_convenience
       text: "The convenience of playing on my phone is appealing"
-      type: "likert_5"
-      category: "digital_lottery_app"
+      type: likert_5
+      category: digital_lottery_app
       scale:
-        1: "Strongly Disagree"
+        1: "Strongly disagree"
         2: "Disagree"
         3: "Neutral"
         4: "Agree"
-        5: "Strongly Agree"
-
-    - id: "app_daily_games"
+        5: "Strongly agree"
+    - id: app_daily_games
       text: "Multiple daily games with smaller jackpots is better than waiting for large draws"
-      type: "likert_5"
-      category: "digital_lottery_app"
+      type: likert_5
+      category: digital_lottery_app
       scale:
-        1: "Strongly Disagree"
+        1: "Strongly disagree"
         2: "Disagree"
         3: "Neutral"
         4: "Agree"
-        5: "Strongly Agree"
-
-    - id: "app_trust"
+        5: "Strongly agree"
+    - id: app_trust
       text: "I would trust a digital app for lottery play and winnings"
-      type: "likert_5"
-      category: "digital_lottery_app"
+      type: likert_5
+      category: digital_lottery_app
       scale:
-        1: "Strongly Disagree"
+        1: "Strongly disagree"
         2: "Disagree"
         3: "Neutral"
         4: "Agree"
-        5: "Strongly Agree"
-
-    # Comparison Questions
-    - id: "preferred_format"
+        5: "Strongly agree"
+    - id: preferred_format
       text: "Which lottery format do you prefer MOST overall?"
-      type: "multiple_choice"
+      type: multiple_choice
       options:
         - "Traditional Powerball (bi-weekly draw game with large jackpots)"
         - "Instant Win Scratch Card (immediate results, better odds)"
         - "Digital Lottery App (mobile-based with daily games)"
         - "None - I would not play any of these"
-
-    - id: "most_important_factor"
+    - id: most_important_factor
       text: "What is the most important factor when choosing a lottery game?"
-      type: "multiple_choice"
+      type: multiple_choice
       options:
         - "Size of potential jackpot"
         - "Odds of winning any prize"
@@ -262,54 +246,48 @@ survey:
         - "Convenience and accessibility"
         - "Entertainment value and fun"
         - "Trust in the game operator"
-
   persona_groups:
     - name: "Traditional Lottery Players"
       description: "Prefer classic draw games with large jackpots"
-      weight: 0.30
-      target_demographics:
-        gender: ["Male", "Female"]
-        age_group: ["45-54", "55-64", "65+"]
-        income_level: ["$25k-$50k", "$50k-$75k"]
+      weight: 0.3
       personas:
         - "A 52-year-old who has played Powerball for 20 years. Enjoys the ritual and dreams of the big win."
         - "A 58-year-old who only plays when jackpot exceeds $100M. Likes the excitement of massive prizes."
         - "A 64-year-old who plays the same numbers weekly. Views it as a small investment in possibility."
-
+      target_demographics:
+        gender: ["Male", "Female"]
+        age_group: ["45-54", "55-64", "65+"]
+        income_level: ["$25k-$50k", "$50k-$75k"]
     - name: "Instant Gratification Seekers"
       description: "Prefer scratch cards and instant win games"
       weight: 0.25
-      target_demographics:
-        gender: ["Male", "Female"]
-        age_group: ["25-34", "35-44", "45-54"]
-        income_level: ["$25k-$50k", "$50k-$75k"]
       personas:
         - "A 32-year-old who wants to know immediately if they won. Doesn't like waiting for draws."
         - "A 41-year-old who enjoys the physical act of scratching. It's part of the fun and entertainment."
         - "A 48-year-old who prefers better odds even with smaller prizes. Wins more often with scratch cards."
-
+      target_demographics:
+        gender: ["Male", "Female"]
+        age_group: ["25-34", "35-44", "45-54"]
+        income_level: ["$25k-$50k", "$50k-$75k"]
     - name: "Digital-First Players"
       description: "Tech-savvy individuals who prefer mobile apps and digital convenience"
       weight: 0.25
-      target_demographics:
-        gender: ["Male", "Female"]
-        age_group: ["21-24", "25-34", "35-44"]
-        income_level: ["$50k-$75k", "$75k-$100k"]
       personas:
         - "A 28-year-old who does everything on their phone. Wants seamless digital experience."
         - "A 35-year-old who appreciates daily games and instant notifications. Likes the modern approach."
         - "A 42-year-old who values convenience and tracking. Prefers cashless digital transactions."
-
-    - name: "Cautious Non-Players"
-      description: "Skeptical of lottery, rarely or never play"
-      weight: 0.20
       target_demographics:
         gender: ["Male", "Female"]
-        age_group: ["25-34", "35-44", "45-54"]
-        income_level: ["Under $25k", "$25k-$50k", "$50k-$75k"]
+        age_group: ["21-24", "25-34", "35-44"]
+        income_level: ["$50k-$75k", "$75k-$100k"]
+    - name: "Cautious Non-Players"
+      description: "Skeptical of lottery, rarely or never play"
+      weight: 0.2
       personas:
         - "A 30-year-old who thinks lottery is a waste of money. Focused on saving and investing."
         - "A 38-year-old who doesn't trust the odds. Prefers guaranteed returns on money spent."
         - "A 46-year-old who played once years ago, didn't win, never tried again. Skeptical of all formats."
-
-  sample_size: 200
+      target_demographics:
+        gender: ["Male", "Female"]
+        age_group: ["25-34", "35-44", "45-54"]
+        income_level: ["Under $25k", "$25k-$50k", "$50k-$75k"]
