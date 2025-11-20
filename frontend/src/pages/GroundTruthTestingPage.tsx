@@ -74,9 +74,10 @@ import {
   useSurveyRuns,
   useCompareToGroundTruth,
 } from '../services/hooks';
-import { CreateGroundTruthFromSSRRequest, RunSurveyRequest, LLM_PROVIDERS, OPENAI_MODELS, ANTHROPIC_MODELS } from '../services/types';
+import { CreateGroundTruthFromSSRRequest, RunSurveyRequest, LLM_PROVIDERS, OPENAI_MODELS, ANTHROPIC_MODELS, UploadGroundTruthCSVResponse } from '../services/types';
 import { EmptyState } from '../components/EmptyState';
 import PageHeader from '../components/PageHeader';
+import { uploadGroundTruthCSV, getErrorMessage } from '../services/api';
 
 const GroundTruthTestingPage: React.FC = () => {
   const [activeStep, setActiveStep] = useState(0);
@@ -117,6 +118,16 @@ const GroundTruthTestingPage: React.FC = () => {
 
   // Ground Truth View State
   const [viewingGroundTruthId, setViewingGroundTruthId] = useState<string | null>(null);
+
+  // CSV Upload State
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadName, setUploadName] = useState('');
+  const [uploadDescription, setUploadDescription] = useState('');
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadPreview, setUploadPreview] = useState<any>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const { data: surveys } = useSurveys();
   const { data: survey } = useSurvey(selectedSurvey, { enabled: !!selectedSurvey });
@@ -287,6 +298,70 @@ const GroundTruthTestingPage: React.FC = () => {
     } catch (error) {
       console.error('Error downloading ground truth:', error);
       alert('Failed to download ground truth. Please try again.');
+    }
+  };
+
+  const handleOpenUploadDialog = () => {
+    if (!selectedSurvey) {
+      alert('Please select a survey first');
+      return;
+    }
+    setUploadDialogOpen(true);
+    setUploadFile(null);
+    setUploadName('');
+    setUploadDescription('');
+    setUploadError(null);
+    setUploadPreview(null);
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setUploadFile(file);
+      setUploadError(null);
+    }
+  };
+
+  const handleUploadCSV = async () => {
+    if (!uploadFile || !selectedSurvey || !uploadName) {
+      setUploadError('Please provide a file, name, and ensure a survey is selected');
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadError(null);
+    setUploadProgress(0);
+
+    try {
+      const result: UploadGroundTruthCSVResponse = await uploadGroundTruthCSV(
+        selectedSurvey,
+        uploadName,
+        uploadDescription,
+        uploadFile,
+        (progressEvent: any) => {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setUploadProgress(percentCompleted);
+        }
+      );
+
+      if (result.success) {
+        setUploadPreview(result.preview);
+        refetchGroundTruths();
+        setUploadDialogOpen(false);
+        // Reset form
+        setUploadFile(null);
+        setUploadName('');
+        setUploadDescription('');
+        setUploadProgress(0);
+        alert(`Ground truth "${uploadName}" uploaded successfully!`);
+      } else {
+        setUploadError(result.errors?.map(e => e.message).join(', ') || 'Upload failed');
+      }
+    } catch (error) {
+      setUploadError(getErrorMessage(error));
+      console.error('CSV upload error:', error);
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -543,7 +618,7 @@ const GroundTruthTestingPage: React.FC = () => {
                               <Typography variant="h6" color="text.secondary">Upload Data</Typography>
                             </Box>
                             <Typography variant="body2" color="text.secondary">
-                              Upload ground truth from real survey results or external sources (CSV/JSON format).
+                              Upload ground truth from real survey results in CSV format with probability distributions.
                             </Typography>
                           </CardContent>
                           <CardActions>
@@ -551,9 +626,9 @@ const GroundTruthTestingPage: React.FC = () => {
                               variant="outlined"
                               fullWidth
                               startIcon={<CloudUploadIcon />}
-                              disabled
+                              onClick={handleOpenUploadDialog}
                             >
-                              Upload (Coming Soon)
+                              Upload CSV Data
                             </Button>
                           </CardActions>
                         </Card>
@@ -1463,6 +1538,104 @@ const GroundTruthTestingPage: React.FC = () => {
             disabled={!ssrConfig.name || createSSRMutation.isPending}
           >
             {createSSRMutation.isPending ? 'Generating...' : 'Generate Ground Truth'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* CSV Upload Dialog */}
+      <Dialog open={uploadDialogOpen} onClose={() => setUploadDialogOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle>Upload Ground Truth from CSV</DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 2 }}>
+            <Alert severity="info" sx={{ mb: 3 }}>
+              Upload ground truth data from real survey results in CSV format. The file should contain probability distributions for each respondent and question.
+            </Alert>
+
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <TextField
+                  label="Ground Truth Name"
+                  fullWidth
+                  required
+                  value={uploadName}
+                  onChange={(e) => setUploadName(e.target.value)}
+                  placeholder="e.g., Real Survey Results Q1 2024"
+                />
+              </Grid>
+
+              <Grid item xs={12}>
+                <TextField
+                  label="Description"
+                  fullWidth
+                  multiline
+                  rows={2}
+                  value={uploadDescription}
+                  onChange={(e) => setUploadDescription(e.target.value)}
+                  placeholder="Optional: Describe the source of this data"
+                />
+              </Grid>
+
+              <Grid item xs={12}>
+                <Divider />
+                <Typography variant="subtitle2" sx={{ mt: 2, mb: 1 }}>
+                  CSV File
+                </Typography>
+              </Grid>
+
+              <Grid item xs={12}>
+                <Button
+                  variant="outlined"
+                  component="label"
+                  fullWidth
+                  startIcon={<CloudUploadIcon />}
+                  sx={{ py: 2 }}
+                >
+                  {uploadFile ? uploadFile.name : 'Choose CSV File'}
+                  <input
+                    type="file"
+                    hidden
+                    accept=".csv"
+                    onChange={handleFileSelect}
+                  />
+                </Button>
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                  Expected format: Category, Question ID, Respondent ID, Rating, Probability
+                </Typography>
+              </Grid>
+
+              {uploadProgress > 0 && uploadProgress < 100 && (
+                <Grid item xs={12}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <LinearProgress variant="determinate" value={uploadProgress} sx={{ flexGrow: 1 }} />
+                    <Typography variant="body2">{uploadProgress}%</Typography>
+                  </Box>
+                </Grid>
+              )}
+
+              {uploadError && (
+                <Grid item xs={12}>
+                  <Alert severity="error">
+                    <Typography variant="body2" fontWeight="medium" gutterBottom>
+                      Upload Error
+                    </Typography>
+                    <Typography variant="body2">{uploadError}</Typography>
+                  </Alert>
+                </Grid>
+              )}
+            </Grid>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setUploadDialogOpen(false)} disabled={isUploading}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleUploadCSV}
+            variant="contained"
+            disabled={!uploadFile || !uploadName || isUploading}
+            startIcon={isUploading ? <CircularProgress size={20} /> : <CloudUploadIcon />}
+          >
+            {isUploading ? 'Uploading...' : 'Upload Ground Truth'}
           </Button>
         </DialogActions>
       </Dialog>

@@ -588,3 +588,42 @@ export const EVALUATION_METRICS: { value: EvaluationMetricType; label: string; d
     description: 'Detects if the response contains fabricated information',
   },
 ];
+
+// CSV Upload Types
+export interface CSVValidationError {
+  line_number?: number;
+  field?: string;
+  message: string;
+  severity: 'error' | 'warning';
+}
+
+export interface CSVUploadPreview {
+  success: boolean;
+  format_detected: 'raw' | 'aggregated';
+  num_respondents?: number;
+  num_questions: number;
+  num_categories: number;
+  categories: string[];
+  questions: string[];
+  sample_data: Array<{
+    category: string;
+    question_id: string;
+    respondent_id?: string;
+    rating: number;
+    probability: number;
+  }>;
+  validation_errors: CSVValidationError[];
+  validation_warnings: CSVValidationError[];
+  metadata?: {
+    name?: string;
+    description?: string;
+  };
+}
+
+export interface UploadGroundTruthCSVResponse {
+  success: boolean;
+  ground_truth_id?: string;
+  preview?: CSVUploadPreview;
+  message?: string;
+  errors?: CSVValidationError[];
+}

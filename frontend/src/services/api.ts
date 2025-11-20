@@ -29,6 +29,7 @@ import {
   SurveyEvaluation,
   EvaluationListItem,
   EvaluationComparison,
+  UploadGroundTruthCSVResponse,
 } from './types';
 
 // Create axios instance with base configuration
@@ -250,6 +251,32 @@ export const uploadGroundTruth = async (
   request: UploadGroundTruthRequest
 ): Promise<{ id: string; status: string; name: string }> => {
   const response = await api.post('/api/ground-truths/from-upload', request);
+  return response.data;
+};
+
+/**
+ * Upload ground truth from CSV file
+ */
+export const uploadGroundTruthCSV = async (
+  surveyId: string,
+  name: string,
+  description: string,
+  file: File,
+  onUploadProgress?: (progressEvent: any) => void
+): Promise<UploadGroundTruthCSVResponse> => {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('survey_id', surveyId);
+  formData.append('name', name);
+  formData.append('description', description);
+
+  const response = await api.post('/api/ground-truths/upload-csv', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+    timeout: 300000, // 5 minutes for CSV parsing
+    onUploadProgress,
+  });
   return response.data;
 };
 
