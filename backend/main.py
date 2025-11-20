@@ -46,6 +46,9 @@ import numpy as np
 # Import ground truth metrics
 from ground_truth_metrics import compare_survey_runs
 
+# Import constants
+from constants import DEFAULT_CATEGORY, DEFAULT_MAX_CONCURRENT
+
 
 # Helper function to convert numpy types to Python native types
 def convert_numpy_types(obj):
@@ -81,6 +84,17 @@ def convert_numpy_types(obj):
     elif isinstance(obj, tuple):
         return tuple(convert_numpy_types(item) for item in obj)
     return obj
+
+def build_response_lookup(responses: List[Response]) -> Dict[tuple, Response]:
+    """
+    Build O(1) lookup dictionary for responses by (respondent_id, question_id).
+
+    Fixes N+1 query pattern: Instead of searching through all responses for each
+    distribution (O(n²)), we build this lookup once and use it repeatedly (O(n)).
+
+    For 5,000 distributions with 5,000 responses: ~2,500× speedup
+    """
+    return {(r.respondent_id, r.question_id): r for r in responses}
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -335,15 +349,15 @@ def aggregate_distributions_by_question(distributions: List[RatingDistribution],
     """Aggregate individual respondent distributions into per-question averages"""
     aggregated = {}
 
+    # Build O(1) lookup dictionary (fixes N+1 pattern)
+    response_lookup = build_response_lookup(responses)
+
     # Group by category and question
     by_question = defaultdict(list)
     for dist in distributions:
-        # Find category from responses
-        category = "general"
-        for r in responses:
-            if r.respondent_id == dist.respondent_id and r.question_id == dist.question_id:
-                category = r.category or "general"
-                break
+        # Find category from responses using O(1) lookup
+        response = response_lookup.get((dist.respondent_id, dist.question_id))
+        category = response.category or DEFAULT_CATEGORY if response else DEFAULT_CATEGORY
 
         key = (category, dist.question_id)
         by_question[key].append(dist)
@@ -620,7 +634,7 @@ async def generate_responses(request: GenerateResponsesRequest):
         )
 
         # Generate responses (using concurrent version for better performance)
-        responses = llm_client.generate_responses_concurrent(survey, profiles, max_concurrent=20)
+        responses = llm_client.generate_responses_concurrent(survey, profiles, max_concurrent=DEFAULT_MAX_CONCURRENT)
 
         return {
             "survey_id": request.survey_id,
@@ -665,22 +679,16 @@ async def apply_ssr(request: ApplySSRRequest):
         # Apply SSR
         distributions = rater.rate_responses(responses, survey, show_progress=False)
 
+        # Build O(1) lookup dictionary (fixes N+1 pattern)
+        response_lookup = build_response_lookup(responses)
+
         # Organize by category and question
         organized_distributions = {}
         for dist in distributions:
-            # Get category
-            category = "general"
-            for r in responses:
-                if r.respondent_id == dist.respondent_id and r.question_id == dist.question_id:
-                    category = r.category or "general"
-                    break
-
-            # Get respondent profile
-            profile = {}
-            for r in responses:
-                if r.respondent_id == dist.respondent_id and r.question_id == dist.question_id:
-                    profile = r.respondent_profile
-                    break
+            # Get category and profile using O(1) lookup
+            response = response_lookup.get((dist.respondent_id, dist.question_id))
+            category = response.category or DEFAULT_CATEGORY if response else DEFAULT_CATEGORY
+            profile = response.respondent_profile if response else {}
 
             if category not in organized_distributions:
                 organized_distributions[category] = {}
@@ -805,16 +813,16 @@ async def run_survey_stream(request: RunSurveyRequest):
             yield f"data: {json.dumps(msg_data)}\n\n"
             await asyncio.sleep(0.1)
 
+            # Build O(1) lookup dictionary (fixes N+1 pattern)
+            response_lookup = build_response_lookup(responses)
+
             # Organize results
             organized_distributions = {}
             for dist in distributions:
-                category = "general"
-                profile = {}
-                for r in responses:
-                    if r.respondent_id == dist.respondent_id and r.question_id == dist.question_id:
-                        category = r.category or "general"
-                        profile = r.respondent_profile
-                        break
+                # Get category and profile using O(1) lookup
+                response = response_lookup.get((dist.respondent_id, dist.question_id))
+                category = response.category or DEFAULT_CATEGORY if response else DEFAULT_CATEGORY
+                profile = response.respondent_profile if response else {}
 
                 if category not in organized_distributions:
                     organized_distributions[category] = {}
@@ -914,7 +922,7 @@ async def run_survey(request: RunSurveyRequest):
             model=request.model,
             temperature=request.llm_temperature
         )
-        responses = llm_client.generate_responses_concurrent(survey, profiles, max_concurrent=20)
+        responses = llm_client.generate_responses_concurrent(survey, profiles, max_concurrent=DEFAULT_MAX_CONCURRENT)
 
         # Step 3: Apply SSR
         rater = SemanticSimilarityRater(
@@ -923,17 +931,16 @@ async def run_survey(request: RunSurveyRequest):
         )
         distributions = rater.rate_responses(responses, survey, show_progress=False)
 
+        # Build O(1) lookup dictionary (fixes N+1 pattern)
+        response_lookup = build_response_lookup(responses)
+
         # Organize results
         organized_distributions = {}
         for dist in distributions:
-            # Get category and profile
-            category = "general"
-            profile = {}
-            for r in responses:
-                if r.respondent_id == dist.respondent_id and r.question_id == dist.question_id:
-                    category = r.category or "general"
-                    profile = r.respondent_profile
-                    break
+            # Get category and profile using O(1) lookup
+            response = response_lookup.get((dist.respondent_id, dist.question_id))
+            category = response.category or DEFAULT_CATEGORY if response else DEFAULT_CATEGORY
+            profile = response.respondent_profile if response else {}
 
             if category not in organized_distributions:
                 organized_distributions[category] = {}
@@ -1106,7 +1113,7 @@ async def create_ground_truth_from_ssr(request: CreateGroundTruthFromSSRRequest)
         responses = llm_client.generate_responses_concurrent(
             survey=survey,
             respondent_profiles=profiles,
-            max_concurrent=20
+            max_concurrent=DEFAULT_MAX_CONCURRENT
         )
 
         # Step 3: Apply SSR
@@ -1119,16 +1126,16 @@ async def create_ground_truth_from_ssr(request: CreateGroundTruthFromSSRRequest)
         # Step 4: Aggregate distributions per question
         aggregated_distributions = aggregate_distributions_by_question(distributions, responses)
 
+        # Build O(1) lookup dictionary (fixes N+1 pattern)
+        response_lookup = build_response_lookup(responses)
+
         # Step 5: Organize raw distributions
         organized_distributions = {}
         for dist in distributions:
-            category = "general"
-            profile = {}
-            for r in responses:
-                if r.respondent_id == dist.respondent_id and r.question_id == dist.question_id:
-                    category = r.category or "general"
-                    profile = r.respondent_profile
-                    break
+            # Get category and profile using O(1) lookup
+            response = response_lookup.get((dist.respondent_id, dist.question_id))
+            category = response.category or DEFAULT_CATEGORY if response else DEFAULT_CATEGORY
+            profile = response.respondent_profile if response else {}
 
             if category not in organized_distributions:
                 organized_distributions[category] = {}

@@ -1,0 +1,20 @@
+# Development and Testing Dependencies
+
+# Testing Framework
+pytest==8.0.0
+pytest-asyncio==0.23.3
+pytest-cov==4.1.0
+pytest-mock==3.12.0
+
+# Test utilities
+httpx==0.26.0  # For testing FastAPI endpoints
+faker==22.0.0  # For generating test data
+
+# Code quality
+black==24.1.0
+flake8==7.0.0
+mypy==1.8.0
+isort==5.13.2
+
+# Async file I/O (for future refactoring)
+aiofiles==23.2.1
