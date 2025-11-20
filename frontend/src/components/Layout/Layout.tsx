@@ -412,22 +412,19 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                 <Button
                   sx={{ justifyContent: 'flex-start', color: 'text.secondary', textTransform: 'none', px: 0, minWidth: 0 }}
-                  component="a"
-                  href="#privacy"
+                  onClick={() => navigate('/privacy')}
                 >
                   Privacy Policy
                 </Button>
                 <Button
                   sx={{ justifyContent: 'flex-start', color: 'text.secondary', textTransform: 'none', px: 0, minWidth: 0 }}
-                  component="a"
-                  href="#terms"
+                  onClick={() => navigate('/terms')}
                 >
                   Terms of Service
                 </Button>
                 <Button
                   sx={{ justifyContent: 'flex-start', color: 'text.secondary', textTransform: 'none', px: 0, minWidth: 0 }}
-                  component="a"
-                  href="#license"
+                  onClick={() => navigate('/license')}
                 >
                   License
                 </Button>

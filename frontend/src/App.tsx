@@ -30,6 +30,9 @@ import DocumentationPage from './pages/DocumentationPage';
 import SettingsPage from './pages/SettingsPage';
 import AdminPage from './pages/AdminPage';
 import EvaluationDashboardPage from './pages/EvaluationDashboardPage';
+import TermsOfServicePage from './pages/TermsOfServicePage';
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
+import LicensePage from './pages/LicensePage';
 
 // Create React Query client
 const queryClient = new QueryClient({
@@ -89,6 +92,11 @@ const App: React.FC = () => {
 
               {/* Settings - system configuration and status */}
               <Route path="/settings" element={<SettingsPage />} />
+
+              {/* Legal pages */}
+              <Route path="/terms" element={<TermsOfServicePage />} />
+              <Route path="/privacy" element={<PrivacyPolicyPage />} />
+              <Route path="/license" element={<LicensePage />} />
 
               {/* Redirect unknown routes to home */}
               <Route path="*" element={<Navigate to="/" replace />} />
