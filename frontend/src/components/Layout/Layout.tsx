@@ -499,7 +499,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               © {new Date().getFullYear()} S.A.G.E. All rights reserved.
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Built with AI-powered synthetic audience technology
+              © {new Date().getFullYear()} Allwyn. All rights reserved.
             </Typography>
           </Box>
         </Container>
