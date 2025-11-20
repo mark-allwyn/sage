@@ -3,6 +3,20 @@ Ground Truth Comparison Metrics
 
 Functions for comparing survey run distributions against ground truth data.
 Includes statistical distance metrics and comparison utilities.
+
+IMPORTANT: This module performs POPULATION-LEVEL distribution comparisons.
+It compares:
+  - Ground Truth: Frequency distribution from real survey answers (e.g., 30% chose rating 4)
+  - Test Run: Averaged probability distributions from SSR model output
+
+This measures: "Does the SSR model capture the overall population preference distribution?"
+NOT: "Can the model predict individual answers?" (respondents are different)
+
+Example:
+  Ground Truth: 20 people answered [4,2,5,3,4,1,5,4,3,2...]
+                → Distribution: [10%, 20%, 15%, 30%, 25%]
+  Test Run: 50 synthetic profiles → Avg distribution: [12%, 18%, 20%, 28%, 22%]
+  Comparison: KL divergence, JS divergence, etc. to measure similarity
 """
 
 import numpy as np
@@ -173,12 +187,19 @@ def compare_survey_runs(
     """
     Compare a complete survey run against ground truth.
 
+    This performs POPULATION-LEVEL comparison, not individual prediction accuracy.
+    It measures whether the SSR model's averaged distributions match the real
+    population's preference distribution from ground truth answers.
+
     Args:
         ground_truth: Ground truth data with aggregated_distributions
-        test_run: Test run data with distributions
+                     - If uploaded: Contains frequency distributions from real answers
+                     - If SSR-generated: Contains averaged SSR probability distributions
+        test_run: Test run data with distributions (SSR model output)
 
     Returns:
-        Comprehensive comparison results with per-question and overall metrics
+        Comprehensive comparison results with per-question and overall metrics.
+        Lower divergence values = better match to ground truth population distribution.
     """
     gt_distributions = ground_truth.get("aggregated_distributions", {})
     test_distributions = test_run.get("distributions", {})
