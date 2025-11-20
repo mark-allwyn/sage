@@ -111,11 +111,13 @@ class ResponseEvaluator:
                 context = [input_text] if input_text else ["No context available"]
 
             # Create test case
+            # Note: DeepEval's Hallucination metric requires 'context', not 'retrieval_context'
             test_case = LLMTestCase(
                 input=input_text,
                 actual_output=actual_output,
                 expected_output=expected_output,
-                retrieval_context=context,
+                context=context,  # Required for Hallucination metric
+                retrieval_context=context,  # For other metrics that may need it
             )
 
             # Get metrics - filter out hallucination if no meaningful context
@@ -141,7 +143,6 @@ class ResponseEvaluator:
             return {
                 "success": True,
                 "scores": scores,
-                "overall_score": sum(s["score"] for s in scores.values()) / len(scores) if scores else 0,
                 "timestamp": datetime.utcnow().isoformat(),
             }
 
@@ -160,6 +161,7 @@ class ResponseEvaluator:
         questions: List[Dict[str, Any]],
         sample_size: Optional[int] = None,
         survey_context: Optional[str] = None,
+        run_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Evaluate multiple survey responses
@@ -170,6 +172,7 @@ class ResponseEvaluator:
             questions: List of question objects with id and text
             sample_size: Optional number of responses to sample (default: 10% or all if <10)
             survey_context: Optional survey context describing what's being evaluated
+            run_id: Optional survey run identifier for tracking which run was evaluated
 
         Returns:
             Aggregated evaluation results
@@ -255,12 +258,12 @@ class ResponseEvaluator:
 
         result = {
             "survey_id": survey_id,
+            "run_id": run_id,
             "success": True,
             "total_responses": total_responses,
             "evaluated_responses": len(sampled_responses),
             "successful_evaluations": len(successful_evals),
             "aggregated_scores": aggregated_scores,
-            "overall_mean_score": sum(s["mean"] for s in aggregated_scores.values()) / len(aggregated_scores) if aggregated_scores else 0,
             "individual_evaluations": evaluations,
             "timestamp": datetime.utcnow().isoformat(),
             "config": {
@@ -318,9 +321,9 @@ class ResponseEvaluator:
                 evaluations.append({
                     "evaluation_id": filepath.stem,
                     "survey_id": data.get("survey_id"),
+                    "run_id": data.get("run_id"),
                     "timestamp": data.get("timestamp"),
                     "evaluated_responses": data.get("evaluated_responses"),
-                    "overall_score": data.get("overall_mean_score"),
                     "success": data.get("success"),
                 })
             except Exception as e:
@@ -341,6 +344,8 @@ class ResponseEvaluator:
         for eval_id in evaluation_ids:
             eval_data = self.load_evaluation(eval_id)
             if eval_data:
+                # Add evaluation_id to the data for reference
+                eval_data["evaluation_id"] = eval_id
                 evaluations.append(eval_data)
 
         if not evaluations:
@@ -348,25 +353,72 @@ class ResponseEvaluator:
 
         # Extract metric trends
         metrics = {}
+        model_performance = {}  # Track performance by model
+        survey_performance = {}  # Track performance by survey
+
         for eval_data in evaluations:
             timestamp = eval_data.get("timestamp")
+            survey_id = eval_data.get("survey_id")
             config_model = eval_data.get("config", {}).get("evaluator_model")
+            eval_id = eval_data.get("evaluation_id")
 
             for metric_name, metric_data in eval_data.get("aggregated_scores", {}).items():
+                # Metric trends over time
                 if metric_name not in metrics:
                     metrics[metric_name] = []
 
                 metrics[metric_name].append({
                     "timestamp": timestamp,
+                    "survey_id": survey_id,
                     "model": config_model,
                     "mean_score": metric_data.get("mean"),
-                    "evaluation_id": eval_data.get("evaluation_id"),
+                    "min_score": metric_data.get("min"),
+                    "max_score": metric_data.get("max"),
+                    "count": metric_data.get("count"),
+                    "evaluation_id": eval_id,
                 })
+
+                # Performance by model
+                if config_model not in model_performance:
+                    model_performance[config_model] = {}
+                if metric_name not in model_performance[config_model]:
+                    model_performance[config_model][metric_name] = []
+                model_performance[config_model][metric_name].append(metric_data.get("mean"))
+
+                # Performance by survey
+                if survey_id not in survey_performance:
+                    survey_performance[survey_id] = {}
+                if metric_name not in survey_performance[survey_id]:
+                    survey_performance[survey_id][metric_name] = []
+                survey_performance[survey_id][metric_name].append(metric_data.get("mean"))
+
+        # Calculate model averages
+        model_averages = {}
+        for model, model_metrics in model_performance.items():
+            model_averages[model] = {}
+            for metric_name, scores in model_metrics.items():
+                model_averages[model][metric_name] = {
+                    "mean": sum(scores) / len(scores) if scores else 0,
+                    "count": len(scores),
+                }
+
+        # Calculate survey averages
+        survey_averages = {}
+        for survey_id, survey_metrics in survey_performance.items():
+            survey_averages[survey_id] = {}
+            for metric_name, scores in survey_metrics.items():
+                survey_averages[survey_id][metric_name] = {
+                    "mean": sum(scores) / len(scores) if scores else 0,
+                    "count": len(scores),
+                }
 
         return {
             "success": True,
             "num_evaluations": len(evaluations),
-            "metrics": metrics,
+            "metrics": metrics,  # Time-series data
+            "model_averages": model_averages,  # Average performance by model
+            "survey_averages": survey_averages,  # Average performance by survey
+            "evaluations": evaluations,  # Full evaluation data for reference
             "timestamp": datetime.utcnow().isoformat(),
         }
 

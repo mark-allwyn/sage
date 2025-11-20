@@ -1014,21 +1014,35 @@ async def run_survey(request: RunSurveyRequest):
 async def get_survey_runs(survey_id: Optional[str] = None):
     """List all survey runs with optional filtering by survey_id"""
     results_dir = get_results_dir()
-    index_path = results_dir / "runs_index.json"
 
-    if not index_path.exists():
-        return []
-
-    index = json.loads(index_path.read_text())
+    # Scan directory for run files (more robust than relying on index file)
+    runs = []
+    for run_file in results_dir.glob("run_*.json"):
+        try:
+            data = json.loads(run_file.read_text())
+            # Create metadata entry for the list
+            run_meta = {
+                "run_id": data.get("run_id"),
+                "survey_id": data.get("survey_id"),
+                "survey_name": data.get("survey_name"),
+                "timestamp": data.get("timestamp"),
+                "num_profiles": data.get("num_profiles"),
+                "num_responses": data.get("num_responses"),
+                "config": data.get("config", {})
+            }
+            runs.append(run_meta)
+        except Exception as e:
+            logger.error(f"Error reading run file {run_file}: {e}")
+            continue
 
     # Filter by survey_id if provided
     if survey_id:
-        index = [run for run in index if run["survey_id"] == survey_id]
+        runs = [run for run in runs if run["survey_id"] == survey_id]
 
     # Sort by timestamp descending (newest first)
-    index.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
+    runs.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
 
-    return index
+    return runs
 
 @app.get("/api/survey-runs/{run_id}")
 async def get_survey_run(run_id: str):
@@ -1550,6 +1564,10 @@ async def evaluate_responses(request: EvaluateResponsesRequest):
 
         # Pass survey context for proper hallucination detection
         survey_context = survey_config.context if hasattr(survey_config, 'context') else None
+        logger.info(f"Survey context available: {survey_context is not None}, length: {len(survey_context) if survey_context else 0}")
+
+        # Extract run_id from the run file name
+        actual_run_id = run_file.stem  # This gives us the filename without extension
 
         result = evaluator.evaluate_survey_responses(
             survey_id=request.survey_id,
@@ -1557,6 +1575,7 @@ async def evaluate_responses(request: EvaluateResponsesRequest):
             questions=questions_dict,
             sample_size=request.sample_size,
             survey_context=survey_context,
+            run_id=actual_run_id,
         )
 
         logger.info(f"Evaluation complete for survey {request.survey_id}")

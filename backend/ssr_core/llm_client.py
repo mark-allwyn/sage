@@ -379,6 +379,7 @@ class LLMClient:
             )
 
         responses = []
+        errors = []
         total = len(respondent_profiles) * len(survey.questions)
 
         # Create all tasks upfront
@@ -406,9 +407,32 @@ class LLMClient:
                         response = future.result()
                         if response:
                             responses.append(response)
+                        else:
+                            errors.append("Response generation returned None")
                     except Exception as e:
-                        print(f"\nError generating response: {e}")
+                        error_msg = str(e)
+                        errors.append(error_msg)
+                        print(f"\nError generating response: {error_msg}")
                     pbar.update(1)
+
+        # Check if too many errors occurred
+        error_rate = len(errors) / total if total > 0 else 0
+        if error_rate > 0.5:  # If more than 50% of requests failed
+            # Extract the most common error message
+            if errors:
+                first_error = errors[0]
+                # Check for specific API errors
+                if "credit balance is too low" in first_error.lower():
+                    raise Exception(f"API Error: Insufficient credits. {len(errors)}/{total} requests failed. Please add credits to your {self.provider.title()} account at https://console.{self.provider}.com")
+                elif "api key" in first_error.lower() or "authentication" in first_error.lower():
+                    raise Exception(f"API Error: Authentication failed. {len(errors)}/{total} requests failed. Please check your {self.provider.upper()}_API_KEY")
+                elif "rate limit" in first_error.lower():
+                    raise Exception(f"API Error: Rate limit exceeded. {len(errors)}/{total} requests failed. Please wait a moment and try again")
+                else:
+                    raise Exception(f"API Error: {len(errors)}/{total} requests failed. First error: {first_error[:200]}")
+        elif errors:
+            # Some errors but not critical - just log them
+            print(f"\nWarning: {len(errors)}/{total} requests failed, but continuing with {len(responses)} successful responses")
 
         return responses
 

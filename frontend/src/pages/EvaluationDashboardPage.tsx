@@ -52,7 +52,18 @@ import {
   CompareArrows as CompareIcon,
   Info as InfoIcon,
   HelpOutline as HelpIcon,
+  TrendingUp as TrendingUpIcon,
 } from '@mui/icons-material';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RechartsTooltip,
+  Legend,
+  ResponsiveContainer,
+} from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '../components/PageHeader';
 import {
@@ -102,6 +113,7 @@ const EvaluationDashboardPage: React.FC = () => {
     { enabled: !!selectedEvaluationId }
   );
   const { data: surveyRuns } = useSurveyRuns(runConfig.survey_id || undefined);
+  const { data: allSurveyRuns } = useSurveyRuns(); // Fetch all survey runs to check availability
 
   // Mutations
   const compareMutation = useCompareEvaluations();
@@ -122,6 +134,8 @@ const EvaluationDashboardPage: React.FC = () => {
   });
 
   const evaluations = evaluationsData?.evaluations || [];
+  const hasSurveyRuns = allSurveyRuns && allSurveyRuns.length > 0;
+  const canRunEvaluation = surveys && surveys.length > 0 && hasSurveyRuns;
 
   const handleRunEvaluation = () => {
     const payload = {
@@ -288,14 +302,21 @@ const EvaluationDashboardPage: React.FC = () => {
                 >
                   Compare Evaluations
                 </Button>
-                <Button
-                  variant="contained"
-                  startIcon={<PlayIcon />}
-                  onClick={handleOpenRunDialog}
-                  disabled={!surveys || surveys.length === 0}
+                <Tooltip
+                  title={!hasSurveyRuns ? "You need to run a survey first before evaluating responses" : ""}
+                  arrow
                 >
-                  Run New Evaluation
-                </Button>
+                  <span>
+                    <Button
+                      variant="contained"
+                      startIcon={<PlayIcon />}
+                      onClick={handleOpenRunDialog}
+                      disabled={!canRunEvaluation}
+                    >
+                      Run New Evaluation
+                    </Button>
+                  </span>
+                </Tooltip>
               </>
             )}
           </Grid>
@@ -322,16 +343,25 @@ const EvaluationDashboardPage: React.FC = () => {
             No evaluations found
           </Typography>
           <Typography variant="body2" color="text.secondary" paragraph>
-            Run your first evaluation to start monitoring LLM response quality
+            {!hasSurveyRuns
+              ? "You need to run a survey first before you can evaluate responses"
+              : "Run your first evaluation to start monitoring LLM response quality"}
           </Typography>
-          <Button
-            variant="contained"
-            startIcon={<PlayIcon />}
-            onClick={handleOpenRunDialog}
-            disabled={!surveys || surveys.length === 0}
+          <Tooltip
+            title={!hasSurveyRuns ? "You need to run a survey first before evaluating responses" : ""}
+            arrow
           >
-            Run New Evaluation
-          </Button>
+            <span>
+              <Button
+                variant="contained"
+                startIcon={<PlayIcon />}
+                onClick={handleOpenRunDialog}
+                disabled={!canRunEvaluation}
+              >
+                Run New Evaluation
+              </Button>
+            </span>
+          </Tooltip>
         </Paper>
       ) : (
         <Grid container spacing={3}>
@@ -365,33 +395,15 @@ const EvaluationDashboardPage: React.FC = () => {
                     />
                   </Box>
 
+                  <Typography variant="body2" color="text.secondary" gutterBottom sx={{ fontFamily: 'monospace', fontSize: '0.85rem' }}>
+                    Run: {evaluation.run_id || 'N/A'}
+                  </Typography>
+
                   <Typography variant="body2" color="text.secondary" gutterBottom>
                     {formatTimestamp(evaluation.timestamp)}
                   </Typography>
 
-                  <Box sx={{ my: 2 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
-                      <Typography variant="body2" color="text.secondary">
-                        Overall Score
-                      </Typography>
-                      <Tooltip title={getScoreInterpretation(evaluation.overall_score)}>
-                        <InfoIcon sx={{ fontSize: 16, color: 'text.secondary', cursor: 'help' }} />
-                      </Tooltip>
-                    </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <LinearProgress
-                        variant="determinate"
-                        value={evaluation.overall_score * 100}
-                        color={getScoreColor(evaluation.overall_score) as any}
-                        sx={{ flexGrow: 1, height: 8, borderRadius: 1 }}
-                      />
-                      <Typography variant="body2" fontWeight="bold">
-                        {(evaluation.overall_score * 100).toFixed(1)}%
-                      </Typography>
-                    </Box>
-                  </Box>
-
-                  <Typography variant="caption" color="text.secondary">
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 2, display: 'block' }}>
                     {evaluation.evaluated_responses} responses evaluated
                   </Typography>
                 </CardContent>
@@ -625,20 +637,7 @@ const EvaluationDashboardPage: React.FC = () => {
               {/* Summary */}
               <Paper sx={{ p: 2, mb: 3 }}>
                 <Grid container spacing={2}>
-                  <Grid item xs={12} md={3}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
-                      <Typography variant="body2" color="text.secondary">
-                        Overall Score
-                      </Typography>
-                      <Tooltip title="Average score across all metrics and evaluated responses">
-                        <InfoIcon sx={{ fontSize: 14, color: 'text.secondary', cursor: 'help' }} />
-                      </Tooltip>
-                    </Box>
-                    <Typography variant="h4" color={getScoreColor(selectedEvaluation.overall_mean_score)}>
-                      {(selectedEvaluation.overall_mean_score * 100).toFixed(1)}%
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={12} md={3}>
+                  <Grid item xs={12} md={4}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
                       <Typography variant="body2" color="text.secondary">
                         Total Responses
@@ -670,6 +669,19 @@ const EvaluationDashboardPage: React.FC = () => {
                       </Tooltip>
                     </Box>
                     <Typography variant="h6">{selectedEvaluation.successful_evaluations}</Typography>
+                  </Grid>
+                  <Grid item xs={12} md={2}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        Survey Run
+                      </Typography>
+                      <Tooltip title="The survey run ID that was evaluated. Shows 'N/A' for evaluations created before run tracking was implemented.">
+                        <InfoIcon sx={{ fontSize: 14, color: 'text.secondary', cursor: 'help' }} />
+                      </Tooltip>
+                    </Box>
+                    <Typography variant="h6" sx={{ fontFamily: 'monospace', fontSize: '0.95rem' }}>
+                      {selectedEvaluation.run_id || 'N/A'}
+                    </Typography>
                   </Grid>
                 </Grid>
               </Paper>
@@ -781,20 +793,8 @@ const EvaluationDashboardPage: React.FC = () => {
                             </Box>
                           </Grid>
 
-                          {/* Overall Score */}
-                          <Grid item xs={12} md={3}>
-                            <Typography variant="caption" color="text.secondary">
-                              Overall Score
-                            </Typography>
-                            <Typography variant="h5" color={getScoreColor(evalResult.overall_score || 0)}>
-                              {evalResult.overall_score !== undefined
-                                ? `${(evalResult.overall_score * 100).toFixed(1)}%`
-                                : 'N/A'}
-                            </Typography>
-                          </Grid>
-
                           {/* Metric Scores with Reasoning */}
-                          <Grid item xs={12} md={9}>
+                          <Grid item xs={12}>
                             {evalResult.scores && Object.entries(evalResult.scores).map(([metricName, metricData]: [string, any]) => (
                               <Box key={metricName} sx={{ mb: 2, '&:last-child': { mb: 0 } }}>
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
@@ -853,53 +853,282 @@ const EvaluationDashboardPage: React.FC = () => {
             <Box sx={{ pt: 2 }}>
               <Alert severity="info" sx={{ mb: 3 }}>
                 <Typography variant="body2">
-                  This comparison shows metric trends across {compareMutation.data.num_evaluations} evaluations.
-                  Use this to track quality improvements over time or compare different model configurations.
+                  Comparing {compareMutation.data.num_evaluations} evaluations across {Object.keys(compareMutation.data.model_averages || {}).length} models and {Object.keys(compareMutation.data.survey_averages || {}).length} surveys.
+                  Use this to identify which models perform best for specific use cases.
                 </Typography>
               </Alert>
 
-              {/* Metrics Comparison */}
-              {Object.entries(compareMutation.data.metrics || {}).map(([metricName, metricDataArray]: [string, any]) => (
-                <Paper key={metricName} sx={{ p: 3, mb: 3 }}>
-                  <Typography variant="h6" gutterBottom sx={{ textTransform: 'capitalize' }}>
-                    {metricName.replace(/_/g, ' ')}
+              {/* Model Leaderboard */}
+              {compareMutation.data.model_averages && Object.keys(compareMutation.data.model_averages).length > 0 && (
+                <Paper sx={{ p: 3, mb: 3 }}>
+                  <Typography variant="h6" gutterBottom>
+                    Model Leaderboard
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    Average performance across all evaluations
                   </Typography>
                   <TableContainer>
                     <Table size="small">
                       <TableHead>
                         <TableRow>
-                          <TableCell>Evaluation</TableCell>
-                          <TableCell>Timestamp</TableCell>
+                          <TableCell>Rank</TableCell>
                           <TableCell>Model</TableCell>
-                          <TableCell align="right">Mean Score</TableCell>
+                          {Object.keys(Object.values(compareMutation.data.model_averages)[0] || {}).map(metricName => (
+                            <TableCell key={metricName} align="right" sx={{ textTransform: 'capitalize' }}>
+                              {metricName.replace(/_/g, ' ')}
+                            </TableCell>
+                          ))}
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                        {metricDataArray.map((data: any, idx: number) => (
-                          <TableRow key={idx}>
-                            <TableCell>#{idx + 1}</TableCell>
-                            <TableCell>{data.timestamp ? new Date(data.timestamp).toLocaleString() : 'N/A'}</TableCell>
-                            <TableCell>{data.model || 'N/A'}</TableCell>
-                            <TableCell align="right">
-                              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1 }}>
-                                <LinearProgress
-                                  variant="determinate"
-                                  value={data.mean_score * 100}
-                                  color={getScoreColor(data.mean_score) as any}
-                                  sx={{ width: 100, height: 6, borderRadius: 1 }}
+                        {Object.entries(compareMutation.data.model_averages)
+                          .sort(([, aMetrics]: [string, any], [, bMetrics]: [string, any]) => {
+                            // Sort by average of all metrics (for simplicity)
+                            const aAvg = Object.values(aMetrics).reduce((sum: number, m: any) => sum + m.mean, 0) / Object.keys(aMetrics).length;
+                            const bAvg = Object.values(bMetrics).reduce((sum: number, m: any) => sum + m.mean, 0) / Object.keys(bMetrics).length;
+                            return bAvg - aAvg;
+                          })
+                          .map(([model, metrics]: [string, any], idx: number) => (
+                            <TableRow key={model}>
+                              <TableCell>
+                                <Chip
+                                  label={`#${idx + 1}`}
+                                  size="small"
+                                  color={idx === 0 ? 'primary' : 'default'}
+                                  sx={{ fontWeight: 'bold' }}
                                 />
-                                <Typography variant="body2" fontWeight="bold" sx={{ minWidth: 50 }}>
-                                  {(data.mean_score * 100).toFixed(1)}%
-                                </Typography>
-                              </Box>
+                              </TableCell>
+                              <TableCell sx={{ fontWeight: idx === 0 ? 600 : 400 }}>
+                                {model}
+                              </TableCell>
+                              {Object.entries(metrics).map(([metricName, metricData]: [string, any]) => (
+                                <TableCell key={metricName} align="right">
+                                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1 }}>
+                                    <LinearProgress
+                                      variant="determinate"
+                                      value={metricData.mean * 100}
+                                      color={getScoreColor(metricData.mean) as any}
+                                      sx={{ width: 80, height: 6, borderRadius: 1 }}
+                                    />
+                                    <Typography variant="body2" fontWeight="bold" sx={{ minWidth: 50 }}>
+                                      {(metricData.mean * 100).toFixed(1)}%
+                                    </Typography>
+                                    <Typography variant="caption" color="text.secondary" sx={{ minWidth: 30 }}>
+                                      (n={metricData.count})
+                                    </Typography>
+                                  </Box>
+                                </TableCell>
+                              ))}
+                            </TableRow>
+                          ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Paper>
+              )}
+
+              {/* Survey Performance Breakdown */}
+              {compareMutation.data.survey_averages && Object.keys(compareMutation.data.survey_averages).length > 1 && (
+                <Paper sx={{ p: 3, mb: 3 }}>
+                  <Typography variant="h6" gutterBottom>
+                    Survey-Specific Performance
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    Average scores by survey type
+                  </Typography>
+                  <TableContainer>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Survey ID</TableCell>
+                          {Object.keys(Object.values(compareMutation.data.survey_averages)[0] || {}).map(metricName => (
+                            <TableCell key={metricName} align="right" sx={{ textTransform: 'capitalize' }}>
+                              {metricName.replace(/_/g, ' ')}
                             </TableCell>
+                          ))}
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {Object.entries(compareMutation.data.survey_averages).map(([surveyId, metrics]: [string, any]) => (
+                          <TableRow key={surveyId}>
+                            <TableCell sx={{ fontFamily: 'monospace', fontSize: '0.85rem' }}>
+                              {surveyId}
+                            </TableCell>
+                            {Object.entries(metrics).map(([metricName, metricData]: [string, any]) => (
+                              <TableCell key={metricName} align="right">
+                                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1 }}>
+                                  <LinearProgress
+                                    variant="determinate"
+                                    value={metricData.mean * 100}
+                                    color={getScoreColor(metricData.mean) as any}
+                                    sx={{ width: 80, height: 6, borderRadius: 1 }}
+                                  />
+                                  <Typography variant="body2" fontWeight="bold" sx={{ minWidth: 50 }}>
+                                    {(metricData.mean * 100).toFixed(1)}%
+                                  </Typography>
+                                </Box>
+                              </TableCell>
+                            ))}
                           </TableRow>
                         ))}
                       </TableBody>
                     </Table>
                   </TableContainer>
                 </Paper>
-              ))}
+              )}
+
+              {/* Time-Series Trends */}
+              {Object.entries(compareMutation.data.metrics || {}).map(([metricName, metricDataArray]: [string, any]) => {
+                // Prepare data for chart
+                const chartData = metricDataArray
+                  .sort((a: any, b: any) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+                  .map((data: any, idx: number) => ({
+                    index: idx + 1,
+                    timestamp: new Date(data.timestamp).toLocaleDateString(),
+                    timeDetail: new Date(data.timestamp).toLocaleString(),
+                    score: Math.round(data.mean_score * 100),
+                    model: data.model || 'Unknown',
+                    survey_id: data.survey_id || 'N/A',
+                    min_score: Math.round(data.min_score * 100),
+                    max_score: Math.round(data.max_score * 100),
+                  }));
+
+                // Get unique models for color coding
+                const uniqueModels = Array.from(new Set(chartData.map((d: any) => d.model))) as string[];
+                const colors = ['#1976d2', '#dc004e', '#9c27b0', '#ff9800', '#4caf50', '#f44336'];
+
+                return (
+                  <Paper key={metricName} sx={{ p: 3, mb: 3 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                      <TrendingUpIcon color="primary" />
+                      <Typography variant="h6" sx={{ textTransform: 'capitalize' }}>
+                        {metricName.replace(/_/g, ' ')} - Trends Over Time
+                      </Typography>
+                    </Box>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                      {getMetricExplanation(metricName)}
+                    </Typography>
+
+                    {/* Chart */}
+                    <Box sx={{ width: '100%', height: 400, mb: 3 }}>
+                      <ResponsiveContainer>
+                        <LineChart data={chartData}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis
+                            dataKey="index"
+                            label={{ value: 'Evaluation #', position: 'insideBottom', offset: -5 }}
+                          />
+                          <YAxis
+                            label={{ value: 'Score (%)', angle: -90, position: 'insideLeft' }}
+                            domain={[0, 100]}
+                          />
+                          <RechartsTooltip
+                            content={({ active, payload }) => {
+                              if (active && payload && payload.length) {
+                                const data = payload[0].payload;
+                                return (
+                                  <Paper sx={{ p: 2 }}>
+                                    <Typography variant="caption" display="block" fontWeight="bold">
+                                      Evaluation #{data.index}
+                                    </Typography>
+                                    <Typography variant="caption" display="block" color="text.secondary">
+                                      {data.timeDetail}
+                                    </Typography>
+                                    <Typography variant="caption" display="block" sx={{ mt: 1 }}>
+                                      Model: {data.model}
+                                    </Typography>
+                                    <Typography variant="caption" display="block">
+                                      Survey: {data.survey_id}
+                                    </Typography>
+                                    <Typography variant="caption" display="block" sx={{ mt: 1 }} fontWeight="bold">
+                                      Score: {data.score}%
+                                    </Typography>
+                                    <Typography variant="caption" display="block" color="text.secondary">
+                                      Range: {data.min_score}-{data.max_score}%
+                                    </Typography>
+                                  </Paper>
+                                );
+                              }
+                              return null;
+                            }}
+                          />
+                          <Legend />
+                          {uniqueModels.length === 1 ? (
+                            <Line
+                              type="monotone"
+                              dataKey="score"
+                              stroke={colors[0]}
+                              strokeWidth={2}
+                              dot={{ r: 4 }}
+                              activeDot={{ r: 6 }}
+                              name={`${uniqueModels[0]} Score`}
+                            />
+                          ) : (
+                            uniqueModels.map((model: string, idx: number) => (
+                              <Line
+                                key={`line-${model}-${idx}`}
+                                type="monotone"
+                                dataKey={(data: any) => data.model === model ? data.score : null}
+                                stroke={colors[idx % colors.length]}
+                                strokeWidth={2}
+                                dot={{ r: 4 }}
+                                activeDot={{ r: 6 }}
+                                name={`${model} Score`}
+                                connectNulls
+                              />
+                            ))
+                          )}
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </Box>
+
+                    {/* Summary Table */}
+                    <Accordion>
+                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                        <Typography variant="body2">View Detailed Data</Typography>
+                      </AccordionSummary>
+                      <AccordionDetails>
+                        <TableContainer>
+                          <Table size="small">
+                            <TableHead>
+                              <TableRow>
+                                <TableCell>#</TableCell>
+                                <TableCell>Timestamp</TableCell>
+                                <TableCell>Survey ID</TableCell>
+                                <TableCell>Model</TableCell>
+                                <TableCell align="right">Score</TableCell>
+                                <TableCell align="right">Range</TableCell>
+                              </TableRow>
+                            </TableHead>
+                            <TableBody>
+                              {chartData.map((data: any) => (
+                                <TableRow key={data.index}>
+                                  <TableCell>{data.index}</TableCell>
+                                  <TableCell>{data.timeDetail}</TableCell>
+                                  <TableCell sx={{ fontFamily: 'monospace', fontSize: '0.85rem' }}>
+                                    {data.survey_id}
+                                  </TableCell>
+                                  <TableCell>{data.model}</TableCell>
+                                  <TableCell align="right">
+                                    <Typography variant="body2" fontWeight="bold">
+                                      {data.score}%
+                                    </Typography>
+                                  </TableCell>
+                                  <TableCell align="right">
+                                    <Typography variant="caption" color="text.secondary">
+                                      {data.min_score}-{data.max_score}%
+                                    </Typography>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </TableContainer>
+                      </AccordionDetails>
+                    </Accordion>
+                  </Paper>
+                );
+              })}
             </Box>
           ) : (
             <Alert severity="info">Select evaluations and click Compare to see results</Alert>

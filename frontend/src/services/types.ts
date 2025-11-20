@@ -488,7 +488,6 @@ export interface EvaluationResult {
   question_id?: string;
   respondent_id?: string;
   scores?: EvaluationScores;
-  overall_score?: number;
   timestamp: string;
   error?: string;
 }
@@ -501,6 +500,7 @@ export interface EvaluationConfig {
 
 export interface SurveyEvaluation {
   survey_id: string;
+  run_id?: string;
   success: boolean;
   total_responses: number;
   evaluated_responses: number;
@@ -508,7 +508,6 @@ export interface SurveyEvaluation {
   aggregated_scores: {
     [metricName: string]: AggregatedMetricScore;
   };
-  overall_mean_score: number;
   individual_evaluations: EvaluationResult[];
   timestamp: string;
   config: EvaluationConfig;
@@ -518,9 +517,9 @@ export interface SurveyEvaluation {
 export interface EvaluationListItem {
   evaluation_id: string;
   survey_id: string;
+  run_id?: string;
   timestamp: string;
   evaluated_responses: number;
-  overall_score: number;
   success: boolean;
 }
 
@@ -535,9 +534,27 @@ export interface EvaluateResponsesRequest {
 
 export interface MetricTrend {
   timestamp: string;
+  survey_id: string;
   model: string;
   mean_score: number;
+  min_score: number;
+  max_score: number;
+  count: number;
   evaluation_id: string;
+}
+
+export interface ModelPerformance {
+  [metricName: string]: {
+    mean: number;
+    count: number;
+  };
+}
+
+export interface SurveyPerformance {
+  [metricName: string]: {
+    mean: number;
+    count: number;
+  };
 }
 
 export interface EvaluationComparison {
@@ -545,6 +562,12 @@ export interface EvaluationComparison {
   num_evaluations: number;
   metrics: {
     [metricName: string]: MetricTrend[];
+  };
+  model_averages: {
+    [model: string]: ModelPerformance;
+  };
+  survey_averages: {
+    [surveyId: string]: SurveyPerformance;
   };
   timestamp: string;
   error?: string;

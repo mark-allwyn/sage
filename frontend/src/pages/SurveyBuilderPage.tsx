@@ -76,7 +76,7 @@ const SurveyBuilderPage: React.FC = () => {
 
   const AUTO_SAVE_KEY = 'sage_survey_builder_autosave';
 
-  const { data: surveys, isLoading: surveysLoading } = useSurveys();
+  const { data: surveys, isLoading: surveysLoading, refetch: refetchSurveys } = useSurveys();
   const { data: selectedSurvey, isLoading: surveyLoading } = useSurvey(selectedSurveyId, {
     enabled: !!selectedSurveyId && mode === 'edit',
   });
@@ -214,6 +214,8 @@ const SurveyBuilderPage: React.FC = () => {
         sample_size: 100,
       });
       setFilename('');
+      // Refresh surveys list to update dropdown
+      refetchSurveys();
     },
     onError: (error) => {
       setSnackbar({
