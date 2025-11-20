@@ -49,6 +49,9 @@ from ground_truth_metrics import compare_survey_runs
 # Import constants
 from constants import DEFAULT_CATEGORY, DEFAULT_MAX_CONCURRENT
 
+# Import services
+from services.survey_pipeline import SurveyPipeline, PipelineConfig, PipelineProgress
+
 
 # Helper function to convert numpy types to Python native types
 def convert_numpy_types(obj):
@@ -737,145 +740,61 @@ async def run_survey_stream(request: RunSurveyRequest):
             yield f"data: {json.dumps(msg_data)}\n\n"
             await asyncio.sleep(0.1)
 
-            # Step 1: Generate profiles
-            msg_data = {'status': 'running', 'message': f'Step 1/3: Generating {request.num_profiles} profiles...', 'progress': 10}
-            yield f"data: {json.dumps(msg_data)}\n\n"
-            await asyncio.sleep(0.1)
-
-            profiles = generate_diverse_profiles(
-                n_profiles=request.num_profiles,
-                persona_groups=survey.persona_groups
-            )
-
-            msg_data = {'status': 'running', 'message': f'Generated {len(profiles)} profiles', 'progress': 25}
-            yield f"data: {json.dumps(msg_data)}\n\n"
-            await asyncio.sleep(0.1)
-
-            # Step 2: Generate LLM responses
-            num_api_calls = len(profiles) * len(survey.questions)
-            num_batches = (num_api_calls + 49) // 50  # Calculate number of batches
-            concurrent_limit = 20
-            num_batches = (num_api_calls + concurrent_limit - 1) // concurrent_limit
-            msg_data = {'status': 'running', 'message': f'Step 2/3: Generating LLM responses ({num_api_calls} API calls in ~{num_batches} batches of {concurrent_limit})...', 'progress': 30}
-            yield f"data: {json.dumps(msg_data)}\n\n"
-            await asyncio.sleep(0.1)
-
-            print(f"\n=== Starting LLM Response Generation ===")
-            print(f"Total API calls: {num_api_calls}")
-            print(f"Concurrent limit: {concurrent_limit}")
-            print(f"Expected batches: ~{num_batches}")
-            print(f"Estimated time: ~{num_batches * 3} seconds (assuming 3s per batch)\n")
-
-            llm_client = LLMClient(
-                provider=request.llm_provider,
+            # Configure and run pipeline
+            config = PipelineConfig(
+                llm_provider=request.llm_provider,
                 model=request.model,
-                temperature=request.llm_temperature
+                llm_temperature=request.llm_temperature,
+                ssr_temperature=request.ssr_temperature,
+                normalize_method=request.normalize_method,
+                num_profiles=request.num_profiles,
+                seed=request.seed
             )
 
-            import time
-            start_time = time.time()
-            responses = llm_client.generate_responses_concurrent(survey, profiles, max_concurrent=concurrent_limit)
-            elapsed = time.time() - start_time
+            pipeline = SurveyPipeline(survey, config)
 
-            print(f"\n=== LLM Response Generation Complete ===")
-            print(f"Total responses: {len(responses)}")
-            print(f"Time taken: {elapsed:.2f} seconds")
-            print(f"Average per call: {elapsed/len(responses):.2f} seconds\n")
-
-            msg_data = {'status': 'running', 'message': f'Generated {len(responses)} responses in {elapsed:.1f}s', 'progress': 60}
-            yield f"data: {json.dumps(msg_data)}\n\n"
-            await asyncio.sleep(0.1)
-
-            # Step 3: Apply SSR
-            msg_data = {'status': 'running', 'message': f'Step 3/3: Applying SSR to {len(responses)} responses...', 'progress': 65}
-            yield f"data: {json.dumps(msg_data)}\n\n"
-            await asyncio.sleep(0.1)
-
-            print(f"\n=== Starting SSR Application ===")
-            print(f"Number of responses to process: {len(responses)}")
-            print(f"Temperature: {request.ssr_temperature}")
-            print(f"Normalize method: {request.normalize_method}\n")
-
-            ssr_start_time = time.time()
-            rater = SemanticSimilarityRater(
-                temperature=request.ssr_temperature,
-                normalize_method=request.normalize_method
-            )
-            distributions = rater.rate_responses(responses, survey, show_progress=False)
-            ssr_elapsed = time.time() - ssr_start_time
-
-            print(f"\n=== SSR Application Complete ===")
-            print(f"Distributions generated: {len(distributions)}")
-            print(f"Time taken: {ssr_elapsed:.2f} seconds")
-            print(f"Average per response: {ssr_elapsed/len(responses):.2f} seconds\n")
-
-            msg_data = {'status': 'running', 'message': f'Generated {len(distributions)} distributions in {ssr_elapsed:.1f}s', 'progress': 90}
-            yield f"data: {json.dumps(msg_data)}\n\n"
-            await asyncio.sleep(0.1)
-
-            # Build O(1) lookup dictionary (fixes N+1 pattern)
-            response_lookup = build_response_lookup(responses)
-
-            # Organize results
-            organized_distributions = {}
-            for dist in distributions:
-                # Get category and profile using O(1) lookup
-                response = response_lookup.get((dist.respondent_id, dist.question_id))
-                category = response.category or DEFAULT_CATEGORY if response else DEFAULT_CATEGORY
-                profile = response.respondent_profile if response else {}
-
-                if category not in organized_distributions:
-                    organized_distributions[category] = {}
-
-                if dist.question_id not in organized_distributions[category]:
-                    organized_distributions[category][dist.question_id] = {}
-
-                # json.dumps() will handle all escaping automatically
-                organized_distributions[category][dist.question_id][dist.respondent_id] = {
-                    "probabilities": dist.distribution.tolist(),
-                    "mode": int(dist.mode),
-                    "expected_value": float(dist.expected_value),
-                    "entropy": float(dist.entropy),
-                    "text_response": dist.text_response or "",
-                    "gender": profile.get('gender', 'Unknown'),
-                    "age_group": profile.get('age_group', 'Unknown'),
-                    "persona_group": profile.get('persona_group', 'General'),
-                    "occupation": profile.get('occupation', 'Unknown')
+            # Define progress callback for streaming updates
+            def progress_callback(progress: PipelineProgress):
+                msg_data = {
+                    'status': progress.status,
+                    'message': progress.message,
+                    'progress': progress.progress
                 }
+                # Note: Can't yield from callback, will collect and yield after
+                nonlocal last_progress
+                last_progress = msg_data
 
-            run_id = f"run_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            last_progress = None
 
-            result = {
-                "run_id": run_id,
-                "survey_id": request.survey_id,
-                "survey_name": survey.name,
-                "timestamp": datetime.now().isoformat(),
-                "num_profiles": len(profiles),
-                "num_responses": len(responses),
-                "num_distributions": len(distributions),
-                "distributions": organized_distributions,
-                "config": {
-                    "llm_provider": request.llm_provider,
-                    "model": request.model,
-                    "llm_temperature": request.llm_temperature,
-                    "ssr_temperature": request.ssr_temperature,
-                    "normalize_method": request.normalize_method,
-                    "seed": request.seed
-                }
+            # Run pipeline (currently runs synchronously in background thread)
+            result = await pipeline.run_async()
+
+            # Convert PipelineResult dataclass to dict for JSON serialization
+            result_dict = {
+                "run_id": result.run_id,
+                "survey_id": result.survey_id,
+                "survey_name": result.survey_name,
+                "timestamp": result.timestamp,
+                "num_profiles": result.num_profiles,
+                "num_responses": result.num_responses,
+                "num_distributions": result.num_distributions,
+                "distributions": result.distributions,
+                "config": result.config
             }
 
             # Save run results to disk
-            save_survey_run(result)
+            save_survey_run(result_dict)
 
             # Send completion with results
             print(f"\n=== Preparing Completion Message ===")
-            print(f"Result size - Profiles: {len(profiles)}, Responses: {len(responses)}, Distributions: {len(distributions)}")
+            print(f"Result size - Profiles: {result.num_profiles}, Responses: {result.num_responses}, Distributions: {result.num_distributions}")
+            print(f"Pipeline timing: {result.timing}")
 
             completion_data = {
                 'status': 'complete',
                 'message': 'Survey complete!',
                 'progress': 100,
-                'result': result
+                'result': result_dict
             }
 
             print("Serializing completion data to JSON...")
