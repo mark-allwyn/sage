@@ -193,7 +193,7 @@ class ApplySSRRequest(BaseModel):
 class RunSurveyRequest(BaseModel):
     survey_id: str
     num_profiles: int = Field(default=100, ge=10, le=500)
-    llm_provider: str = Field(default="openai", pattern="^(openai|anthropic)$")
+    llm_provider: str = Field(default="openai", pattern="^(openai|anthropic|ollama)$")
     model: str = "gpt-4"
     llm_temperature: float = Field(default=0.7, ge=0.0, le=2.0)
     ssr_temperature: float = Field(default=1.0, ge=0.1, le=5.0)
@@ -205,7 +205,7 @@ class CreateGroundTruthFromSSRRequest(BaseModel):
     name: str
     description: str
     num_profiles: int = Field(default=500, ge=10, le=2000)
-    llm_provider: str = Field(default="openai", pattern="^(openai|anthropic)$")
+    llm_provider: str = Field(default="openai", pattern="^(openai|anthropic|ollama)$")
     model: str = "gpt-4"
     llm_temperature: float = Field(default=0.7, ge=0.0, le=2.0)
     ssr_temperature: float = Field(default=1.0, ge=0.1, le=5.0)
@@ -217,6 +217,21 @@ class UploadGroundTruthRequest(BaseModel):
     name: str
     description: str
     distributions: Dict[str, Any]
+
+# Settings Models
+class ProviderConfig(BaseModel):
+    enabled: bool
+    api_key: Optional[str] = None
+    models: List[str] = Field(default_factory=list)
+
+class SystemSettings(BaseModel):
+    providers: Dict[str, ProviderConfig]
+
+class UpdateProviderRequest(BaseModel):
+    provider: str
+    enabled: bool
+    api_key: Optional[str] = None
+    models: List[str] = Field(default_factory=list)
 
 # ===================
 # Helper Functions
@@ -258,24 +273,61 @@ def save_survey_run(run_result: dict) -> None:
     run_path = results_dir / f"{run_result['run_id']}.json"
     run_path.write_text(json.dumps(run_result, indent=2))
 
-    # Update index
-    index_path = results_dir / "runs_index.json"
-    if index_path.exists():
-        index = json.loads(index_path.read_text())
-    else:
-        index = []
+def get_settings_path() -> Path:
+    """Get path to settings file"""
+    backend_dir = Path(__file__).parent
+    return backend_dir / "settings.json"
 
-    # Add metadata to index
-    index.append({
-        "run_id": run_result["run_id"],
-        "survey_id": run_result["survey_id"],
-        "timestamp": run_result.get("timestamp", datetime.now().isoformat()),
-        "num_profiles": run_result["num_profiles"],
-        "num_responses": run_result["num_responses"],
-        "config": run_result["config"]
-    })
+def load_settings() -> SystemSettings:
+    """Load settings from file or return defaults"""
+    settings_path = get_settings_path()
 
-    index_path.write_text(json.dumps(index, indent=2))
+    if settings_path.exists():
+        try:
+            with open(settings_path, 'r') as f:
+                data = json.load(f)
+                return SystemSettings(**data)
+        except Exception as e:
+            logger.warning(f"Error loading settings: {e}, using defaults")
+
+    # Return default settings
+    return SystemSettings(
+        providers={
+            "openai": ProviderConfig(enabled=False, api_key=None, models=[]),
+            "anthropic": ProviderConfig(enabled=False, api_key=None, models=[]),
+            "gemini": ProviderConfig(enabled=False, api_key=None, models=[]),
+            "ollama": ProviderConfig(enabled=True, api_key=None, models=["gemma3:latest"]),
+        }
+    )
+
+def save_settings(settings: SystemSettings) -> None:
+    """Save settings to file"""
+    settings_path = get_settings_path()
+    with open(settings_path, 'w') as f:
+        json.dump(settings.dict(), f, indent=2)
+
+def get_api_key_for_provider(provider: str) -> Optional[str]:
+    """Get API key for a provider from settings or environment"""
+    import os
+
+    # First check settings file
+    settings = load_settings()
+    if provider in settings.providers:
+        provider_config = settings.providers[provider]
+        if provider_config.api_key:
+            return provider_config.api_key
+
+    # Fallback to environment variables
+    env_var_map = {
+        "openai": "OPENAI_API_KEY",
+        "anthropic": "ANTHROPIC_API_KEY",
+        "gemini": "GEMINI_API_KEY",
+    }
+
+    if provider in env_var_map:
+        return os.getenv(env_var_map[provider])
+
+    return None
 
 def aggregate_distributions_by_question(distributions: List[RatingDistribution], responses: List[Response]) -> Dict:
     """Aggregate individual respondent distributions into per-question averages"""
@@ -337,6 +389,8 @@ def save_ground_truth(ground_truth: dict) -> None:
         "survey_id": ground_truth["survey_id"],
         "source": ground_truth["source"],
         "created_at": ground_truth["created_at"],
+        "num_profiles": ground_truth.get("num_profiles"),
+        "num_responses": ground_truth.get("num_responses"),
         "generation_config": ground_truth.get("generation_config")
     })
 
@@ -435,7 +489,10 @@ async def get_surveys():
                 has_categories=survey.has_categories()
             ))
         except Exception as e:
-            # Skip invalid survey files
+            # Log and skip invalid survey files
+            logger.error(f"Failed to load survey from {yaml_file.name}: {str(e)}")
+            import traceback
+            logger.error(traceback.format_exc())
             continue
 
     return surveys
@@ -960,21 +1017,35 @@ async def run_survey(request: RunSurveyRequest):
 async def get_survey_runs(survey_id: Optional[str] = None):
     """List all survey runs with optional filtering by survey_id"""
     results_dir = get_results_dir()
-    index_path = results_dir / "runs_index.json"
 
-    if not index_path.exists():
-        return []
-
-    index = json.loads(index_path.read_text())
+    # Scan directory for run files (more robust than relying on index file)
+    runs = []
+    for run_file in results_dir.glob("run_*.json"):
+        try:
+            data = json.loads(run_file.read_text())
+            # Create metadata entry for the list
+            run_meta = {
+                "run_id": data.get("run_id"),
+                "survey_id": data.get("survey_id"),
+                "survey_name": data.get("survey_name"),
+                "timestamp": data.get("timestamp"),
+                "num_profiles": data.get("num_profiles"),
+                "num_responses": data.get("num_responses"),
+                "config": data.get("config", {})
+            }
+            runs.append(run_meta)
+        except Exception as e:
+            logger.error(f"Error reading run file {run_file}: {e}")
+            continue
 
     # Filter by survey_id if provided
     if survey_id:
-        index = [run for run in index if run["survey_id"] == survey_id]
+        runs = [run for run in runs if run["survey_id"] == survey_id]
 
     # Sort by timestamp descending (newest first)
-    index.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
+    runs.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
 
-    return index
+    return runs
 
 @app.get("/api/survey-runs/{run_id}")
 async def get_survey_run(run_id: str):
@@ -1090,6 +1161,8 @@ async def create_ground_truth_from_ssr(request: CreateGroundTruthFromSSRRequest)
             "survey_name": survey.name,
             "source": "ssr_generated",
             "created_at": datetime.now().isoformat(),
+            "num_profiles": request.num_profiles,
+            "num_responses": len(responses),
             "generation_config": {
                 "num_profiles": request.num_profiles,
                 "llm_provider": request.llm_provider,
@@ -1327,6 +1400,279 @@ async def process_webpage_url(media_url: str = Form(...)):
     except Exception as e:
         logger.error(f"Error processing webpage URL: {e}")
         raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}")
+# ===================
+# Settings API Endpoints
+# ===================
+
+@app.get("/api/settings")
+async def get_settings():
+    """Get current system settings (with masked API keys)"""
+    try:
+        settings = load_settings()
+
+        # Mask API keys in response (show only last 4 characters)
+        masked_settings = settings.dict()
+        for provider, config in masked_settings["providers"].items():
+            if config["api_key"]:
+                key = config["api_key"]
+                if len(key) > 4:
+                    masked_settings["providers"][provider]["api_key"] = "****" + key[-4:]
+                else:
+                    masked_settings["providers"][provider]["api_key"] = "****"
+
+        return masked_settings
+    except Exception as e:
+        logger.error(f"Error loading settings: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.put("/api/settings/provider")
+async def update_provider_settings(request: UpdateProviderRequest):
+    """Update settings for a specific provider"""
+    try:
+        # Load current settings
+        settings = load_settings()
+
+        # Validate provider
+        if request.provider not in settings.providers:
+            raise HTTPException(status_code=400, detail=f"Invalid provider: {request.provider}")
+
+        # Update provider config
+        settings.providers[request.provider] = ProviderConfig(
+            enabled=request.enabled,
+            api_key=request.api_key,
+            models=request.models
+        )
+
+        # Save settings
+        save_settings(settings)
+
+        logger.info(f"Updated settings for provider: {request.provider}")
+
+        return {"message": f"Settings updated for {request.provider}", "success": True}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating provider settings: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/settings/reset")
+async def reset_settings():
+    """Reset settings to defaults"""
+    try:
+        default_settings = SystemSettings(
+            providers={
+                "openai": ProviderConfig(enabled=False, api_key=None, models=[]),
+                "anthropic": ProviderConfig(enabled=False, api_key=None, models=[]),
+                "gemini": ProviderConfig(enabled=False, api_key=None, models=[]),
+                "ollama": ProviderConfig(enabled=True, api_key=None, models=["gemma3:latest"]),
+            }
+        )
+
+        save_settings(default_settings)
+
+        logger.info("Settings reset to defaults")
+
+        return {"message": "Settings reset to defaults", "success": True}
+
+    except Exception as e:
+        logger.error(f"Error resetting settings: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ===================
+# Evaluation Endpoints
+# ===================
+
+from evaluation import create_evaluator, ResponseEvaluator
+
+
+class EvaluateResponsesRequest(BaseModel):
+    """Request to evaluate survey responses"""
+    survey_id: str
+    run_id: Optional[str] = None
+    sample_size: Optional[int] = None
+    metrics: Optional[List[str]] = Field(default=None)
+    evaluator_model: str = Field(default="gpt-4o-mini")
+    threshold: float = Field(default=0.5)
+
+
+class EvaluationListItem(BaseModel):
+    """Summary of an evaluation"""
+    evaluation_id: str
+    survey_id: str
+    timestamp: str
+    evaluated_responses: int
+    overall_score: float
+    success: bool
+
+
+@app.post("/api/evaluations/evaluate")
+async def evaluate_responses(request: EvaluateResponsesRequest):
+    """
+    Evaluate LLM responses for a survey run
+
+    This endpoint evaluates responses using DeepEval metrics including
+    answer relevancy, bias detection, and hallucination detection.
+    """
+    try:
+        logger.info(f"Starting evaluation for survey {request.survey_id}")
+
+        # Load survey configuration (load_survey expects survey_id, not path)
+        survey_config = load_survey(request.survey_id)
+
+        # Load responses - either from specific run or latest run
+        results_dir = get_results_dir()
+        if request.run_id:
+            run_file = results_dir / f"{request.run_id}.json"
+            if not run_file.exists():
+                raise HTTPException(status_code=404, detail=f"Run {request.run_id} not found")
+        else:
+            # Find latest run for this survey
+            run_files = list(results_dir.glob(f"{request.survey_id}_*.json"))
+            if not run_files:
+                raise HTTPException(status_code=404, detail=f"No runs found for survey {request.survey_id}")
+            run_file = max(run_files, key=lambda p: p.stat().st_mtime)
+
+        with open(run_file, 'r') as f:
+            run_data = json.load(f)
+
+        # Extract responses
+        responses = []
+        for category, cat_data in run_data.get("distributions", {}).items():
+            for question_id, question_data in cat_data.items():
+                for respondent_id, dist_data in question_data.items():
+                    responses.append({
+                        "question_id": question_id,
+                        "respondent_id": respondent_id,
+                        "text_response": dist_data.get("text_response", ""),
+                        "category": category,
+                    })
+
+        if not responses:
+            raise HTTPException(status_code=400, detail="No responses found to evaluate")
+
+        # Create evaluator
+        evaluator = create_evaluator(
+            metrics=request.metrics,
+            evaluator_model=request.evaluator_model,
+            threshold=request.threshold,
+        )
+
+        # Run evaluation
+        # Convert Survey object questions to dict format expected by evaluator
+        questions_dict = [{"id": q.id, "text": q.text} for q in survey_config.questions]
+
+        # Pass survey context for proper hallucination detection
+        survey_context = survey_config.context if hasattr(survey_config, 'context') else None
+        logger.info(f"Survey context available: {survey_context is not None}, length: {len(survey_context) if survey_context else 0}")
+
+        # Extract run_id from the run file name
+        actual_run_id = run_file.stem  # This gives us the filename without extension
+
+        result = evaluator.evaluate_survey_responses(
+            survey_id=request.survey_id,
+            responses=responses,
+            questions=questions_dict,
+            sample_size=request.sample_size,
+            survey_context=survey_context,
+            run_id=actual_run_id,
+        )
+
+        logger.info(f"Evaluation complete for survey {request.survey_id}")
+
+        return result
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error evaluating responses: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/evaluations")
+async def list_evaluations(survey_id: Optional[str] = None):
+    """
+    List all evaluations, optionally filtered by survey_id
+    """
+    try:
+        evaluator = ResponseEvaluator()
+        evaluations = evaluator.list_evaluations(survey_id=survey_id)
+
+        return {
+            "evaluations": evaluations,
+            "count": len(evaluations),
+        }
+
+    except Exception as e:
+        logger.error(f"Error listing evaluations: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/evaluations/{evaluation_id}")
+async def get_evaluation(evaluation_id: str):
+    """
+    Get detailed evaluation results
+    """
+    try:
+        evaluator = ResponseEvaluator()
+        result = evaluator.load_evaluation(evaluation_id)
+
+        if not result:
+            raise HTTPException(status_code=404, detail=f"Evaluation {evaluation_id} not found")
+
+        return result
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error loading evaluation: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/api/evaluations/{evaluation_id}")
+async def delete_evaluation(evaluation_id: str):
+    """
+    Delete an evaluation
+    """
+    try:
+        evaluator = ResponseEvaluator()
+        filepath = evaluator.results_dir / f"{evaluation_id}.json"
+
+        if not filepath.exists():
+            raise HTTPException(status_code=404, detail=f"Evaluation {evaluation_id} not found")
+
+        filepath.unlink()
+        logger.info(f"Deleted evaluation {evaluation_id}")
+
+        return {
+            "evaluation_id": evaluation_id,
+            "status": "deleted",
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting evaluation: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/evaluations/compare")
+async def compare_evaluations(evaluation_ids: List[str]):
+    """
+    Compare multiple evaluations to see trends
+    """
+    try:
+        evaluator = ResponseEvaluator()
+        result = evaluator.compare_evaluations(evaluation_ids)
+
+        return result
+
+    except Exception as e:
+        logger.error(f"Error comparing evaluations: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # WebSocket endpoint for real-time progress (future enhancement)

@@ -1,0 +1,8 @@
+{
+  "survey_id": "lottery_scratch_cards",
+  "run_id": "run_20251118_145206",
+  "sample_size": 3,
+  "metrics": ["answer_relevancy"],
+  "evaluator_model": "gpt-4o-mini",
+  "threshold": 0.5
+}

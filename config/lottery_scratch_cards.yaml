@@ -1,0 +1,203 @@
+survey:
+  name: "Lottery Scratch Card Evaluation"
+  description: "Single category survey evaluating a new premium scratch card lottery product"
+
+  context: |
+    We are evaluating a new premium lottery scratch card product:
+
+    **GOLD RUSH JACKPOT - Premium Scratch Card**
+
+    A high-value instant lottery scratch card offering exciting prizes and enhanced gameplay.
+
+    Product Details:
+    - Price: $10 per card (premium tier)
+    - Top Prize: $1,000,000 cash
+    - Overall Odds: 1 in 3.5 cards wins a prize
+    - Prize Range: $10 to $1,000,000
+    - Second-Tier Prizes: Multiple $10,000 and $50,000 prizes
+    - Bonus Games: Includes a "multiplier" feature that can triple winnings
+    - Design: Gold-themed with modern holographic security features
+    - Availability: Sold at authorized lottery retailers and convenience stores
+
+    Prize Structure:
+    - $1,000,000: 1 in 3,500,000
+    - $50,000: 1 in 875,000
+    - $10,000: 1 in 350,000
+    - $1,000: 1 in 35,000
+    - $100: 1 in 3,500
+    - $50: 1 in 875
+    - $20: 1 in 175
+    - $10: 1 in 10
+
+    Unique Features:
+    - Triple Match Bonus: Match three gold bars to multiply your prize by 3x
+    - Quick Reveal Option: Use mobile app to scan and instantly see if you've won
+    - Second Chance: Non-winning tickets can be entered into monthly $100,000 drawings
+    - Collect & Win: Collect special symbols for bonus prize opportunities
+
+  questions:
+    # Purchase intent
+    - id: "purchase_likelihood"
+      text: "How likely would you be to purchase this $10 scratch card?"
+      type: "likert_5"
+      scale:
+        1: "Definitely would not buy"
+        2: "Probably would not buy"
+        3: "Might or might not buy"
+        4: "Probably would buy"
+        5: "Definitely would buy"
+
+    # Value perception
+    - id: "value_for_money"
+      text: "The $10 price point represents good value for this scratch card"
+      type: "likert_5"
+      scale:
+        1: "Strongly disagree"
+        2: "Disagree"
+        3: "Neither agree nor disagree"
+        4: "Agree"
+        5: "Strongly agree"
+
+    # Product appeal
+    - id: "overall_appeal"
+      text: "Overall, how appealing is this Gold Rush Jackpot scratch card to you?"
+      type: "likert_7"
+      scale:
+        1: "Not at all appealing"
+        2: "Slightly unappealing"
+        3: "Somewhat unappealing"
+        4: "Neutral"
+        5: "Somewhat appealing"
+        6: "Appealing"
+        7: "Extremely appealing"
+
+    # Prize structure
+    - id: "prize_attractiveness"
+      text: "The prize structure (including the $1M top prize) is attractive"
+      type: "likert_5"
+      scale:
+        1: "Strongly disagree"
+        2: "Disagree"
+        3: "Neither agree nor disagree"
+        4: "Agree"
+        5: "Strongly agree"
+
+    # Odds perception
+    - id: "odds_fairness"
+      text: "The odds (1 in 3.5 cards wins) seem fair for a $10 scratch card"
+      type: "likert_5"
+      scale:
+        1: "Strongly disagree"
+        2: "Disagree"
+        3: "Neither agree nor disagree"
+        4: "Agree"
+        5: "Strongly agree"
+
+    # Uniqueness
+    - id: "uniqueness"
+      text: "This scratch card stands out from other lottery products I've seen"
+      type: "likert_5"
+      scale:
+        1: "Strongly disagree"
+        2: "Disagree"
+        3: "Neither agree nor disagree"
+        4: "Agree"
+        5: "Strongly agree"
+
+    # Bonus features
+    - id: "bonus_features_appeal"
+      text: "The bonus features (multiplier, second chance, collect & win) make this more appealing"
+      type: "likert_5"
+      scale:
+        1: "Strongly disagree"
+        2: "Disagree"
+        3: "Neither agree nor disagree"
+        4: "Agree"
+        5: "Strongly agree"
+
+    # Current usage
+    - id: "current_lottery_player"
+      text: "Do you currently play lottery games or scratch cards?"
+      type: "yes_no"
+
+    # Purchase frequency
+    - id: "purchase_frequency_expectation"
+      text: "If you were to purchase this scratch card, how often would you buy it?"
+      type: "multiple_choice"
+      options:
+        - "Never - would not purchase"
+        - "Rarely (once every few months)"
+        - "Occasionally (once a month)"
+        - "Regularly (2-3 times per month)"
+        - "Frequently (weekly)"
+        - "Very frequently (multiple times per week)"
+
+    # Most attractive feature
+    - id: "most_attractive_feature"
+      text: "Which feature of this scratch card is most attractive to you?"
+      type: "multiple_choice"
+      options:
+        - "$1,000,000 top prize"
+        - "Good overall odds (1 in 3.5)"
+        - "Triple multiplier bonus"
+        - "Second chance drawings"
+        - "Mobile app quick reveal"
+        - "Collect & win bonus game"
+        - "Premium gold design"
+
+  demographics:
+    - age_group
+    - gender
+    - income_level
+    - persona_group
+
+  persona_groups:
+    - name: "Casual Players"
+      description: "Occasional lottery players who buy tickets for fun and entertainment"
+      weight: 0.35
+      target_demographics:
+        gender: ["Male", "Female"]
+        age_group: ["25-34", "35-44", "45-54"]
+        income_level: ["$25k-$50k", "$50k-$75k", "$75k-$100k"]
+      personas:
+        - "A 32-year-old who buys scratch cards occasionally as a small indulgence. Views it as entertainment rather than investment."
+        - "A 28-year-old who picks up a scratch card when getting gas or coffee. Enjoys the quick thrill and doesn't mind losing."
+        - "A 45-year-old who plays the lottery when the jackpot is high. Treats it as a fun 'what if' moment."
+
+    - name: "Regular Players"
+      description: "Consistent lottery and scratch card players who play multiple times per month"
+      weight: 0.25
+      target_demographics:
+        gender: ["Male", "Female"]
+        age_group: ["35-44", "45-54", "55-64"]
+        income_level: ["$25k-$50k", "$50k-$75k"]
+      personas:
+        - "A 48-year-old who has a weekly lottery routine. Buys several scratch cards and plays favorite numbers regularly."
+        - "A 55-year-old who views lottery as a retirement supplement hope. Tracks wins and losses, knows the odds."
+        - "A 42-year-old who enjoys the anticipation and ritual of scratching cards. Has favorite stores and lucky days."
+
+    - name: "Price-Sensitive Non-Players"
+      description: "Budget-conscious consumers who rarely or never play lottery games"
+      weight: 0.25
+      target_demographics:
+        gender: ["Male", "Female"]
+        age_group: ["25-34", "35-44", "45-54"]
+        income_level: ["Under $25k", "$25k-$50k"]
+      personas:
+        - "A 29-year-old on a tight budget who sees lottery as a waste of money. Prefers guaranteed value."
+        - "A 38-year-old who thinks the odds are too low to justify spending. Would rather save the money."
+        - "A 50-year-old skeptic who believes lottery preys on hope. Has never won and doesn't expect to."
+
+    - name: "Premium Seekers"
+      description: "Players who prefer higher-priced tickets with bigger prizes and better odds"
+      weight: 0.15
+      target_demographics:
+        gender: ["Male", "Female"]
+        age_group: ["35-44", "45-54", "55-64"]
+        income_level: ["$75k-$100k", "$100k+"]
+      personas:
+        - "A 44-year-old with disposable income who only buys premium scratch cards. Views cheap tickets as not worth the time."
+        - "A 52-year-old who appreciates better odds and larger prizes. Willing to pay more for better entertainment value."
+        - "A 58-year-old who treats premium scratch cards as a hobby. Enjoys the quality and presentation of higher-end products."
+
+  sample_size: 150

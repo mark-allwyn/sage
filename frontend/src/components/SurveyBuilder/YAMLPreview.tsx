@@ -12,14 +12,20 @@ interface YAMLPreviewProps {
 }
 
 const YAMLPreview: React.FC<YAMLPreviewProps> = ({ surveyData }) => {
+  // Helper function to escape strings for YAML
+  const escapeYAMLString = (str: string): string => {
+    if (!str) return '';
+    // Escape backslashes first, then double quotes
+    return str.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+  };
+
   const generateYAML = (): string => {
     const yaml: string[] = [];
 
     yaml.push('survey:');
-    yaml.push(`  name: "${surveyData.name || 'Untitled Survey'}"`);
-    yaml.push(`  description: "${surveyData.description || 'No description'}"`);
-    yaml.push(`  context: "${surveyData.context || 'No context provided'}"`);
-    yaml.push(`  sample_size: ${surveyData.sample_size}`);
+    yaml.push(`  name: "${escapeYAMLString(surveyData.name || 'Untitled Survey')}"`);
+    yaml.push(`  description: "${escapeYAMLString(surveyData.description || 'No description')}"`);
+    yaml.push(`  context: "${escapeYAMLString(surveyData.context || 'No context provided')}"`);
 
     // Demographics
     yaml.push('  demographics:');
@@ -36,9 +42,9 @@ const YAMLPreview: React.FC<YAMLPreviewProps> = ({ surveyData }) => {
       yaml.push('  categories:');
       surveyData.categories.forEach(cat => {
         yaml.push(`    - id: ${cat.id}`);
-        yaml.push(`      name: "${cat.name}"`);
-        yaml.push(`      description: "${cat.description}"`);
-        yaml.push(`      context: "${cat.context}"`);
+        yaml.push(`      name: "${escapeYAMLString(cat.name)}"`);
+        yaml.push(`      description: "${escapeYAMLString(cat.description)}"`);
+        yaml.push(`      context: "${escapeYAMLString(cat.context)}"`);
       });
     }
 
@@ -47,7 +53,7 @@ const YAMLPreview: React.FC<YAMLPreviewProps> = ({ surveyData }) => {
     if (surveyData.questions.length > 0) {
       surveyData.questions.forEach(q => {
         yaml.push(`    - id: ${q.id}`);
-        yaml.push(`      text: "${q.text}"`);
+        yaml.push(`      text: "${escapeYAMLString(q.text)}"`);
         yaml.push(`      type: ${q.type}`);
         if (q.category) {
           yaml.push(`      category: ${q.category}`);
@@ -58,7 +64,7 @@ const YAMLPreview: React.FC<YAMLPreviewProps> = ({ surveyData }) => {
         if (q.options && q.options.length > 0) {
           yaml.push(`      options:`);
           q.options.forEach(opt => {
-            yaml.push(`        - "${opt}"`);
+            yaml.push(`        - "${escapeYAMLString(opt)}"`);
           });
         }
       });
@@ -70,21 +76,33 @@ const YAMLPreview: React.FC<YAMLPreviewProps> = ({ surveyData }) => {
     yaml.push('  persona_groups:');
     if (surveyData.persona_groups.length > 0) {
       surveyData.persona_groups.forEach(pg => {
-        yaml.push(`    - name: "${pg.name}"`);
-        yaml.push(`      description: "${pg.description}"`);
+        yaml.push(`    - name: "${escapeYAMLString(pg.name)}"`);
+        yaml.push(`      description: "${escapeYAMLString(pg.description)}"`);
         yaml.push(`      weight: ${pg.weight}`);
         yaml.push(`      personas:`);
         if (pg.personas.length > 0) {
           pg.personas.forEach(p => {
-            yaml.push(`        - "${p}"`);
+            yaml.push(`        - "${escapeYAMLString(p)}"`);
           });
         } else {
           yaml.push(`        []`);
         }
         yaml.push(`      target_demographics:`);
-        yaml.push(`        gender: [${pg.target_demographics.gender.map(g => `"${g}"`).join(', ')}]`);
-        yaml.push(`        age_group: [${pg.target_demographics.age_group.map(a => `"${a}"`).join(', ')}]`);
-        yaml.push(`        occupation: [${pg.target_demographics.occupation.map(o => `"${o}"`).join(', ')}]`);
+        if (pg.target_demographics.gender) {
+          yaml.push(`        gender: [${pg.target_demographics.gender.map(g => `"${escapeYAMLString(g)}"`).join(', ')}]`);
+        }
+        if (pg.target_demographics.age_group) {
+          yaml.push(`        age_group: [${pg.target_demographics.age_group.map(a => `"${escapeYAMLString(a)}"`).join(', ')}]`);
+        }
+        if (pg.target_demographics.occupation) {
+          yaml.push(`        occupation: [${pg.target_demographics.occupation.map(o => `"${escapeYAMLString(o)}"`).join(', ')}]`);
+        }
+        if (pg.target_demographics.income_level) {
+          yaml.push(`        income_level: [${pg.target_demographics.income_level.map(il => `"${escapeYAMLString(il)}"`).join(', ')}]`);
+        }
+        if (pg.target_demographics.tech_comfort_level) {
+          yaml.push(`        tech_comfort_level: [${pg.target_demographics.tech_comfort_level.map(tcl => `"${escapeYAMLString(tcl)}"`).join(', ')}]`);
+        }
       });
     } else {
       yaml.push(`    []`);

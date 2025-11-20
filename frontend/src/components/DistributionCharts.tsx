@@ -13,8 +13,6 @@ import {
   CardContent,
 } from '@mui/material';
 import {
-  LineChart,
-  Line,
   BarChart,
   Bar,
   XAxis,
@@ -23,10 +21,8 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-  ComposedChart,
-  Area,
 } from 'recharts';
-import type { RatingDistribution, AggregatedDistribution, DistributionData } from '../services/types';
+import type { RatingDistribution, AggregatedDistribution, DistributionData, Survey } from '../services/types';
 
 interface DistributionChartsProps {
   testRunDistributions?: DistributionData;
@@ -35,11 +31,13 @@ interface DistributionChartsProps {
       [question_id: string]: AggregatedDistribution;
     };
   };
+  survey?: Survey;
 }
 
 const DistributionCharts: React.FC<DistributionChartsProps> = ({
   testRunDistributions,
   groundTruthDistributions,
+  survey,
 }) => {
   if (!testRunDistributions || !groundTruthDistributions) {
     return null;
@@ -74,6 +72,19 @@ const DistributionCharts: React.FC<DistributionChartsProps> = ({
     return sumProbs.map((sum) => sum / respondentIds.length);
   };
 
+  // Helper to get question labels from survey
+  const getQuestionLabels = (questionId: string): string[] | null => {
+    if (!survey) return null;
+
+    const question = survey.questions.find(q => q.id === questionId);
+    if (!question || !question.scale) return null;
+
+    const scaleEntries = Object.entries(question.scale)
+      .sort(([keyA], [keyB]) => Number(keyA) - Number(keyB));
+
+    return scaleEntries.map(([_, label]) => label);
+  };
+
   // Get all categories and questions
   const categories = Object.keys(groundTruthDistributions);
 
@@ -102,10 +113,14 @@ const DistributionCharts: React.FC<DistributionChartsProps> = ({
 
                 if (!testDist) return null;
 
-                // Prepare chart data
+                // Get labels from survey or use numbers as fallback
+                const textLabels = getQuestionLabels(questionId);
                 const numRatings = gtDist.mean_probabilities.length;
-                const chartData = Array.from({ length: numRatings }, (_, i) => ({
-                  rating: `${i + 1}`,
+                const labels = textLabels || Array.from({ length: numRatings }, (_, i) => `${i + 1}`);
+
+                // Prepare chart data with text labels
+                const chartData = labels.map((label, i) => ({
+                  rating: label,
                   groundTruth: gtDist.mean_probabilities[i],
                   experiment: testDist[i],
                 }));
@@ -117,48 +132,57 @@ const DistributionCharts: React.FC<DistributionChartsProps> = ({
                         <Typography variant="subtitle1" gutterBottom fontWeight="bold">
                           {questionId}
                         </Typography>
-                        <ResponsiveContainer width="100%" height={300}>
-                          <ComposedChart data={chartData}>
+                        <ResponsiveContainer width="100%" height={380}>
+                          <BarChart
+                            data={chartData}
+                            margin={{ top: 30, right: 20, left: 10, bottom: 80 }}
+                          >
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis
                               dataKey="rating"
-                              label={{ value: 'Rating', position: 'insideBottom', offset: -5 }}
+                              label={{
+                                value: 'Rating Scale',
+                                position: 'insideBottom',
+                                offset: -15,
+                                style: { fontSize: '11px' }
+                              }}
+                              tick={{ fontSize: 10 }}
+                              angle={-45}
+                              textAnchor="end"
+                              height={70}
+                              interval={0}
                             />
                             <YAxis
                               label={{ value: 'Probability', angle: -90, position: 'insideLeft' }}
+                              tick={{ fontSize: 11 }}
                             />
                             <Tooltip
                               formatter={(value: number) => value.toFixed(3)}
                               contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.95)' }}
                             />
-                            <Legend />
+                            <Legend
+                              wrapperStyle={{ fontSize: '12px' }}
+                              verticalAlign="top"
+                              align="center"
+                              iconSize={10}
+                            />
 
                             {/* Ground truth as bars */}
                             <Bar
                               dataKey="groundTruth"
                               fill="#FF6E3A"
                               name="Ground Truth"
-                              opacity={0.6}
+                              opacity={0.8}
                             />
 
-                            {/* Experiment as line with area */}
-                            <Area
-                              type="monotone"
+                            {/* Experiment as bars */}
+                            <Bar
                               dataKey="experiment"
                               fill="#367588"
-                              stroke="#367588"
-                              fillOpacity={0.3}
-                              name="Experiment (Area)"
-                            />
-                            <Line
-                              type="monotone"
-                              dataKey="experiment"
-                              stroke="#367588"
-                              strokeWidth={3}
-                              dot={{ fill: '#367588', r: 5 }}
                               name="Experiment"
+                              opacity={0.8}
                             />
-                          </ComposedChart>
+                          </BarChart>
                         </ResponsiveContainer>
 
                         {/* Show sample size */}

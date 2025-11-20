@@ -23,6 +23,12 @@ import {
   CreateGroundTruthFromSSRRequest,
   UploadGroundTruthRequest,
   ComparisonResults,
+  SystemSettings,
+  UpdateSettingsRequest,
+  EvaluateResponsesRequest,
+  SurveyEvaluation,
+  EvaluationListItem,
+  EvaluationComparison,
 } from './types';
 import * as api from './api';
 
@@ -38,6 +44,9 @@ export const queryKeys = {
   surveyRun: (runId: string) => ['surveyRun', runId] as const,
   groundTruths: (surveyId?: string) => surveyId ? ['groundTruths', surveyId] : ['groundTruths'] as const,
   groundTruth: (gtId: string) => ['groundTruth', gtId] as const,
+  settings: ['settings'] as const,
+  evaluations: (surveyId?: string) => surveyId ? ['evaluations', surveyId] : ['evaluations'] as const,
+  evaluation: (evaluationId: string) => ['evaluation', evaluationId] as const,
 };
 
 // ===================
@@ -383,6 +392,144 @@ export const useCompareToGroundTruth = (
 ) => {
   return useMutation<ComparisonResults, Error, { runId: string; groundTruthId: string }>({
     mutationFn: ({ runId, groundTruthId }) => api.compareToGroundTruth(runId, groundTruthId),
+    ...options,
+  });
+};
+
+// ===================
+// Settings Hooks
+// ===================
+
+/**
+ * Get system settings
+ */
+export const useSettings = (
+  options?: Omit<UseQueryOptions<SystemSettings, Error>, 'queryKey' | 'queryFn'>
+) => {
+  return useQuery<SystemSettings, Error>({
+    queryKey: queryKeys.settings,
+    queryFn: api.getSettings,
+    ...options,
+  });
+};
+
+/**
+ * Update provider settings
+ */
+export const useUpdateProviderSettings = (
+  options?: UseMutationOptions<{ success: boolean; message: string }, Error, UpdateSettingsRequest>
+) => {
+  const queryClient = useQueryClient();
+
+  return useMutation<{ success: boolean; message: string }, Error, UpdateSettingsRequest>({
+    mutationFn: api.updateProviderSettings,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.settings });
+    },
+    ...options,
+  });
+};
+
+/**
+ * Reset settings to defaults
+ */
+export const useResetSettings = (
+  options?: UseMutationOptions<{ success: boolean; message: string }, Error, void>
+) => {
+  const queryClient = useQueryClient();
+
+  return useMutation<{ success: boolean; message: string }, Error, void>({
+    mutationFn: api.resetSettings,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.settings });
+    },
+    ...options,
+  });
+};
+
+// ===================
+// Evaluation Hooks
+// ===================
+
+/**
+ * List all evaluations, optionally filtered by survey_id
+ */
+export const useEvaluations = (
+  surveyId?: string,
+  options?: Omit<UseQueryOptions<{ evaluations: EvaluationListItem[]; count: number }, Error>, 'queryKey' | 'queryFn'>
+) => {
+  return useQuery<{ evaluations: EvaluationListItem[]; count: number }, Error>({
+    queryKey: queryKeys.evaluations(surveyId),
+    queryFn: () => api.getEvaluations(surveyId),
+    staleTime: 1 * 60 * 1000, // 1 minute
+    ...options,
+  });
+};
+
+/**
+ * Fetch detailed evaluation results
+ */
+export const useEvaluation = (
+  evaluationId: string,
+  options?: Omit<UseQueryOptions<SurveyEvaluation, Error>, 'queryKey' | 'queryFn'>
+) => {
+  return useQuery<SurveyEvaluation, Error>({
+    queryKey: queryKeys.evaluation(evaluationId),
+    queryFn: () => api.getEvaluation(evaluationId),
+    enabled: !!evaluationId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    ...options,
+  });
+};
+
+/**
+ * Evaluate survey responses
+ */
+export const useEvaluateResponses = (
+  options?: UseMutationOptions<SurveyEvaluation, Error, EvaluateResponsesRequest>
+) => {
+  const queryClient = useQueryClient();
+
+  return useMutation<SurveyEvaluation, Error, EvaluateResponsesRequest>({
+    mutationFn: api.evaluateResponses,
+    onSuccess: (data) => {
+      // Invalidate all evaluations lists
+      queryClient.invalidateQueries({ queryKey: ['evaluations'] });
+      // Set the new evaluation in cache
+      if (data.survey_id) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.evaluations(data.survey_id) });
+      }
+    },
+    ...options,
+  });
+};
+
+/**
+ * Delete an evaluation
+ */
+export const useDeleteEvaluation = (
+  options?: UseMutationOptions<{ evaluation_id: string; status: string }, Error, string>
+) => {
+  const queryClient = useQueryClient();
+
+  return useMutation<{ evaluation_id: string; status: string }, Error, string>({
+    mutationFn: api.deleteEvaluation,
+    onSuccess: () => {
+      // Invalidate all evaluations lists
+      queryClient.invalidateQueries({ queryKey: ['evaluations'] });
+    },
+    ...options,
+  });
+};
+
+/**
+ * Compare multiple evaluations
+ */
+export const useCompareEvaluations = (
+  options?: UseMutationOptions<EvaluationComparison, Error, string[]>
+) => {
+  return useMutation<EvaluationComparison, Error, string[]>({
+    mutationFn: api.compareEvaluations,
     ...options,
   });
 };

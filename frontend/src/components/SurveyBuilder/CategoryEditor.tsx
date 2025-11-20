@@ -18,6 +18,7 @@ import {
   Alert,
   CircularProgress,
   Chip,
+  Tooltip,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -25,6 +26,7 @@ import {
   Edit as EditIcon,
   Image as ImageIcon,
   Link as LinkIcon,
+  HelpOutline as HelpIcon,
 } from '@mui/icons-material';
 import { Category, MediaUploadResponse } from '../../services/types';
 import axios from 'axios';
@@ -167,14 +169,21 @@ const CategoryEditor: React.FC<CategoryEditorProps> = ({ categories, setCategori
   return (
     <Paper sx={{ p: 3, mb: 3 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h5">Categories</Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography variant="h5">Categories</Typography>
+          <Tooltip title="Categories represent products, brands, or concepts you want to compare in your survey. For example, if comparing smartphones, each phone model would be a category. You can attach images or webpages to provide visual context.">
+            <IconButton size="small">
+              <HelpIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </Box>
         <Button startIcon={<AddIcon />} variant="outlined" onClick={handleAdd}>
           Add Category
         </Button>
       </Box>
 
       <Typography variant="body2" color="text.secondary" gutterBottom>
-        Optional: Add categories to compare multiple products or services in your survey.
+        Optional: Add categories to compare multiple products, services, or concepts in your survey.
       </Typography>
 
       {/* Existing Categories */}
@@ -264,52 +273,90 @@ const CategoryEditor: React.FC<CategoryEditorProps> = ({ categories, setCategori
             </Typography>
             <Grid container spacing={2}>
               <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label="Category ID"
-                  value={editingCategory.id || ''}
-                  onChange={(e) => setEditingCategory({ ...editingCategory, id: e.target.value })}
-                  required
-                />
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                  <TextField
+                    fullWidth
+                    label="Category ID"
+                    value={editingCategory.id || ''}
+                    onChange={(e) => setEditingCategory({ ...editingCategory, id: e.target.value })}
+                    required
+                    helperText="Unique identifier (e.g., 'product_a', 'brand1')"
+                  />
+                  <Tooltip title="Short, unique ID for this category. Use lowercase with underscores.">
+                    <IconButton size="small" sx={{ mt: 1 }}>
+                      <HelpIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
               </Grid>
               <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label="Category Name"
-                  value={editingCategory.name || ''}
-                  onChange={(e) => setEditingCategory({ ...editingCategory, name: e.target.value })}
-                  required
-                />
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                  <TextField
+                    fullWidth
+                    label="Category Name"
+                    value={editingCategory.name || ''}
+                    onChange={(e) => setEditingCategory({ ...editingCategory, name: e.target.value })}
+                    required
+                    helperText="Display name for the category"
+                  />
+                  <Tooltip title="Human-readable name that will be shown in questions and results (e.g., 'iPhone 15 Pro', 'Coca-Cola')">
+                    <IconButton size="small" sx={{ mt: 1 }}>
+                      <HelpIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
               </Grid>
               <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Description"
-                  value={editingCategory.description || ''}
-                  onChange={(e) => setEditingCategory({ ...editingCategory, description: e.target.value })}
-                  multiline
-                  rows={2}
-                />
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                  <TextField
+                    fullWidth
+                    label="Description"
+                    value={editingCategory.description || ''}
+                    onChange={(e) => setEditingCategory({ ...editingCategory, description: e.target.value })}
+                    multiline
+                    rows={2}
+                    helperText="Brief overview of this category"
+                  />
+                  <Tooltip title="A short description to help identify and differentiate this category.">
+                    <IconButton size="small" sx={{ mt: 1 }}>
+                      <HelpIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
               </Grid>
               <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Context"
-                  value={editingCategory.context || ''}
-                  onChange={(e) => setEditingCategory({ ...editingCategory, context: e.target.value })}
-                  multiline
-                  rows={4}
-                  helperText="Additional context for this category"
-                />
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                  <TextField
+                    fullWidth
+                    label="Context"
+                    value={editingCategory.context || ''}
+                    onChange={(e) => setEditingCategory({ ...editingCategory, context: e.target.value })}
+                    multiline
+                    rows={4}
+                    helperText="Detailed information about this category for AI understanding"
+                  />
+                  <Tooltip title="Provide comprehensive details about this category. This could include features, pricing, target audience, or any information that would help the AI generate realistic responses. The more context, the better the responses.">
+                    <IconButton size="small" sx={{ mt: 1 }}>
+                      <HelpIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
               </Grid>
 
               {/* Media Upload Section */}
               <Grid item xs={12}>
-                <Typography variant="subtitle1" gutterBottom sx={{ mt: 2 }}>
-                  Media Content (Optional)
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 2 }}>
+                  <Typography variant="subtitle1">
+                    Media Content (Optional)
+                  </Typography>
+                  <Tooltip title="Attach an image or webpage URL to provide visual context for this category. Vision-capable AI models (like GPT-4 Vision or Claude 3) can analyze these visuals when generating responses, making them more accurate and contextual.">
+                    <IconButton size="small">
+                      <HelpIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
                 <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
-                  Add images or webpage URLs to provide visual context. Vision-capable models required.
+                  Upload images or provide webpage URLs. Requires vision-capable AI models.
                 </Typography>
 
                 {uploadError && (

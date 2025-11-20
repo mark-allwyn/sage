@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -26,12 +27,14 @@ import {
   DialogContentText,
   DialogActions,
 } from '@mui/material';
-import { Save as SaveIcon, Code as CodeIcon, Delete as DeleteIcon, Add as AddIcon } from '@mui/icons-material';
+import { Save as SaveIcon, Code as CodeIcon, Delete as DeleteIcon, Add as AddIcon, Visibility as VisibilityIcon, PlayArrow as PlayArrowIcon, Create as CreateIcon, ContentCopy as CopyIcon } from '@mui/icons-material';
 import SurveyForm from '../components/SurveyBuilder/SurveyForm';
 import YAMLPreview from '../components/SurveyBuilder/YAMLPreview';
 import { useCreateSurvey, useUpdateSurvey, useDeleteSurvey, useSurveys, useSurvey } from '../services/hooks';
 import { getErrorMessage } from '../services/api';
 import { SurveyBuilderState } from '../services/types';
+import { SurveyBuilderSkeleton } from '../components/LoadingSkeleton';
+import PageHeader from '../components/PageHeader';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -48,6 +51,7 @@ const TabPanel: React.FC<TabPanelProps> = ({ children, value, index }) => {
 };
 
 const SurveyBuilderPage: React.FC = () => {
+  const navigate = useNavigate();
   const [tabValue, setTabValue] = useState(0);
   const [mode, setMode] = useState<'create' | 'edit'>('create');
   const [selectedSurveyId, setSelectedSurveyId] = useState<string>('');
@@ -59,13 +63,19 @@ const SurveyBuilderPage: React.FC = () => {
     persona_groups: [],
     categories: [],
     demographics: ['age_group', 'gender', 'occupation'],
-    sample_size: 100,
   });
   const [filename, setFilename] = useState('');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [lastSavedTime, setLastSavedTime] = useState<Date | null>(null);
+  const [successDialogOpen, setSuccessDialogOpen] = useState(false);
+  const [lastCreatedSurveyId, setLastCreatedSurveyId] = useState<string>('');
+  const [autoSaveMessage, setAutoSaveMessage] = useState<string>('');
 
-  const { data: surveys, isLoading: surveysLoading } = useSurveys();
+  const AUTO_SAVE_KEY = 'sage_survey_builder_autosave';
+
+  const { data: surveys, isLoading: surveysLoading, refetch: refetchSurveys } = useSurveys();
   const { data: selectedSurvey, isLoading: surveyLoading } = useSurvey(selectedSurveyId, {
     enabled: !!selectedSurveyId && mode === 'edit',
   });
@@ -81,19 +91,67 @@ const SurveyBuilderPage: React.FC = () => {
         persona_groups: selectedSurvey.persona_groups,
         categories: selectedSurvey.categories || [],
         demographics: selectedSurvey.demographics || ['age_group', 'gender', 'occupation'],
-        sample_size: selectedSurvey.sample_size || 100,
       });
       setFilename(selectedSurveyId + '.yaml');
     }
   }, [selectedSurvey, selectedSurveyId, mode]);
 
+  // Load auto-saved data on mount (only for create mode)
+  useEffect(() => {
+    if (mode === 'create') {
+      try {
+        const saved = localStorage.getItem(AUTO_SAVE_KEY);
+        if (saved) {
+          const data = JSON.parse(saved);
+          // Only restore if there's meaningful data
+          if (data.surveyData.name || data.surveyData.questions.length > 0) {
+            const shouldRestore = window.confirm(
+              'Found an auto-saved draft. Would you like to restore it?'
+            );
+            if (shouldRestore) {
+              setSurveyData(data.surveyData);
+              setFilename(data.filename);
+              setAutoSaveMessage('Draft restored from auto-save');
+              setTimeout(() => setAutoSaveMessage(''), 3000);
+            } else {
+              localStorage.removeItem(AUTO_SAVE_KEY);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error loading auto-save:', error);
+      }
+    }
+  }, []);
+
+  // Auto-save to localStorage every 30 seconds
+  useEffect(() => {
+    if (mode !== 'create') return; // Only auto-save in create mode
+
+    const interval = setInterval(() => {
+      try {
+        const dataToSave = {
+          surveyData,
+          filename,
+          timestamp: new Date().toISOString(),
+        };
+        localStorage.setItem(AUTO_SAVE_KEY, JSON.stringify(dataToSave));
+        setAutoSaveMessage('Draft auto-saved');
+        setTimeout(() => setAutoSaveMessage(''), 2000);
+      } catch (error) {
+        console.error('Error auto-saving:', error);
+      }
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(interval);
+  }, [surveyData, filename, mode]);
+
   const createSurveyMutation = useCreateSurvey({
     onSuccess: (data) => {
-      setSnackbar({
-        open: true,
-        message: `Survey created successfully: ${data.survey_id}`,
-        severity: 'success',
-      });
+      setLastCreatedSurveyId(data.survey_id);
+      setSuccessDialogOpen(true);
+      // Clear auto-save
+      localStorage.removeItem(AUTO_SAVE_KEY);
       // Reset form
       setSurveyData({
         name: '',
@@ -103,7 +161,6 @@ const SurveyBuilderPage: React.FC = () => {
         persona_groups: [],
         categories: [],
         demographics: ['age_group', 'gender', 'occupation'],
-        sample_size: 100,
       });
       setFilename('');
     },
@@ -151,9 +208,10 @@ const SurveyBuilderPage: React.FC = () => {
         persona_groups: [],
         categories: [],
         demographics: ['age_group', 'gender', 'occupation'],
-        sample_size: 100,
       });
       setFilename('');
+      // Refresh surveys list to update dropdown
+      refetchSurveys();
     },
     onError: (error) => {
       setSnackbar({
@@ -180,7 +238,6 @@ const SurveyBuilderPage: React.FC = () => {
         persona_groups: [],
         categories: [],
         demographics: ['age_group', 'gender', 'occupation'],
-        sample_size: 100,
       });
       setFilename('');
     }
@@ -223,6 +280,23 @@ const SurveyBuilderPage: React.FC = () => {
     }
   };
 
+  const handleDuplicate = () => {
+    // Switch to create mode with current survey data
+    // Update the name to indicate it's a copy
+    setSurveyData({
+      ...surveyData,
+      name: `${surveyData.name} (Copy)`,
+    });
+    setFilename(''); // Clear filename so user must provide new one
+    setMode('create');
+    setSelectedSurveyId('');
+    setSnackbar({
+      open: true,
+      message: 'Survey duplicated. Update the filename and save to create a copy.',
+      severity: 'success',
+    });
+  };
+
   const handleCloseSnackbar = () => {
     setSnackbar({ ...snackbar, open: false });
   };
@@ -232,14 +306,18 @@ const SurveyBuilderPage: React.FC = () => {
   return (
     <Box>
       {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h3" component="h1" gutterBottom>
-          Survey Builder
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          Create a new survey or edit an existing survey configuration.
-        </Typography>
-      </Box>
+      <PageHeader
+        title="Survey Builder"
+        subtitle="Create a new survey or edit an existing survey configuration"
+        icon={<CreateIcon sx={{ fontSize: 28 }} />}
+      />
+
+      {/* Auto-save indicator */}
+      {autoSaveMessage && mode === 'create' && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          {autoSaveMessage}
+        </Alert>
+      )}
 
       {/* Mode Selector */}
       <Paper sx={{ p: 4, mb: 3 }}>
@@ -262,16 +340,16 @@ const SurveyBuilderPage: React.FC = () => {
                 borderColor: mode === 'create' ? 'primary.main' : 'divider',
                 borderRadius: 2,
                 cursor: 'pointer',
-                bgcolor: mode === 'create' ? 'primary.light' : 'transparent',
+                bgcolor: mode === 'create' ? 'action.selected' : 'transparent',
                 transition: 'all 0.2s',
                 '&:hover': {
                   borderColor: 'primary.main',
-                  bgcolor: mode === 'create' ? 'primary.light' : 'action.hover',
+                  bgcolor: mode === 'create' ? 'action.selected' : 'action.hover',
                 },
               }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <AddIcon sx={{ fontSize: 40, color: mode === 'create' ? 'primary.dark' : 'primary.main', mr: 2 }} />
+                <AddIcon sx={{ fontSize: 40, color: 'primary.main', mr: 2 }} />
                 <Typography variant="h6">Create New Survey</Typography>
               </Box>
               <Typography variant="body2" color="text.secondary">
@@ -288,16 +366,16 @@ const SurveyBuilderPage: React.FC = () => {
                 borderColor: mode === 'edit' ? 'primary.main' : 'divider',
                 borderRadius: 2,
                 cursor: 'pointer',
-                bgcolor: mode === 'edit' ? 'primary.light' : 'transparent',
+                bgcolor: mode === 'edit' ? 'action.selected' : 'transparent',
                 transition: 'all 0.2s',
                 '&:hover': {
                   borderColor: 'primary.main',
-                  bgcolor: mode === 'edit' ? 'primary.light' : 'action.hover',
+                  bgcolor: mode === 'edit' ? 'action.selected' : 'action.hover',
                 },
               }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <CodeIcon sx={{ fontSize: 40, color: mode === 'edit' ? 'primary.dark' : 'primary.main', mr: 2 }} />
+                <CodeIcon sx={{ fontSize: 40, color: 'primary.main', mr: 2 }} />
                 <Typography variant="h6">Edit Existing Survey</Typography>
               </Box>
               <Typography variant="body2" color="text.secondary">
@@ -320,6 +398,13 @@ const SurveyBuilderPage: React.FC = () => {
                 label="Survey"
                 onChange={(e) => handleSurveySelect(e.target.value)}
                 disabled={surveysLoading}
+                MenuProps={{
+                  PaperProps: {
+                    style: {
+                      maxHeight: 500,
+                    },
+                  },
+                }}
               >
                 <MenuItem value="">
                   <em>Choose a survey...</em>
@@ -372,7 +457,7 @@ const SurveyBuilderPage: React.FC = () => {
               />
             </Grid>
             <Grid item xs={12}>
-              <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+              <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
                 {mode === 'edit' && (
                   <Button
                     variant="outlined"
@@ -383,6 +468,28 @@ const SurveyBuilderPage: React.FC = () => {
                     disabled={isLoading}
                   >
                     Delete Survey
+                  </Button>
+                )}
+                {mode === 'edit' && selectedSurveyId && (
+                  <Button
+                    variant="outlined"
+                    size="large"
+                    startIcon={<CopyIcon />}
+                    onClick={handleDuplicate}
+                    disabled={isLoading}
+                  >
+                    Duplicate Survey
+                  </Button>
+                )}
+                {mode === 'edit' && selectedSurveyId && (
+                  <Button
+                    variant="outlined"
+                    size="large"
+                    startIcon={<VisibilityIcon />}
+                    onClick={() => navigate(`/preview/${selectedSurveyId}`)}
+                    disabled={isLoading}
+                  >
+                    Preview Survey
                   </Button>
                 )}
                 <Button
@@ -447,6 +554,63 @@ const SurveyBuilderPage: React.FC = () => {
         </DialogActions>
       </Dialog>
 
+      {/* Success Dialog with Next Steps */}
+      <Dialog
+        open={successDialogOpen}
+        onClose={() => setSuccessDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Survey Created Successfully!</DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ mb: 3 }}>
+            Your survey has been created. What would you like to do next?
+          </DialogContentText>
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <Button
+                variant="contained"
+                size="large"
+                fullWidth
+                startIcon={<PlayArrowIcon />}
+                onClick={() => {
+                  setSuccessDialogOpen(false);
+                  navigate(`/runner/${lastCreatedSurveyId}`);
+                }}
+                sx={{ py: 1.5 }}
+              >
+                Run This Survey Now
+              </Button>
+            </Grid>
+            <Grid item xs={6}>
+              <Button
+                variant="outlined"
+                size="large"
+                fullWidth
+                startIcon={<VisibilityIcon />}
+                onClick={() => {
+                  setSuccessDialogOpen(false);
+                  navigate(`/preview/${lastCreatedSurveyId}`);
+                }}
+              >
+                Preview
+              </Button>
+            </Grid>
+            <Grid item xs={6}>
+              <Button
+                variant="outlined"
+                size="large"
+                fullWidth
+                startIcon={<AddIcon />}
+                onClick={() => setSuccessDialogOpen(false)}
+              >
+                Create Another
+              </Button>
+            </Grid>
+          </Grid>
+        </DialogContent>
+      </Dialog>
+
       {/* Snackbar for notifications */}
       <Snackbar
         open={snackbar.open}
@@ -470,7 +634,6 @@ const generateYAML = (data: SurveyBuilderState): string => {
   yaml.push(`  name: "${data.name}"`);
   yaml.push(`  description: "${data.description}"`);
   yaml.push(`  context: "${data.context}"`);
-  yaml.push(`  sample_size: ${data.sample_size}`);
 
   // Demographics
   yaml.push('  demographics:');
@@ -520,9 +683,21 @@ const generateYAML = (data: SurveyBuilderState): string => {
       yaml.push(`        - "${p}"`);
     });
     yaml.push(`      target_demographics:`);
-    yaml.push(`        gender: [${pg.target_demographics.gender.map(g => `"${g}"`).join(', ')}]`);
-    yaml.push(`        age_group: [${pg.target_demographics.age_group.map(a => `"${a}"`).join(', ')}]`);
-    yaml.push(`        occupation: [${pg.target_demographics.occupation.map(o => `"${o}"`).join(', ')}]`);
+    if (pg.target_demographics.gender) {
+      yaml.push(`        gender: [${pg.target_demographics.gender.map(g => `"${g}"`).join(', ')}]`);
+    }
+    if (pg.target_demographics.age_group) {
+      yaml.push(`        age_group: [${pg.target_demographics.age_group.map(a => `"${a}"`).join(', ')}]`);
+    }
+    if (pg.target_demographics.occupation) {
+      yaml.push(`        occupation: [${pg.target_demographics.occupation.map(o => `"${o}"`).join(', ')}]`);
+    }
+    if (pg.target_demographics.income_level) {
+      yaml.push(`        income_level: [${pg.target_demographics.income_level.map(il => `"${il}"`).join(', ')}]`);
+    }
+    if (pg.target_demographics.tech_comfort_level) {
+      yaml.push(`        tech_comfort_level: [${pg.target_demographics.tech_comfort_level.map(tcl => `"${tcl}"`).join(', ')}]`);
+    }
   });
 
   return yaml.join('\n');

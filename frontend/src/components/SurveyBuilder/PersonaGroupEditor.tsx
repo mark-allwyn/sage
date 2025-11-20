@@ -23,8 +23,9 @@ import {
   Chip,
   Alert,
   Divider,
+  Tooltip,
 } from '@mui/material';
-import { Add as AddIcon, Delete as DeleteIcon, Edit as EditIcon } from '@mui/icons-material';
+import { Add as AddIcon, Delete as DeleteIcon, Edit as EditIcon, HelpOutline as HelpIcon } from '@mui/icons-material';
 import { PersonaGroup, AGE_GROUPS, GENDERS, OCCUPATIONS } from '../../services/types';
 
 interface PersonaGroupEditorProps {
@@ -147,41 +148,71 @@ const PersonaGroupEditor: React.FC<PersonaGroupEditorProps> = ({ personaGroups, 
           </Typography>
           <Grid container spacing={2}>
             <Grid item xs={12} md={8}>
-              <TextField
-                fullWidth
-                label="Group Name"
-                value={editingGroup?.name || ''}
-                onChange={(e) => setEditingGroup({ ...editingGroup, name: e.target.value })}
-                required
-              />
+              <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                <TextField
+                  fullWidth
+                  label="Group Name"
+                  value={editingGroup?.name || ''}
+                  onChange={(e) => setEditingGroup({ ...editingGroup, name: e.target.value })}
+                  required
+                  helperText="Descriptive name for this respondent group"
+                />
+                <Tooltip title="Give this group a descriptive name (e.g., 'Tech-Savvy Millennials', 'Budget-Conscious Families')">
+                  <IconButton size="small" sx={{ mt: 1 }}>
+                    <HelpIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </Box>
             </Grid>
             <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                type="number"
-                label="Weight"
-                value={editingGroup?.weight || 1.0}
-                onChange={(e) => setEditingGroup({ ...editingGroup, weight: parseFloat(e.target.value) || 1.0 })}
-                inputProps={{ min: 0, step: 0.1 }}
-                helperText="Will be normalized with other groups"
-              />
+              <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                <TextField
+                  fullWidth
+                  type="number"
+                  label="Weight"
+                  value={editingGroup?.weight || 1.0}
+                  onChange={(e) => setEditingGroup({ ...editingGroup, weight: parseFloat(e.target.value) || 1.0 })}
+                  inputProps={{ min: 0, step: 0.1 }}
+                  helperText="Will be normalized with other groups"
+                />
+                <Tooltip title="Relative proportion of this group in your sample. Higher weights mean more respondents. Weights are automatically normalized to sum to 1.0 (e.g., weights of 3, 2, 1 become 50%, 33%, 17%)">
+                  <IconButton size="small" sx={{ mt: 1 }}>
+                    <HelpIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </Box>
             </Grid>
             <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Description"
-                value={editingGroup?.description || ''}
-                onChange={(e) => setEditingGroup({ ...editingGroup, description: e.target.value })}
-                multiline
-                rows={2}
-              />
+              <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                <TextField
+                  fullWidth
+                  label="Description"
+                  value={editingGroup?.description || ''}
+                  onChange={(e) => setEditingGroup({ ...editingGroup, description: e.target.value })}
+                  multiline
+                  rows={2}
+                  helperText="Brief description of this group's characteristics"
+                />
+                <Tooltip title="Describe what makes this group unique. This helps you stay organized and understand your sample composition.">
+                  <IconButton size="small" sx={{ mt: 1 }}>
+                    <HelpIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </Box>
             </Grid>
 
             {/* Personas */}
             <Grid item xs={12}>
-              <Typography variant="subtitle2" gutterBottom>
-                Personas *
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                <Typography variant="subtitle2">
+                  Personas *
+                </Typography>
+                <Tooltip title="Define specific persona descriptions that characterize this group. Each persona is a short description of a respondent archetype (e.g., 'Sarah, 28, urban marketing professional who values sustainability'). The AI will use these to generate diverse but realistic profiles.">
+                  <IconButton size="small">
+                    <HelpIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </Box>
               <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
                 <TextField
                   fullWidth
@@ -190,6 +221,7 @@ const PersonaGroupEditor: React.FC<PersonaGroupEditorProps> = ({ personaGroups, 
                   value={personaInput}
                   onChange={(e) => setPersonaInput(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleAddPersona()}
+                  helperText="Type a persona description and press Enter or click Add"
                 />
                 <Button onClick={handleAddPersona} variant="outlined">
                   Add
@@ -331,7 +363,14 @@ const PersonaGroupEditor: React.FC<PersonaGroupEditorProps> = ({ personaGroups, 
   return (
     <Paper sx={{ p: 3, mb: 3 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h5">Persona Groups</Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography variant="h5">Persona Groups</Typography>
+          <Tooltip title="Create groups of respondent types with specific characteristics (e.g., 'Young Professionals', 'Retirees'). Each group can have different demographics and will be weighted in your final sample.">
+            <IconButton size="small">
+              <HelpIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </Box>
         <Button startIcon={<AddIcon />} variant="outlined" onClick={handleAdd} disabled={!!editingGroup}>
           Add Persona Group
         </Button>
@@ -383,19 +422,35 @@ const PersonaGroupEditor: React.FC<PersonaGroupEditorProps> = ({ personaGroups, 
                       <Grid container spacing={1}>
                         <Grid item xs={12} md={4}>
                           <Typography variant="caption" color="text.secondary">
-                            <strong>Genders:</strong> {group.target_demographics.gender.join(', ') || 'All'}
+                            <strong>Genders:</strong> {group.target_demographics.gender?.join(', ') || 'All'}
                           </Typography>
                         </Grid>
                         <Grid item xs={12} md={4}>
                           <Typography variant="caption" color="text.secondary">
-                            <strong>Ages:</strong> {group.target_demographics.age_group.join(', ') || 'All'}
+                            <strong>Ages:</strong> {group.target_demographics.age_group?.join(', ') || 'All'}
                           </Typography>
                         </Grid>
-                        <Grid item xs={12} md={4}>
-                          <Typography variant="caption" color="text.secondary">
-                            <strong>Occupations:</strong> {group.target_demographics.occupation.join(', ') || 'All'}
-                          </Typography>
-                        </Grid>
+                        {group.target_demographics.occupation && (
+                          <Grid item xs={12} md={4}>
+                            <Typography variant="caption" color="text.secondary">
+                              <strong>Occupations:</strong> {group.target_demographics.occupation.join(', ')}
+                            </Typography>
+                          </Grid>
+                        )}
+                        {group.target_demographics.income_level && (
+                          <Grid item xs={12} md={4}>
+                            <Typography variant="caption" color="text.secondary">
+                              <strong>Income:</strong> {group.target_demographics.income_level.join(', ')}
+                            </Typography>
+                          </Grid>
+                        )}
+                        {group.target_demographics.tech_comfort_level && (
+                          <Grid item xs={12} md={4}>
+                            <Typography variant="caption" color="text.secondary">
+                              <strong>Tech:</strong> {group.target_demographics.tech_comfort_level.join(', ')}
+                            </Typography>
+                          </Grid>
+                        )}
                       </Grid>
                     </Box>
                     <Box sx={{ display: 'flex', gap: 0.5 }}>

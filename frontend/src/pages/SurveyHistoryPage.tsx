@@ -37,9 +37,15 @@ import {
   Delete as DeleteIcon,
   Search as SearchIcon,
   History as HistoryIcon,
+  PlayArrow as PlayArrowIcon,
+  Download as DownloadIcon,
 } from '@mui/icons-material';
 import { useSurveyRuns, useDeleteSurveyRun, useSurveys } from '../services/hooks';
 import { SurveyRunMetadata } from '../services/types';
+import { ListSkeleton } from '../components/LoadingSkeleton';
+import { EmptyState } from '../components/EmptyState';
+import PageHeader from '../components/PageHeader';
+import { exportSurveyHistoryToCSV } from '../utils/csvExport';
 
 const SurveyHistoryPage: React.FC = () => {
   const navigate = useNavigate();
@@ -73,6 +79,11 @@ const SurveyHistoryPage: React.FC = () => {
     navigate(`/history/${runId}`);
   };
 
+  const handleExportCSV = () => {
+    if (!filteredRuns || filteredRuns.length === 0) return;
+    exportSurveyHistoryToCSV(filteredRuns);
+  };
+
   // Filter runs by search query
   const filteredRuns = runs?.filter((run) => {
     if (!searchQuery) return true;
@@ -91,21 +102,15 @@ const SurveyHistoryPage: React.FC = () => {
   return (
     <Box>
       {/* Header */}
-      <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 2 }}>
-        <HistoryIcon sx={{ fontSize: 40, color: 'primary.main' }} />
-        <Box>
-          <Typography variant="h3" component="h1">
-            Survey History
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            View and manage previously run surveys
-          </Typography>
-        </Box>
-      </Box>
+      <PageHeader
+        title="Survey History"
+        subtitle="View and manage previously run surveys with detailed results"
+        icon={<HistoryIcon sx={{ fontSize: 28 }} />}
+      />
 
       {/* Filters */}
-      <Paper sx={{ p: 3, mb: 3 }}>
-        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+      <Paper sx={{ p: 4, mb: 3 }}>
+        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
           <FormControl sx={{ minWidth: 200 }}>
             <InputLabel>Filter by Survey</InputLabel>
             <Select
@@ -137,6 +142,15 @@ const SurveyHistoryPage: React.FC = () => {
             }}
             sx={{ flexGrow: 1 }}
           />
+
+          <Button
+            startIcon={<DownloadIcon />}
+            variant="outlined"
+            onClick={handleExportCSV}
+            disabled={!filteredRuns || filteredRuns.length === 0}
+          >
+            Export CSV
+          </Button>
         </Box>
       </Paper>
 
@@ -156,19 +170,24 @@ const SurveyHistoryPage: React.FC = () => {
 
       {/* Empty State */}
       {!isLoading && !error && filteredRuns && filteredRuns.length === 0 && (
-        <Paper sx={{ p: 6, textAlign: 'center' }}>
-          <HistoryIcon sx={{ fontSize: 60, color: 'text.secondary', mb: 2 }} />
-          <Typography variant="h6" color="text.secondary" gutterBottom>
-            No survey runs found
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            {searchQuery || selectedSurveyFilter
-              ? 'Try adjusting your filters'
-              : 'Run a survey to see it appear here'}
-          </Typography>
-          <Button variant="contained" onClick={() => navigate('/runner')}>
-            Run a Survey
-          </Button>
+        <Paper sx={{ mb: 3 }}>
+          <EmptyState
+            icon={<PlayArrowIcon />}
+            title="No survey runs found"
+            description={searchQuery || selectedSurveyFilter
+              ? 'Try adjusting your filters to see more results'
+              : 'Run a survey to see it appear here. Survey runs will be saved automatically.'}
+            actions={[
+              { label: "Run Survey", primary: true, href: "/runner" },
+              ...(searchQuery || selectedSurveyFilter ? [{
+                label: "Clear Filters",
+                onClick: () => {
+                  setSearchQuery('');
+                  setSelectedSurveyFilter('');
+                }
+              }] : [])
+            ]}
+          />
         </Paper>
       )}
 

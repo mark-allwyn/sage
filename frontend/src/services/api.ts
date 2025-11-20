@@ -23,6 +23,12 @@ import {
   CreateGroundTruthFromSSRRequest,
   UploadGroundTruthRequest,
   ComparisonResults,
+  SystemSettings,
+  UpdateSettingsRequest,
+  EvaluateResponsesRequest,
+  SurveyEvaluation,
+  EvaluationListItem,
+  EvaluationComparison,
 } from './types';
 
 // Create axios instance with base configuration
@@ -300,6 +306,76 @@ export const getErrorMessage = (error: unknown): string => {
     return error.message;
   }
   return 'An unexpected error occurred';
+};
+
+// ===================
+// Settings
+// ===================
+
+/**
+ * Get system settings
+ */
+export const getSettings = async (): Promise<SystemSettings> => {
+  const response = await api.get('/api/settings');
+  return response.data;
+};
+
+/**
+ * Update provider settings
+ */
+export const updateProviderSettings = async (request: UpdateSettingsRequest): Promise<{ success: boolean; message: string }> => {
+  const response = await api.put('/api/settings/provider', request);
+  return response.data;
+};
+
+/**
+ * Reset settings to defaults
+ */
+export const resetSettings = async (): Promise<{ success: boolean; message: string }> => {
+  const response = await api.post('/api/settings/reset');
+  return response.data;
+};
+
+// Evaluation API
+/**
+ * Evaluate survey responses
+ */
+export const evaluateResponses = async (request: EvaluateResponsesRequest): Promise<SurveyEvaluation> => {
+  const response = await api.post('/api/evaluations/evaluate', request);
+  return response.data;
+};
+
+/**
+ * List all evaluations, optionally filtered by survey_id
+ */
+export const getEvaluations = async (surveyId?: string): Promise<{ evaluations: EvaluationListItem[]; count: number }> => {
+  const params = surveyId ? { survey_id: surveyId } : {};
+  const response = await api.get('/api/evaluations', { params });
+  return response.data;
+};
+
+/**
+ * Get detailed evaluation results
+ */
+export const getEvaluation = async (evaluationId: string): Promise<SurveyEvaluation> => {
+  const response = await api.get(`/api/evaluations/${evaluationId}`);
+  return response.data;
+};
+
+/**
+ * Delete an evaluation
+ */
+export const deleteEvaluation = async (evaluationId: string): Promise<{ evaluation_id: string; status: string }> => {
+  const response = await api.delete(`/api/evaluations/${evaluationId}`);
+  return response.data;
+};
+
+/**
+ * Compare multiple evaluations
+ */
+export const compareEvaluations = async (evaluationIds: string[]): Promise<EvaluationComparison> => {
+  const response = await api.post('/api/evaluations/compare', evaluationIds);
+  return response.data;
 };
 
 export default api;

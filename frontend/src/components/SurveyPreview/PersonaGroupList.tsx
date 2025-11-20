@@ -46,7 +46,7 @@ const PersonaGroupList: React.FC<PersonaGroupListProps> = ({ personaGroups }) =>
                   Target Demographics:
                 </Typography>
                 <Grid container spacing={1}>
-                  {group.target_demographics.gender.length > 0 && (
+                  {group.target_demographics?.gender && group.target_demographics.gender.length > 0 && (
                     <Grid item xs={12}>
                       <Typography variant="caption" color="text.secondary">
                         Genders:
@@ -58,7 +58,7 @@ const PersonaGroupList: React.FC<PersonaGroupListProps> = ({ personaGroups }) =>
                       </Box>
                     </Grid>
                   )}
-                  {group.target_demographics.age_group.length > 0 && (
+                  {group.target_demographics?.age_group && group.target_demographics.age_group.length > 0 && (
                     <Grid item xs={12}>
                       <Typography variant="caption" color="text.secondary">
                         Age Groups:
@@ -70,7 +70,7 @@ const PersonaGroupList: React.FC<PersonaGroupListProps> = ({ personaGroups }) =>
                       </Box>
                     </Grid>
                   )}
-                  {group.target_demographics.occupation.length > 0 && (
+                  {group.target_demographics?.occupation && group.target_demographics.occupation.length > 0 && (
                     <Grid item xs={12}>
                       <Typography variant="caption" color="text.secondary">
                         Occupations:
@@ -78,6 +78,30 @@ const PersonaGroupList: React.FC<PersonaGroupListProps> = ({ personaGroups }) =>
                       <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mt: 0.5 }}>
                         {group.target_demographics.occupation.map((o, i) => (
                           <Chip key={i} label={o} size="small" />
+                        ))}
+                      </Box>
+                    </Grid>
+                  )}
+                  {group.target_demographics?.income_level && group.target_demographics.income_level.length > 0 && (
+                    <Grid item xs={12}>
+                      <Typography variant="caption" color="text.secondary">
+                        Income Levels:
+                      </Typography>
+                      <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mt: 0.5 }}>
+                        {group.target_demographics.income_level.map((il, i) => (
+                          <Chip key={i} label={il} size="small" />
+                        ))}
+                      </Box>
+                    </Grid>
+                  )}
+                  {group.target_demographics?.tech_comfort_level && group.target_demographics.tech_comfort_level.length > 0 && (
+                    <Grid item xs={12}>
+                      <Typography variant="caption" color="text.secondary">
+                        Tech Comfort:
+                      </Typography>
+                      <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mt: 0.5 }}>
+                        {group.target_demographics.tech_comfort_level.map((tcl, i) => (
+                          <Chip key={i} label={tcl} size="small" />
                         ))}
                       </Box>
                     </Grid>

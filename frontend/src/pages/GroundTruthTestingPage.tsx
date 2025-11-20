@@ -1,14 +1,13 @@
 /**
  * Ground Truth Testing Page
  * Create ground truths, run experiments, and compare results
+ * Redesigned with stepper workflow for better UX
  */
 
 import React, { useState } from 'react';
 import {
   Box,
   Typography,
-  Tabs,
-  Tab,
   Paper,
   Grid,
   Card,
@@ -36,6 +35,15 @@ import {
   DialogActions,
   Divider,
   LinearProgress,
+  Tooltip,
+  Stepper,
+  Step,
+  StepLabel,
+  StepContent,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Collapse,
 } from '@mui/material';
 import {
   Science as ScienceIcon,
@@ -43,12 +51,18 @@ import {
   Psychology as PsychologyIcon,
   Delete as DeleteIcon,
   Visibility as VisibilityIcon,
-  Add as AddIcon,
   PlayArrow as PlayArrowIcon,
   CompareArrows as CompareArrowsIcon,
+  Download as DownloadIcon,
+  CheckCircle as CheckCircleIcon,
+  NavigateNext as NavigateNextIcon,
+  NavigateBefore as NavigateBeforeIcon,
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon,
+  Casino as CasinoIcon,
 } from '@mui/icons-material';
 import DistributionCharts from '../components/DistributionCharts';
-import ConfusionMatrix from '../components/ConfusionMatrix';
+import DifferenceHeatmap from '../components/DifferenceHeatmap';
 import {
   useSurveys,
   useSurvey,
@@ -61,32 +75,16 @@ import {
   useCompareToGroundTruth,
 } from '../services/hooks';
 import { CreateGroundTruthFromSSRRequest, RunSurveyRequest, LLM_PROVIDERS, OPENAI_MODELS, ANTHROPIC_MODELS } from '../services/types';
-
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
-}
-
-function TabPanel(props: TabPanelProps) {
-  const { children, value, index, ...other } = props;
-
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`gt-tabpanel-${index}`}
-      aria-labelledby={`gt-tab-${index}`}
-      {...other}
-    >
-      {value === index && <Box sx={{ pt: 3 }}>{children}</Box>}
-    </div>
-  );
-}
+import { EmptyState } from '../components/EmptyState';
+import PageHeader from '../components/PageHeader';
 
 const GroundTruthTestingPage: React.FC = () => {
-  const [tabValue, setTabValue] = useState(0);
+  const [activeStep, setActiveStep] = useState(0);
   const [selectedSurvey, setSelectedSurvey] = useState('');
+
+  // Step 2 UI State
+  const [expandedAccordion, setExpandedAccordion] = useState<string>('basic');
+  const [showPreviousRuns, setShowPreviousRuns] = useState(false);
 
   // SSR Ground Truth Generation State
   const [ssrDialogOpen, setSSRDialogOpen] = useState(false);
@@ -96,7 +94,7 @@ const GroundTruthTestingPage: React.FC = () => {
     description: '',
     num_profiles: 50,
     llm_provider: 'openai',
-    model: 'gpt-3.5-turbo',
+    model: 'gpt-4o-mini',
     llm_temperature: 0.7,
     ssr_temperature: 1.0,
     normalize_method: 'paper',
@@ -105,12 +103,11 @@ const GroundTruthTestingPage: React.FC = () => {
 
   // Experiment Runner State
   const [selectedGroundTruth, setSelectedGroundTruth] = useState('');
-  const [experimentDialogOpen, setExperimentDialogOpen] = useState(false);
   const [experimentConfig, setExperimentConfig] = useState<RunSurveyRequest>({
     survey_id: '',
     num_profiles: 50,
     llm_provider: 'openai',
-    model: 'gpt-3.5-turbo',
+    model: 'gpt-4o-mini',
     llm_temperature: 0.7,
     ssr_temperature: 1.0,
     normalize_method: 'paper',
@@ -151,7 +148,6 @@ const GroundTruthTestingPage: React.FC = () => {
   const runSurveyMutation = useRunSurvey({
     onSuccess: (data) => {
       refetchSurveyRuns();
-      setExperimentDialogOpen(false);
       // Automatically compare to ground truth
       if (selectedGroundTruth && data.run_id) {
         compareToGroundTruthMutation.mutate({
@@ -166,13 +162,28 @@ const GroundTruthTestingPage: React.FC = () => {
     onSuccess: (data) => {
       setComparisonResults(data);
       console.log('Comparison Results:', data);
-      // Switch to View Results tab
-      setTabValue(2);
+      // Move to results step
+      setActiveStep(2);
     },
   });
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setTabValue(newValue);
+  const handleNext = () => {
+    setActiveStep((prevActiveStep) => prevActiveStep + 1);
+  };
+
+  const handleBack = () => {
+    setActiveStep((prevActiveStep) => prevActiveStep - 1);
+  };
+
+  const handleStepClick = (step: number) => {
+    // Allow navigation to completed steps
+    if (step === 0) {
+      setActiveStep(step);
+    } else if (step === 1 && selectedSurvey) {
+      setActiveStep(step);
+    } else if (step === 2 && comparisonResults) {
+      setActiveStep(step);
+    }
   };
 
   const handleOpenSSRDialog = () => {
@@ -194,17 +205,111 @@ const GroundTruthTestingPage: React.FC = () => {
     }
   };
 
-  const handleOpenExperimentDialog = () => {
+  const handleDownloadGroundTruth = async (gtId: string, gtName: string) => {
+    try {
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+      const response = await fetch(`${apiUrl}/api/ground-truths/${gtId}`);
+
+      if (!response.ok) {
+        throw new Error('Failed to download ground truth');
+      }
+
+      const data = await response.json();
+
+      // Convert ground truth data to CSV format
+      const csvRows: string[] = [];
+
+      // Add metadata header
+      csvRows.push('# Ground Truth Metadata');
+      csvRows.push(`# ID: ${data.id}`);
+      csvRows.push(`# Name: ${data.name}`);
+      csvRows.push(`# Survey: ${data.survey_name}`);
+      csvRows.push(`# Source: ${data.source}`);
+      csvRows.push(`# Created: ${data.created_at}`);
+      csvRows.push(`# Number of Profiles: ${data.num_profiles || 'N/A'}`);
+      csvRows.push(`# Number of Responses: ${data.num_responses || 'N/A'}`);
+      csvRows.push('');
+
+      // Add aggregated distributions data
+      csvRows.push('# Aggregated Distributions by Question');
+      csvRows.push('Category,Question ID,Rating,Probability,Sample Size');
+
+      for (const [category, questions] of Object.entries(data.aggregated_distributions || {})) {
+        for (const [questionId, questionData] of Object.entries(questions as any)) {
+          const probs = (questionData as any).mean_probabilities || [];
+          const sampleSize = (questionData as any).sample_size || 0;
+
+          probs.forEach((prob: number, idx: number) => {
+            const rating = idx + 1;
+            csvRows.push(`"${category}","${questionId}",${rating},${prob},${sampleSize}`);
+          });
+        }
+      }
+
+      csvRows.push('');
+      csvRows.push('# Raw Individual Distributions');
+      csvRows.push('Category,Question ID,Respondent ID,Rating,Probability,Mode,Expected Value,Entropy,Gender,Age Group,Persona Group,Occupation');
+
+      // Add raw distributions data
+      for (const [category, questions] of Object.entries(data.raw_distributions || {})) {
+        for (const [questionId, respondents] of Object.entries(questions as any)) {
+          for (const [respondentId, distData] of Object.entries(respondents as any)) {
+            const dist = distData as any;
+            const probs = dist.probabilities || [];
+
+            probs.forEach((prob: number, idx: number) => {
+              const rating = idx + 1;
+              csvRows.push(
+                `"${category}","${questionId}","${respondentId}",${rating},${prob},${dist.mode || ''},${dist.expected_value || ''},${dist.entropy || ''},"${dist.gender || ''}","${dist.age_group || ''}","${dist.persona_group || ''}","${dist.occupation || ''}"`
+              );
+            });
+          }
+        }
+      }
+
+      // Create CSV blob
+      const csvContent = csvRows.join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+
+      // Create a temporary URL for the blob
+      const url = window.URL.createObjectURL(blob);
+
+      // Create a temporary anchor element and trigger download
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${gtName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${gtId}.csv`;
+      document.body.appendChild(a);
+      a.click();
+
+      // Clean up
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Error downloading ground truth:', error);
+      alert('Failed to download ground truth. Please try again.');
+    }
+  };
+
+  const handleRunExperiment = () => {
     if (!selectedGroundTruth) {
       alert('Please select a ground truth first');
       return;
     }
-    setExperimentConfig({ ...experimentConfig, survey_id: selectedSurvey });
-    setExperimentDialogOpen(true);
+    // Set survey_id before running
+    const configWithSurvey = { ...experimentConfig, survey_id: selectedSurvey };
+    setExperimentConfig(configWithSurvey);
+    runSurveyMutation.mutate(configWithSurvey);
   };
 
-  const handleRunExperiment = () => {
-    runSurveyMutation.mutate(experimentConfig);
+  const handleAccordionChange = (panel: string) => (_event: React.SyntheticEvent, isExpanded: boolean) => {
+    setExpandedAccordion(isExpanded ? panel : '');
+  };
+
+  const handleRandomizeSeed = () => {
+    setExperimentConfig({
+      ...experimentConfig,
+      seed: Math.floor(Math.random() * 10000),
+    });
   };
 
   const formatDate = (timestamp: string) => {
@@ -226,708 +331,960 @@ const GroundTruthTestingPage: React.FC = () => {
     return value.toFixed(4);
   };
 
+  const steps = [
+    {
+      label: 'Select Survey & Ground Truth',
+      description: 'Choose a survey and create or select a ground truth baseline',
+    },
+    {
+      label: 'Run Experiment',
+      description: 'Configure and execute a survey run for comparison',
+    },
+    {
+      label: 'View Results',
+      description: 'Analyze comparison metrics and visualizations',
+    },
+  ];
+
   return (
     <Box>
       {/* Header */}
-      <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 2 }}>
-        <ScienceIcon sx={{ fontSize: 40, color: 'primary.main' }} />
-        <Box>
-          <Typography variant="h3" component="h1">
-            Ground Truth Testing
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Create ground truths and run experiments to validate synthetic data quality
-          </Typography>
-        </Box>
-      </Box>
+      <PageHeader
+        title="Ground Truth Experiments"
+        subtitle="Validate synthetic data quality by comparing survey runs against ground truth baselines"
+        icon={<ScienceIcon sx={{ fontSize: 28 }} />}
+        badge={{ label: "Beta", color: "secondary" }}
+      />
 
-      {/* Survey Selector */}
-      <Paper sx={{ p: 3, mb: 3 }}>
-        <FormControl fullWidth>
-          <InputLabel>Select Survey</InputLabel>
-          <Select
-            value={selectedSurvey}
-            label="Select Survey"
-            onChange={(e) => setSelectedSurvey(e.target.value)}
-          >
-            <MenuItem value="">
-              <em>Choose a survey...</em>
-            </MenuItem>
-            {surveys?.map((s) => (
-              <MenuItem key={s.id} value={s.id}>
-                {s.name} ({s.num_questions} questions)
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-        {survey && (
-          <Box sx={{ mt: 2 }}>
-            <Alert severity="info">
-              <Typography variant="subtitle2" gutterBottom>
-                Survey: {survey.name}
-              </Typography>
-              <Typography variant="body2">
-                Persona Groups: {survey.persona_groups.map(pg => pg.name).join(', ')}
-              </Typography>
-            </Alert>
-          </Box>
-        )}
-      </Paper>
-
-      {/* Tabs */}
-      <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-        <Tabs value={tabValue} onChange={handleTabChange}>
-          <Tab label="Create & Manage Ground Truths" />
-          <Tab label="Run Experiments" disabled={!selectedSurvey || !groundTruths || groundTruths.length === 0} />
-          <Tab label="View Results" disabled={!comparisonResults} />
-        </Tabs>
-      </Box>
-
-      {/* Tab 1: Create & Manage Ground Truths */}
-      <TabPanel value={tabValue} index={0}>
-        {!selectedSurvey ? (
-          <Alert severity="info">
-            Please select a survey above to create and manage ground truths
-          </Alert>
-        ) : (
-          <Grid container spacing={3}>
-            {/* Create Ground Truth Options */}
-            <Grid item xs={12} md={6}>
-              <Card>
-                <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                    <PsychologyIcon sx={{ fontSize: 40, color: 'primary.main' }} />
-                    <Box>
-                      <Typography variant="h6">Generate via SSR Pipeline</Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Uses your survey's persona groups
-                      </Typography>
-                    </Box>
-                  </Box>
-                  <Typography variant="body2" color="text.secondary" paragraph>
-                    Run the full SSR pipeline to generate a ground truth baseline. This uses your
-                    survey's defined persona groups to create realistic synthetic data.
+      {/* Workflow Stepper */}
+      <Paper sx={{ p: 4, mb: 3 }}>
+        <Stepper activeStep={activeStep} orientation="vertical">
+          {/* Step 1: Select Survey & Ground Truth */}
+          <Step>
+            <StepLabel
+              optional={selectedSurvey && groundTruths && groundTruths.length > 0 ? (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
+                  <CheckCircleIcon sx={{ fontSize: 16, color: 'success.main' }} />
+                  <Typography variant="caption" color="success.main">
+                    Survey selected, {groundTruths.length} ground truth{groundTruths.length !== 1 ? 's' : ''} available
                   </Typography>
-                  <Box sx={{ bgcolor: 'background.default', p: 2, borderRadius: 1 }}>
-                    <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
-                      Recommended Settings:
-                    </Typography>
-                    <Typography variant="caption" display="block">
-                      • Profiles: 500+ (higher = better quality)
-                    </Typography>
-                    <Typography variant="caption" display="block">
-                      • Model: GPT-4 or Claude 3 Opus
-                    </Typography>
-                    <Typography variant="caption" display="block">
-                      • Seed: 42 (for reproducibility)
-                    </Typography>
-                  </Box>
-                </CardContent>
-                <CardActions>
-                  <Button
-                    variant="contained"
-                    fullWidth
-                    startIcon={<PsychologyIcon />}
-                    onClick={handleOpenSSRDialog}
-                  >
-                    Generate Ground Truth
-                  </Button>
-                </CardActions>
-              </Card>
-            </Grid>
+                </Box>
+              ) : null}
+              sx={{ cursor: 'pointer' }}
+              onClick={() => handleStepClick(0)}
+            >
+              <Typography variant="h6">{steps[0].label}</Typography>
+            </StepLabel>
+            <StepContent>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                {steps[0].description}
+              </Typography>
 
-            <Grid item xs={12} md={6}>
-              <Card>
-                <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                    <CloudUploadIcon sx={{ fontSize: 40, color: 'primary.main' }} />
-                    <Box>
-                      <Typography variant="h6">Upload Ground Truth</Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        From external data source
-                      </Typography>
-                    </Box>
-                  </Box>
-                  <Typography variant="body2" color="text.secondary" paragraph>
-                    Upload ground truth data from real survey results, published research, or other
-                    external sources in CSV or JSON format.
-                  </Typography>
-                  <Alert severity="warning" sx={{ mt: 2 }}>
-                    <Typography variant="caption">
-                      Coming soon - Upload functionality
-                    </Typography>
-                  </Alert>
-                </CardContent>
-                <CardActions>
-                  <Button variant="outlined" fullWidth startIcon={<CloudUploadIcon />} disabled>
-                    Upload Data
-                  </Button>
-                </CardActions>
-              </Card>
-            </Grid>
-
-            {/* Existing Ground Truths */}
-            <Grid item xs={12}>
-              <Paper sx={{ p: 3 }}>
-                <Typography variant="h6" gutterBottom>
-                  Existing Ground Truths
+              {/* Survey Selector */}
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="subtitle1" gutterBottom fontWeight="medium">
+                  1. Select Survey
                 </Typography>
-                <Divider sx={{ mb: 2 }} />
-
-                {!groundTruths || groundTruths.length === 0 ? (
-                  <Alert severity="info">
-                    No ground truths created yet for this survey. Create one using the options above.
-                  </Alert>
-                ) : (
-                  <TableContainer>
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Name</TableCell>
-                          <TableCell>Source</TableCell>
-                          <TableCell>Created</TableCell>
-                          <TableCell>Configuration</TableCell>
-                          <TableCell align="right">Actions</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {groundTruths.map((gt) => (
-                          <TableRow key={gt.id} hover>
-                            <TableCell>
-                              <Typography variant="body2" fontWeight="medium">
-                                {gt.name}
-                              </Typography>
-                            </TableCell>
-                            <TableCell>
-                              <Chip
-                                label={gt.source === 'ssr_generated' ? 'SSR' : 'Uploaded'}
-                                size="small"
-                                color={gt.source === 'ssr_generated' ? 'primary' : 'default'}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Typography variant="body2" color="text.secondary">
-                                {formatDate(gt.created_at)}
-                              </Typography>
-                            </TableCell>
-                            <TableCell>
-                              {gt.source === 'ssr_generated' && gt.generation_config && (
-                                <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                                  <Chip
-                                    label={gt.generation_config.model}
-                                    size="small"
-                                    variant="outlined"
-                                  />
-                                  <Chip
-                                    label={`n=${gt.generation_config.num_profiles}`}
-                                    size="small"
-                                    variant="outlined"
-                                  />
-                                  <Chip
-                                    label={`seed=${gt.generation_config.seed}`}
-                                    size="small"
-                                    variant="outlined"
-                                  />
-                                </Box>
-                              )}
-                            </TableCell>
-                            <TableCell align="right">
-                              <IconButton
-                                size="small"
-                                color="primary"
-                                onClick={() => setViewingGroundTruthId(gt.id)}
-                              >
-                                <VisibilityIcon />
-                              </IconButton>
-                              <IconButton
-                                size="small"
-                                color="error"
-                                onClick={() => handleDeleteGroundTruth(gt.id)}
-                              >
-                                <DeleteIcon />
-                              </IconButton>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                )}
-              </Paper>
-            </Grid>
-          </Grid>
-        )}
-      </TabPanel>
-
-      {/* Tab 2: Run Experiments */}
-      <TabPanel value={tabValue} index={1}>
-        <Grid container spacing={3}>
-          {/* Ground Truth Selector */}
-          <Grid item xs={12}>
-            <Paper sx={{ p: 3 }}>
-              <Typography variant="h6" gutterBottom>
-                Select Ground Truth for Comparison
-              </Typography>
-              <FormControl fullWidth sx={{ mt: 2 }}>
-                <InputLabel>Ground Truth</InputLabel>
-                <Select
-                  value={selectedGroundTruth}
-                  label="Ground Truth"
-                  onChange={(e) => setSelectedGroundTruth(e.target.value)}
-                >
-                  <MenuItem value="">
-                    <em>Select a ground truth...</em>
-                  </MenuItem>
-                  {groundTruths?.map((gt) => (
-                    <MenuItem key={gt.id} value={gt.id}>
-                      {gt.name} ({gt.source === 'ssr_generated' ? 'SSR' : 'Uploaded'}) - {formatDate(gt.created_at)}
+                <FormControl fullWidth sx={{ mb: 2 }}>
+                  <InputLabel>Survey</InputLabel>
+                  <Select
+                    value={selectedSurvey}
+                    label="Survey"
+                    onChange={(e) => setSelectedSurvey(e.target.value)}
+                  >
+                    <MenuItem value="">
+                      <em>Choose a survey...</em>
                     </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Paper>
-          </Grid>
-
-          {/* Run Experiment Button */}
-          {selectedGroundTruth && (
-            <Grid item xs={12}>
-              <Card>
-                <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                    <PlayArrowIcon sx={{ fontSize: 40, color: 'primary.main' }} />
-                    <Box>
-                      <Typography variant="h6">Run New Experiment</Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Generate synthetic survey data and automatically compare to selected ground truth
-                      </Typography>
-                    </Box>
-                  </Box>
-                  <Alert severity="info" sx={{ mb: 2 }}>
-                    This will run the full SSR pipeline and automatically compare results to the selected ground truth.
-                    The comparison metrics will be displayed below.
+                    {surveys?.map((s) => (
+                      <MenuItem key={s.id} value={s.id}>
+                        {s.name} ({s.num_questions} questions)
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                {survey && (
+                  <Alert severity="info">
+                    <Typography variant="body2">
+                      <strong>{survey.name}</strong> • {survey.questions.length} questions • Persona Groups: {survey.persona_groups.map(pg => pg.name).join(', ')}
+                    </Typography>
                   </Alert>
-                </CardContent>
-                <CardActions>
-                  <Button
-                    variant="contained"
-                    fullWidth
-                    startIcon={<PlayArrowIcon />}
-                    onClick={handleOpenExperimentDialog}
-                  >
-                    Configure & Run Experiment
-                  </Button>
-                </CardActions>
-              </Card>
-            </Grid>
-          )}
+                )}
+              </Box>
 
-          {/* Recent Experiments */}
-          {selectedGroundTruth && surveyRuns && surveyRuns.length > 0 && (
-            <Grid item xs={12}>
-              <Paper sx={{ p: 3 }}>
-                <Typography variant="h6" gutterBottom>
-                  Recent Experiment Runs
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  Select an experiment run to compare against the selected ground truth
-                </Typography>
-                <Divider sx={{ mb: 2 }} />
-                <TableContainer>
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Run ID</TableCell>
-                        <TableCell>Timestamp</TableCell>
-                        <TableCell>Model</TableCell>
-                        <TableCell>Profiles</TableCell>
-                        <TableCell align="right">Actions</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {surveyRuns.slice(0, 5).map((run) => (
-                        <TableRow key={run.run_id} hover>
-                          <TableCell>
-                            <Typography variant="body2" fontWeight="medium">
-                              {run.run_id}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
+              {selectedSurvey && (
+                <>
+                  <Divider sx={{ my: 3 }} />
+
+                  {/* Ground Truth Management */}
+                  <Box>
+                    <Typography variant="subtitle1" gutterBottom fontWeight="medium">
+                      2. Create or Select Ground Truth
+                    </Typography>
+
+                    {/* Existing Ground Truths */}
+                    {groundTruths && groundTruths.length > 0 ? (
+                      <Box sx={{ mb: 3 }}>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                          Available ground truths for this survey:
+                        </Typography>
+                        <TableContainer component={Paper} variant="outlined">
+                          <Table size="small">
+                            <TableHead>
+                              <TableRow>
+                                <TableCell>Name</TableCell>
+                                <TableCell>Source</TableCell>
+                                <TableCell>Created</TableCell>
+                                <TableCell>Config</TableCell>
+                                <TableCell align="right">Actions</TableCell>
+                              </TableRow>
+                            </TableHead>
+                            <TableBody>
+                              {groundTruths.map((gt) => (
+                                <TableRow key={gt.id} hover>
+                                  <TableCell>
+                                    <Typography variant="body2" fontWeight="medium">
+                                      {gt.name}
+                                    </Typography>
+                                  </TableCell>
+                                  <TableCell>
+                                    <Chip
+                                      label={gt.source === 'ssr_generated' ? 'SSR' : 'Uploaded'}
+                                      size="small"
+                                      color={gt.source === 'ssr_generated' ? 'primary' : 'default'}
+                                    />
+                                  </TableCell>
+                                  <TableCell>
+                                    <Typography variant="body2" color="text.secondary">
+                                      {formatDate(gt.created_at)}
+                                    </Typography>
+                                  </TableCell>
+                                  <TableCell>
+                                    {gt.source === 'ssr_generated' && gt.generation_config && (
+                                      <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                                        <Chip label={gt.generation_config.model} size="small" variant="outlined" />
+                                        <Chip label={`n=${gt.generation_config.num_profiles}`} size="small" variant="outlined" />
+                                      </Box>
+                                    )}
+                                  </TableCell>
+                                  <TableCell align="right">
+                                    <IconButton
+                                      size="small"
+                                      color="primary"
+                                      onClick={() => setViewingGroundTruthId(gt.id)}
+                                      title="View Details"
+                                    >
+                                      <VisibilityIcon fontSize="small" />
+                                    </IconButton>
+                                    <IconButton
+                                      size="small"
+                                      color="success"
+                                      onClick={() => handleDownloadGroundTruth(gt.id, gt.name)}
+                                      title="Download"
+                                    >
+                                      <DownloadIcon fontSize="small" />
+                                    </IconButton>
+                                    <IconButton
+                                      size="small"
+                                      color="error"
+                                      onClick={() => handleDeleteGroundTruth(gt.id)}
+                                      title="Delete"
+                                    >
+                                      <DeleteIcon fontSize="small" />
+                                    </IconButton>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </TableContainer>
+                      </Box>
+                    ) : (
+                      <Alert severity="warning" sx={{ mb: 3 }}>
+                        <Typography variant="body2" fontWeight="medium" gutterBottom>
+                          No ground truths yet for this survey
+                        </Typography>
+                        <Typography variant="body2">
+                          Create a ground truth baseline using the options below to enable experiments.
+                        </Typography>
+                      </Alert>
+                    )}
+
+                    {/* Create Ground Truth Options */}
+                    <Grid container spacing={2}>
+                      <Grid item xs={12} md={6}>
+                        <Card variant="outlined">
+                          <CardContent>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
+                              <PsychologyIcon sx={{ fontSize: 32, color: 'primary.main' }} />
+                              <Typography variant="h6">Generate via SSR</Typography>
+                            </Box>
                             <Typography variant="body2" color="text.secondary">
-                              {formatDate(run.timestamp)}
+                              Run the full SSR pipeline using your survey's persona groups to create a high-quality baseline.
                             </Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Chip label={run.config.model} size="small" variant="outlined" />
-                          </TableCell>
-                          <TableCell>
-                            <Chip label={`n=${run.num_profiles}`} size="small" variant="outlined" />
-                          </TableCell>
-                          <TableCell align="right">
+                          </CardContent>
+                          <CardActions>
                             <Button
-                              size="small"
-                              startIcon={<CompareArrowsIcon />}
-                              onClick={() =>
-                                compareToGroundTruthMutation.mutate({
-                                  runId: run.run_id,
-                                  groundTruthId: selectedGroundTruth,
-                                })
-                              }
-                              disabled={compareToGroundTruthMutation.isPending}
+                              variant="contained"
+                              fullWidth
+                              startIcon={<PsychologyIcon />}
+                              onClick={handleOpenSSRDialog}
                             >
-                              View Comparison
+                              Generate Ground Truth
                             </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </Paper>
-            </Grid>
-          )}
-        </Grid>
-      </TabPanel>
+                          </CardActions>
+                        </Card>
+                      </Grid>
 
-      {/* Tab 3: View Results */}
-      <TabPanel value={tabValue} index={2}>
-        {!comparisonResults ? (
-          <Alert severity="info">
-            No comparison results available. Run an experiment and compare it to a ground truth to see results here.
-          </Alert>
-        ) : (
-          <Grid container spacing={3}>
-            {/* Header Information */}
-            <Grid item xs={12}>
-              <Paper sx={{ p: 3 }}>
-                <Typography variant="h6" gutterBottom>
-                  Comparison Summary
-                </Typography>
-                <Grid container spacing={2}>
-                  <Grid item xs={12} md={4}>
-                    <Typography variant="subtitle2" color="text.secondary">
-                      Run ID
-                    </Typography>
-                    <Typography variant="body2" fontFamily="monospace">
-                      {comparisonResults.run_id}
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={12} md={4}>
-                    <Typography variant="subtitle2" color="text.secondary">
-                      Ground Truth ID
-                    </Typography>
-                    <Typography variant="body2" fontFamily="monospace">
-                      {comparisonResults.ground_truth_id}
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={12} md={4}>
-                    <Typography variant="subtitle2" color="text.secondary">
-                      Survey ID
-                    </Typography>
-                    <Typography variant="body2" fontFamily="monospace">
-                      {comparisonResults.survey_id}
-                    </Typography>
-                  </Grid>
-                </Grid>
-              </Paper>
-            </Grid>
+                      <Grid item xs={12} md={6}>
+                        <Card variant="outlined">
+                          <CardContent>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
+                              <CloudUploadIcon sx={{ fontSize: 32, color: 'text.secondary' }} />
+                              <Typography variant="h6" color="text.secondary">Upload Data</Typography>
+                            </Box>
+                            <Typography variant="body2" color="text.secondary">
+                              Upload ground truth from real survey results or external sources (CSV/JSON format).
+                            </Typography>
+                          </CardContent>
+                          <CardActions>
+                            <Button
+                              variant="outlined"
+                              fullWidth
+                              startIcon={<CloudUploadIcon />}
+                              disabled
+                            >
+                              Upload (Coming Soon)
+                            </Button>
+                          </CardActions>
+                        </Card>
+                      </Grid>
+                    </Grid>
+                  </Box>
 
-            {/* Overall Metrics */}
-            <Grid item xs={12}>
-              <Paper sx={{ p: 3 }}>
-                <Typography variant="h6" gutterBottom>
-                  Overall Metrics
+                  {/* Navigation */}
+                  <Box sx={{ mt: 3, display: 'flex', gap: 1 }}>
+                    <Button
+                      variant="contained"
+                      onClick={handleNext}
+                      endIcon={<NavigateNextIcon />}
+                      disabled={!selectedSurvey || !groundTruths || groundTruths.length === 0}
+                    >
+                      Continue to Experiments
+                    </Button>
+                    {(!groundTruths || groundTruths.length === 0) && (
+                      <Tooltip title="Create at least one ground truth to continue">
+                        <span>
+                          <Button disabled variant="outlined">Waiting for Ground Truth...</Button>
+                        </span>
+                      </Tooltip>
+                    )}
+                  </Box>
+                </>
+              )}
+            </StepContent>
+          </Step>
+
+          {/* Step 2: Run Experiment */}
+          <Step>
+            <StepLabel
+              optional={selectedGroundTruth ? (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
+                  <CheckCircleIcon sx={{ fontSize: 16, color: 'success.main' }} />
+                  <Typography variant="caption" color="success.main">
+                    Ground truth selected, ready to run
+                  </Typography>
+                </Box>
+              ) : null}
+              sx={{ cursor: selectedSurvey ? 'pointer' : 'default' }}
+              onClick={() => handleStepClick(1)}
+            >
+              <Typography variant="h6">{steps[1].label}</Typography>
+            </StepLabel>
+            <StepContent>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                {steps[1].description}
+              </Typography>
+
+              {/* Ground Truth Selector */}
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="subtitle1" gutterBottom fontWeight="medium">
+                  Select Ground Truth for Comparison
                 </Typography>
-                <Divider sx={{ mb: 2 }} />
-                <Grid container spacing={2}>
-                  <Grid item xs={12} md={3}>
-                    <Card variant="outlined">
-                      <CardContent>
-                        <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                          Mean KL Divergence
+                <FormControl fullWidth sx={{ mb: 2 }}>
+                  <InputLabel>Ground Truth</InputLabel>
+                  <Select
+                    value={selectedGroundTruth}
+                    label="Ground Truth"
+                    onChange={(e) => setSelectedGroundTruth(e.target.value)}
+                  >
+                    <MenuItem value="">
+                      <em>Select a ground truth...</em>
+                    </MenuItem>
+                    {groundTruths?.map((gt) => (
+                      <MenuItem key={gt.id} value={gt.id}>
+                        {gt.name} ({gt.source === 'ssr_generated' ? 'SSR' : 'Uploaded'})
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Box>
+
+              {selectedGroundTruth && (
+                <>
+                  {/* Inline Experiment Configuration */}
+                  <Paper variant="outlined" sx={{ p: 3, mb: 3 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                      <PlayArrowIcon sx={{ fontSize: 32, color: 'primary.main' }} />
+                      <Box sx={{ flexGrow: 1 }}>
+                        <Typography variant="h6">New Experiment Configuration</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Configure parameters and run the SSR pipeline
                         </Typography>
-                        <Typography variant="h5">
-                          {formatMetric(comparisonResults.comparison.overall_metrics.mean_kl_divergence)}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          ± {formatMetric(comparisonResults.comparison.overall_metrics.std_kl_divergence)}
-                        </Typography>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                  <Grid item xs={12} md={3}>
-                    <Card variant="outlined">
-                      <CardContent>
-                        <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                          Mean JS Divergence
-                        </Typography>
-                        <Typography variant="h5">
-                          {formatMetric(comparisonResults.comparison.overall_metrics.mean_js_divergence)}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          ± {formatMetric(comparisonResults.comparison.overall_metrics.std_js_divergence)}
-                        </Typography>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                  <Grid item xs={12} md={3}>
-                    <Card variant="outlined">
-                      <CardContent>
-                        <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                          Mean Wasserstein Distance
-                        </Typography>
-                        <Typography variant="h5">
-                          {formatMetric(comparisonResults.comparison.overall_metrics.mean_wasserstein)}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          ± {formatMetric(comparisonResults.comparison.overall_metrics.std_wasserstein)}
-                        </Typography>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                  <Grid item xs={12} md={3}>
-                    <Card variant="outlined">
-                      <CardContent>
-                        <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                          Mean Absolute Error
-                        </Typography>
-                        <Typography variant="h5">
-                          {formatMetric(comparisonResults.comparison.overall_metrics.mean_mae)}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          ± {formatMetric(comparisonResults.comparison.overall_metrics.std_mae)}
-                        </Typography>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Alert severity="info">
-                      Compared {comparisonResults.comparison.overall_metrics.num_questions_compared} questions.
-                      Lower values indicate better similarity to ground truth.
+                      </Box>
+                    </Box>
+
+                    <Alert severity="info" sx={{ mb: 3 }}>
+                      Comparing against: <strong>{groundTruths?.find(gt => gt.id === selectedGroundTruth)?.name}</strong>
                     </Alert>
-                  </Grid>
-                </Grid>
-              </Paper>
-            </Grid>
 
-            {/* By Category Metrics */}
-            {Object.keys(comparisonResults.comparison.by_category || {}).length > 0 && (
-              <Grid item xs={12}>
-                <Paper sx={{ p: 3 }}>
-                  <Typography variant="h6" gutterBottom>
-                    Metrics by Category
-                  </Typography>
-                  <Divider sx={{ mb: 2 }} />
-                  <TableContainer>
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Category</TableCell>
-                          <TableCell align="right">Mean KL Divergence</TableCell>
-                          <TableCell align="right">Mean JS Divergence</TableCell>
-                          <TableCell align="right">Mean Wasserstein</TableCell>
-                          <TableCell align="right">Mean MAE</TableCell>
-                          <TableCell align="right">Questions</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {Object.entries(comparisonResults.comparison.by_category).map(([category, metrics]: [string, any]) => (
-                          <TableRow key={category}>
-                            <TableCell>
-                              <Typography variant="body2" fontWeight="medium">
-                                {category}
-                              </Typography>
-                            </TableCell>
-                            <TableCell align="right">
-                              {formatMetric(metrics.mean_kl_divergence)}
-                            </TableCell>
-                            <TableCell align="right">
-                              {formatMetric(metrics.mean_js_divergence)}
-                            </TableCell>
-                            <TableCell align="right">
-                              {formatMetric(metrics.mean_wasserstein)}
-                            </TableCell>
-                            <TableCell align="right">
-                              {formatMetric(metrics.mean_mae)}
-                            </TableCell>
-                            <TableCell align="right">
-                              <Chip label={metrics.num_questions} size="small" />
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </Paper>
-              </Grid>
-            )}
-
-            {/* By Question Metrics */}
-            {Object.keys(comparisonResults.comparison.by_question || {}).length > 0 && (
-              <Grid item xs={12}>
-                <Paper sx={{ p: 3 }}>
-                  <Typography variant="h6" gutterBottom>
-                    Metrics by Question
-                  </Typography>
-                  <Divider sx={{ mb: 2 }} />
-                  <TableContainer>
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Question</TableCell>
-                          <TableCell align="right">KL Divergence</TableCell>
-                          <TableCell align="right">JS Divergence</TableCell>
-                          <TableCell align="right">Wasserstein</TableCell>
-                          <TableCell align="right">Chi-Squared</TableCell>
-                          <TableCell align="right">P-Value</TableCell>
-                          <TableCell align="right">MAE</TableCell>
-                          <TableCell align="center">Significant?</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {Object.entries(comparisonResults.comparison.by_question).map(([questionKey, metrics]: [string, any]) => (
-                          <TableRow key={questionKey}>
-                            <TableCell>
-                              <Typography variant="body2" fontFamily="monospace" fontSize="0.75rem">
-                                {questionKey}
-                              </Typography>
-                            </TableCell>
-                            <TableCell align="right">
-                              {formatMetric(metrics.kl_divergence)}
-                            </TableCell>
-                            <TableCell align="right">
-                              {formatMetric(metrics.js_divergence)}
-                            </TableCell>
-                            <TableCell align="right">
-                              {formatMetric(metrics.wasserstein_distance)}
-                            </TableCell>
-                            <TableCell align="right">
-                              {formatMetric(metrics.chi_squared)}
-                            </TableCell>
-                            <TableCell align="right">
-                              {formatMetric(metrics.chi_squared_p_value)}
-                            </TableCell>
-                            <TableCell align="right">
-                              {formatMetric(metrics.mean_absolute_error)}
-                            </TableCell>
-                            <TableCell align="center">
-                              <Chip
-                                label={metrics.significant_difference ? 'Yes' : 'No'}
-                                color={metrics.significant_difference ? 'warning' : 'success'}
-                                size="small"
+                    {/* Basic Settings Accordion */}
+                    <Accordion
+                      expanded={expandedAccordion === 'basic'}
+                      onChange={handleAccordionChange('basic')}
+                      sx={{ mb: 1 }}
+                    >
+                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Typography variant="subtitle1" fontWeight="medium">
+                            Basic Settings
+                          </Typography>
+                          {expandedAccordion !== 'basic' && (
+                            <Chip
+                              label={`${experimentConfig.num_profiles} profiles, seed ${experimentConfig.seed}`}
+                              size="small"
+                              variant="outlined"
+                            />
+                          )}
+                        </Box>
+                      </AccordionSummary>
+                      <AccordionDetails>
+                        <Grid container spacing={2}>
+                          <Grid item xs={12} md={6}>
+                            <TextField
+                              label="Number of Profiles"
+                              type="number"
+                              fullWidth
+                              value={experimentConfig.num_profiles}
+                              onChange={(e) =>
+                                setExperimentConfig({ ...experimentConfig, num_profiles: parseInt(e.target.value) })
+                              }
+                              inputProps={{ min: 10, max: 2000 }}
+                              helperText="Recommended: 50-100 for testing"
+                            />
+                          </Grid>
+                          <Grid item xs={12} md={6}>
+                            <Box sx={{ display: 'flex', gap: 1 }}>
+                              <TextField
+                                label="Random Seed"
+                                type="number"
+                                fullWidth
+                                value={experimentConfig.seed}
+                                onChange={(e) => setExperimentConfig({ ...experimentConfig, seed: parseInt(e.target.value) })}
+                                inputProps={{ min: 0, max: 10000 }}
+                                helperText="Different seed = different results"
                               />
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                  <Alert severity="info" sx={{ mt: 2 }}>
-                    Statistical significance indicates whether the distributions are significantly different (p &lt; 0.05).
-                    "No" means the experimental result is statistically similar to the ground truth.
-                  </Alert>
-                </Paper>
-              </Grid>
-            )}
+                              <Tooltip title="Generate random seed">
+                                <IconButton
+                                  onClick={handleRandomizeSeed}
+                                  sx={{ mt: 1 }}
+                                  color="primary"
+                                >
+                                  <CasinoIcon />
+                                </IconButton>
+                              </Tooltip>
+                            </Box>
+                          </Grid>
+                        </Grid>
+                      </AccordionDetails>
+                    </Accordion>
 
-            {/* Distribution Comparison Charts */}
-            <Grid item xs={12}>
-              <DistributionCharts
-                testRunDistributions={comparisonResults.test_run_distributions}
-                groundTruthDistributions={comparisonResults.ground_truth_distributions}
-              />
-            </Grid>
+                    {/* LLM Configuration Accordion */}
+                    <Accordion
+                      expanded={expandedAccordion === 'llm'}
+                      onChange={handleAccordionChange('llm')}
+                      sx={{ mb: 1 }}
+                    >
+                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Typography variant="subtitle1" fontWeight="medium">
+                            LLM Configuration
+                          </Typography>
+                          {expandedAccordion !== 'llm' && (
+                            <Chip
+                              label={`${experimentConfig.llm_provider}: ${experimentConfig.model}`}
+                              size="small"
+                              variant="outlined"
+                            />
+                          )}
+                        </Box>
+                      </AccordionSummary>
+                      <AccordionDetails>
+                        <Grid container spacing={2}>
+                          <Grid item xs={12} md={6}>
+                            <FormControl fullWidth>
+                              <InputLabel>LLM Provider</InputLabel>
+                              <Select
+                                value={experimentConfig.llm_provider}
+                                label="LLM Provider"
+                                onChange={(e) =>
+                                  setExperimentConfig({
+                                    ...experimentConfig,
+                                    llm_provider: e.target.value as 'openai' | 'anthropic',
+                                    model: e.target.value === 'openai' ? 'gpt-4o-mini' : 'claude-3-haiku-20240307',
+                                  })
+                                }
+                              >
+                                {LLM_PROVIDERS.map((provider) => (
+                                  <MenuItem key={provider.value} value={provider.value}>
+                                    {provider.label}
+                                  </MenuItem>
+                                ))}
+                              </Select>
+                            </FormControl>
+                          </Grid>
+                          <Grid item xs={12} md={6}>
+                            <FormControl fullWidth>
+                              <InputLabel>Model</InputLabel>
+                              <Select
+                                value={experimentConfig.model}
+                                label="Model"
+                                onChange={(e) => setExperimentConfig({ ...experimentConfig, model: e.target.value })}
+                              >
+                                {getExperimentModelOptions().map((model) => (
+                                  <MenuItem key={model.value} value={model.value}>
+                                    {model.label}
+                                  </MenuItem>
+                                ))}
+                              </Select>
+                            </FormControl>
+                          </Grid>
+                        </Grid>
+                      </AccordionDetails>
+                    </Accordion>
 
-            {/* Confusion Matrix */}
-            <Grid item xs={12}>
-              <ConfusionMatrix
-                testRunDistributions={comparisonResults.test_run_distributions}
-                groundTruthDistributions={comparisonResults.ground_truth_distributions}
-                survey={survey}
-              />
-            </Grid>
+                    {/* Advanced Settings Accordion */}
+                    <Accordion
+                      expanded={expandedAccordion === 'advanced'}
+                      onChange={handleAccordionChange('advanced')}
+                    >
+                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Typography variant="subtitle1" fontWeight="medium">
+                            Advanced Settings
+                          </Typography>
+                          {expandedAccordion !== 'advanced' && (
+                            <Chip
+                              label={`LLM temp: ${experimentConfig.llm_temperature}, SSR temp: ${experimentConfig.ssr_temperature}`}
+                              size="small"
+                              variant="outlined"
+                            />
+                          )}
+                        </Box>
+                      </AccordionSummary>
+                      <AccordionDetails>
+                        <Grid container spacing={2}>
+                          <Grid item xs={12} md={6}>
+                            <TextField
+                              label="LLM Temperature"
+                              type="number"
+                              fullWidth
+                              value={experimentConfig.llm_temperature}
+                              onChange={(e) =>
+                                setExperimentConfig({ ...experimentConfig, llm_temperature: parseFloat(e.target.value) })
+                              }
+                              inputProps={{ min: 0, max: 2, step: 0.1 }}
+                              helperText="Controls response randomness (0-2)"
+                            />
+                          </Grid>
+                          <Grid item xs={12} md={6}>
+                            <TextField
+                              label="SSR Temperature"
+                              type="number"
+                              fullWidth
+                              value={experimentConfig.ssr_temperature}
+                              onChange={(e) =>
+                                setExperimentConfig({ ...experimentConfig, ssr_temperature: parseFloat(e.target.value) })
+                              }
+                              inputProps={{ min: 0.1, max: 5, step: 0.1 }}
+                              helperText="Rating distribution temperature (0.1-5)"
+                            />
+                          </Grid>
+                        </Grid>
+                      </AccordionDetails>
+                    </Accordion>
 
-            {/* Interpretation Guide */}
-            <Grid item xs={12}>
-              <Paper sx={{ p: 3, mt: 3, bgcolor: '#f5f5f5' }}>
-                <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold' }}>
-                  How to Interpret the Results
-                </Typography>
-
-                <Grid container spacing={3} sx={{ mt: 1 }}>
-                  {/* Reading the Distribution Charts */}
-                  <Grid item xs={12} md={6}>
-                    <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold', color: 'primary.main' }}>
-                      Reading the Distribution Charts
-                    </Typography>
-                    <Box component="ul" sx={{ mt: 1, pl: 2 }}>
-                      <Typography component="li" variant="body2" sx={{ mb: 1 }}>
-                        <strong>Orange Bars:</strong> Ground truth probability distribution (baseline)
-                      </Typography>
-                      <Typography component="li" variant="body2" sx={{ mb: 1 }}>
-                        <strong>Blue Line/Area:</strong> Experimental run probability distribution
-                      </Typography>
-                      <Typography component="li" variant="body2" sx={{ mb: 1 }}>
-                        <strong>X-Axis:</strong> Rating values (e.g., 1-5 or 1-7 scale)
-                      </Typography>
-                      <Typography component="li" variant="body2" sx={{ mb: 1 }}>
-                        <strong>Y-Axis:</strong> Probability that a respondent selects that rating
-                      </Typography>
-                      <Typography component="li" variant="body2" sx={{ mb: 1 }}>
-                        <strong>Good Match:</strong> When blue line closely follows the orange bars
-                      </Typography>
-                      <Typography component="li" variant="body2">
-                        <strong>Poor Match:</strong> When blue line deviates significantly from orange bars
-                      </Typography>
+                    {/* Run Button */}
+                    <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
+                      <Button
+                        variant="contained"
+                        size="large"
+                        startIcon={<PlayArrowIcon />}
+                        onClick={handleRunExperiment}
+                        disabled={runSurveyMutation.isPending || compareToGroundTruthMutation.isPending}
+                        sx={{ px: 6 }}
+                      >
+                        {runSurveyMutation.isPending
+                          ? 'Running Experiment...'
+                          : 'Run Experiment (Est. 3-5 min)'}
+                      </Button>
                     </Box>
-                  </Grid>
 
-                  {/* Interpreting the Metrics */}
-                  <Grid item xs={12} md={6}>
-                    <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold', color: 'primary.main' }}>
-                      Interpreting the Metrics
+                    {/* Progress Indicator */}
+                    {(runSurveyMutation.isPending || compareToGroundTruthMutation.isPending) && (
+                      <Box sx={{ mt: 2 }}>
+                        <LinearProgress />
+                        <Typography variant="body2" color="text.secondary" align="center" sx={{ mt: 1 }}>
+                          {runSurveyMutation.isPending
+                            ? 'Running SSR pipeline... This may take several minutes.'
+                            : 'Comparing results to ground truth...'}
+                        </Typography>
+                      </Box>
+                    )}
+
+                    {/* Error Display */}
+                    {runSurveyMutation.isError && (
+                      <Alert severity="error" sx={{ mt: 2 }}>
+                        <Typography variant="body2" fontWeight="medium" gutterBottom>
+                          Error running experiment
+                        </Typography>
+                        <Typography variant="body2">
+                          {(() => {
+                            const error = runSurveyMutation.error as any;
+                            if (error?.response?.data?.detail) {
+                              return typeof error.response.data.detail === 'string'
+                                ? error.response.data.detail
+                                : JSON.stringify(error.response.data.detail, null, 2);
+                            }
+                            return error?.message || 'Please try again.';
+                          })()}
+                        </Typography>
+                      </Alert>
+                    )}
+                  </Paper>
+
+                  {/* Divider */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, my: 3 }}>
+                    <Divider sx={{ flexGrow: 1 }} />
+                    <Typography variant="body2" color="text.secondary">
+                      OR
                     </Typography>
-                    <Box component="ul" sx={{ mt: 1, pl: 2 }}>
-                      <Typography component="li" variant="body2" sx={{ mb: 1 }}>
-                        <strong>KL Divergence:</strong> Measures how different the experimental distribution is from ground truth. Lower is better (0 = identical).
-                      </Typography>
-                      <Typography component="li" variant="body2" sx={{ mb: 1 }}>
-                        <strong>JS Divergence:</strong> Symmetric version of KL divergence. Range: 0 to 1, lower is better.
-                      </Typography>
-                      <Typography component="li" variant="body2" sx={{ mb: 1 }}>
-                        <strong>Wasserstein Distance:</strong> "Earth mover's distance" - how much probability mass needs to move. Lower is better.
-                      </Typography>
-                      <Typography component="li" variant="body2" sx={{ mb: 1 }}>
-                        <strong>Chi-Squared:</strong> Statistical test for distribution similarity. Lower values suggest more similar distributions.
-                      </Typography>
-                      <Typography component="li" variant="body2" sx={{ mb: 1 }}>
-                        <strong>P-Value:</strong> If &lt; 0.05, distributions are statistically different. If ≥ 0.05, they're statistically similar (good!).
-                      </Typography>
-                      <Typography component="li" variant="body2">
-                        <strong>MAE:</strong> Mean Absolute Error - average difference between probabilities. Range: 0 to 1, lower is better.
-                      </Typography>
-                    </Box>
-                  </Grid>
+                    <Divider sx={{ flexGrow: 1 }} />
+                  </Box>
 
-                  {/* What Makes a Good Result */}
-                  <Grid item xs={12}>
-                    <Alert severity="info" sx={{ mt: 2 }}>
-                      <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 'bold' }}>
-                        What Makes a Good Result?
+                  {/* Collapsible Previous Runs Section */}
+                  {surveyRuns && surveyRuns.length > 0 && (
+                    <Box>
+                      <Button
+                        variant="outlined"
+                        fullWidth
+                        onClick={() => setShowPreviousRuns(!showPreviousRuns)}
+                        endIcon={showPreviousRuns ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                        sx={{ mb: showPreviousRuns ? 2 : 0 }}
+                      >
+                        {showPreviousRuns ? 'Hide' : 'Compare'} Previous Run ({surveyRuns.length} available)
+                      </Button>
+
+                      <Collapse in={showPreviousRuns}>
+                        <Paper variant="outlined" sx={{ p: 2 }}>
+                          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                            Select a previous experiment run to compare against the selected ground truth:
+                          </Typography>
+                          <TableContainer>
+                            <Table size="small">
+                              <TableHead>
+                                <TableRow>
+                                  <TableCell>Run ID</TableCell>
+                                  <TableCell>Timestamp</TableCell>
+                                  <TableCell>Model</TableCell>
+                                  <TableCell>Profiles</TableCell>
+                                  <TableCell align="right">Actions</TableCell>
+                                </TableRow>
+                              </TableHead>
+                              <TableBody>
+                                {surveyRuns.slice(0, 5).map((run) => (
+                                  <TableRow key={run.run_id} hover>
+                                    <TableCell>
+                                      <Typography variant="body2" fontFamily="monospace" fontSize="0.7rem">
+                                        {run.run_id}
+                                      </Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                      <Typography variant="body2" color="text.secondary" fontSize="0.8rem">
+                                        {formatDate(run.timestamp)}
+                                      </Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                      <Chip label={run.config.model} size="small" variant="outlined" />
+                                    </TableCell>
+                                    <TableCell>
+                                      <Chip label={`n=${run.num_profiles}`} size="small" variant="outlined" />
+                                    </TableCell>
+                                    <TableCell align="right">
+                                      <Button
+                                        size="small"
+                                        startIcon={<CompareArrowsIcon />}
+                                        onClick={() =>
+                                          compareToGroundTruthMutation.mutate({
+                                            runId: run.run_id,
+                                            groundTruthId: selectedGroundTruth,
+                                          })
+                                        }
+                                        disabled={compareToGroundTruthMutation.isPending}
+                                      >
+                                        Compare
+                                      </Button>
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </TableContainer>
+                        </Paper>
+                      </Collapse>
+                    </Box>
+                  )}
+                </>
+              )}
+
+              {/* Navigation */}
+              <Box sx={{ mt: 3, display: 'flex', gap: 1 }}>
+                <Button
+                  onClick={handleBack}
+                  startIcon={<NavigateBeforeIcon />}
+                >
+                  Back
+                </Button>
+                {compareToGroundTruthMutation.isPending && (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <CircularProgress size={20} />
+                    <Typography variant="body2" color="text.secondary">
+                      Comparing to ground truth...
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
+            </StepContent>
+          </Step>
+
+          {/* Step 3: View Results */}
+          <Step>
+            <StepLabel
+              sx={{ cursor: comparisonResults ? 'pointer' : 'default' }}
+              onClick={() => handleStepClick(2)}
+            >
+              <Typography variant="h6">{steps[2].label}</Typography>
+            </StepLabel>
+            <StepContent>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                {steps[2].description}
+              </Typography>
+
+              {!comparisonResults ? (
+                <EmptyState
+                  icon={<CompareArrowsIcon />}
+                  title="No results yet"
+                  description="Run an experiment in Step 2 to see comparison metrics and visualizations here."
+                  compact
+                />
+              ) : (
+                <Box>
+                  {/* Header Information */}
+                  <Paper sx={{ p: 3, mb: 3 }} variant="outlined">
+                    <Typography variant="h6" gutterBottom>
+                      Comparison Summary
+                    </Typography>
+                    <Grid container spacing={2}>
+                      <Grid item xs={12} md={4}>
+                        <Typography variant="caption" color="text.secondary">
+                          Run ID
+                        </Typography>
+                        <Typography variant="body2" fontFamily="monospace">
+                          {comparisonResults.run_id}
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={12} md={4}>
+                        <Typography variant="caption" color="text.secondary">
+                          Ground Truth
+                        </Typography>
+                        <Typography variant="body2">
+                          {groundTruths?.find(gt => gt.id === comparisonResults.ground_truth_id)?.name}
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={12} md={4}>
+                        <Typography variant="caption" color="text.secondary">
+                          Survey
+                        </Typography>
+                        <Typography variant="body2">{survey?.name}</Typography>
+                      </Grid>
+                    </Grid>
+                  </Paper>
+
+                  {/* Overall Metrics */}
+                  <Paper sx={{ p: 3, mb: 3 }} variant="outlined">
+                    <Typography variant="h6" gutterBottom>
+                      Overall Metrics
+                    </Typography>
+                    <Divider sx={{ mb: 2 }} />
+                    <Grid container spacing={2}>
+                      <Grid item xs={12} md={3}>
+                        <Card variant="outlined">
+                          <CardContent>
+                            <Typography variant="caption" color="text.secondary" gutterBottom>
+                              Mean KL Divergence
+                            </Typography>
+                            <Typography variant="h5">
+                              {formatMetric(comparisonResults.comparison.overall_metrics.mean_kl_divergence)}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              ± {formatMetric(comparisonResults.comparison.overall_metrics.std_kl_divergence)}
+                            </Typography>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                      <Grid item xs={12} md={3}>
+                        <Card variant="outlined">
+                          <CardContent>
+                            <Typography variant="caption" color="text.secondary" gutterBottom>
+                              Mean JS Divergence
+                            </Typography>
+                            <Typography variant="h5">
+                              {formatMetric(comparisonResults.comparison.overall_metrics.mean_js_divergence)}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              ± {formatMetric(comparisonResults.comparison.overall_metrics.std_js_divergence)}
+                            </Typography>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                      <Grid item xs={12} md={3}>
+                        <Card variant="outlined">
+                          <CardContent>
+                            <Typography variant="caption" color="text.secondary" gutterBottom>
+                              Mean Wasserstein
+                            </Typography>
+                            <Typography variant="h5">
+                              {formatMetric(comparisonResults.comparison.overall_metrics.mean_wasserstein)}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              ± {formatMetric(comparisonResults.comparison.overall_metrics.std_wasserstein)}
+                            </Typography>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                      <Grid item xs={12} md={3}>
+                        <Card variant="outlined">
+                          <CardContent>
+                            <Typography variant="caption" color="text.secondary" gutterBottom>
+                              Mean Absolute Error
+                            </Typography>
+                            <Typography variant="h5">
+                              {formatMetric(comparisonResults.comparison.overall_metrics.mean_mae)}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              ± {formatMetric(comparisonResults.comparison.overall_metrics.std_mae)}
+                            </Typography>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                      <Grid item xs={12}>
+                        <Alert severity="info">
+                          Compared {comparisonResults.comparison.overall_metrics.num_questions_compared} questions.
+                          Lower values indicate better similarity to ground truth.
+                        </Alert>
+                      </Grid>
+                    </Grid>
+                  </Paper>
+
+                  {/* By Category Metrics */}
+                  {Object.keys(comparisonResults.comparison.by_category || {}).length > 0 && (
+                    <Paper sx={{ p: 3, mb: 3 }} variant="outlined">
+                      <Typography variant="h6" gutterBottom>
+                        Metrics by Category
                       </Typography>
-                      <Typography variant="body2">
-                        A high-quality experiment will have: <strong>low divergence metrics</strong> (KL, JS, Wasserstein, MAE close to 0),
-                        <strong> low chi-squared values</strong>, <strong>p-values ≥ 0.05</strong> (indicating no significant difference from ground truth),
-                        and <strong>distribution charts where the blue line closely tracks the orange bars</strong>.
-                        This indicates your synthetic data generation is accurately reproducing the ground truth patterns.
+                      <Divider sx={{ mb: 2 }} />
+                      <TableContainer>
+                        <Table size="small">
+                          <TableHead>
+                            <TableRow>
+                              <TableCell>Category</TableCell>
+                              <TableCell align="right">KL Divergence</TableCell>
+                              <TableCell align="right">JS Divergence</TableCell>
+                              <TableCell align="right">Wasserstein</TableCell>
+                              <TableCell align="right">MAE</TableCell>
+                              <TableCell align="right">Questions</TableCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {Object.entries(comparisonResults.comparison.by_category).map(([category, metrics]: [string, any]) => (
+                              <TableRow key={category}>
+                                <TableCell>
+                                  <Typography variant="body2" fontWeight="medium">
+                                    {category}
+                                  </Typography>
+                                </TableCell>
+                                <TableCell align="right">{formatMetric(metrics.mean_kl_divergence)}</TableCell>
+                                <TableCell align="right">{formatMetric(metrics.mean_js_divergence)}</TableCell>
+                                <TableCell align="right">{formatMetric(metrics.mean_wasserstein)}</TableCell>
+                                <TableCell align="right">{formatMetric(metrics.mean_mae)}</TableCell>
+                                <TableCell align="right">
+                                  <Chip label={metrics.num_questions} size="small" />
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                    </Paper>
+                  )}
+
+                  {/* By Question Metrics */}
+                  {Object.keys(comparisonResults.comparison.by_question || {}).length > 0 && (
+                    <Paper sx={{ p: 3, mb: 3 }} variant="outlined">
+                      <Typography variant="h6" gutterBottom>
+                        Metrics by Question
                       </Typography>
-                    </Alert>
-                  </Grid>
-                </Grid>
-              </Paper>
-            </Grid>
-          </Grid>
-        )}
-      </TabPanel>
+                      <Divider sx={{ mb: 2 }} />
+                      <TableContainer>
+                        <Table size="small">
+                          <TableHead>
+                            <TableRow>
+                              <TableCell>Question</TableCell>
+                              <TableCell align="right">KL Div</TableCell>
+                              <TableCell align="right">JS Div</TableCell>
+                              <TableCell align="right">Wasserstein</TableCell>
+                              <TableCell align="right">Chi²</TableCell>
+                              <TableCell align="right">P-Value</TableCell>
+                              <TableCell align="right">MAE</TableCell>
+                              <TableCell align="center">Significant?</TableCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {Object.entries(comparisonResults.comparison.by_question).map(([questionKey, metrics]: [string, any]) => (
+                              <TableRow key={questionKey}>
+                                <TableCell>
+                                  <Typography variant="body2" fontFamily="monospace" fontSize="0.7rem">
+                                    {questionKey}
+                                  </Typography>
+                                </TableCell>
+                                <TableCell align="right">{formatMetric(metrics.kl_divergence)}</TableCell>
+                                <TableCell align="right">{formatMetric(metrics.js_divergence)}</TableCell>
+                                <TableCell align="right">{formatMetric(metrics.wasserstein_distance)}</TableCell>
+                                <TableCell align="right">{formatMetric(metrics.chi_squared)}</TableCell>
+                                <TableCell align="right">{formatMetric(metrics.chi_squared_p_value)}</TableCell>
+                                <TableCell align="right">{formatMetric(metrics.mean_absolute_error)}</TableCell>
+                                <TableCell align="center">
+                                  <Chip
+                                    label={metrics.significant_difference ? 'Yes' : 'No'}
+                                    color={metrics.significant_difference ? 'warning' : 'success'}
+                                    size="small"
+                                  />
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                      <Alert severity="info" sx={{ mt: 2 }}>
+                        Statistical significance (p &lt; 0.05) indicates distributions are different. "No" means statistically similar to ground truth (good!).
+                      </Alert>
+                    </Paper>
+                  )}
+
+                  {/* Distribution Charts */}
+                  <Box sx={{ mb: 3 }}>
+                    <DistributionCharts
+                      testRunDistributions={comparisonResults.test_run_distributions}
+                      groundTruthDistributions={comparisonResults.ground_truth_distributions}
+                      survey={survey}
+                    />
+                  </Box>
+
+                  {/* Difference Heatmap */}
+                  <Box sx={{ mb: 3 }}>
+                    <DifferenceHeatmap
+                      testRunDistributions={comparisonResults.test_run_distributions}
+                      groundTruthDistributions={comparisonResults.ground_truth_distributions}
+                      survey={survey}
+                    />
+                  </Box>
+
+                  {/* Interpretation Guide */}
+                  <Paper sx={{ p: 3, bgcolor: '#f5f5f5' }}>
+                    <Typography variant="h6" gutterBottom fontWeight="bold">
+                      How to Interpret Results
+                    </Typography>
+                    <Grid container spacing={3} sx={{ mt: 1 }}>
+                      <Grid item xs={12} md={6}>
+                        <Typography variant="subtitle2" gutterBottom fontWeight="bold" color="primary.main">
+                          Reading the Charts
+                        </Typography>
+                        <Box component="ul" sx={{ pl: 2 }}>
+                          <Typography component="li" variant="body2" sx={{ mb: 0.5 }}>
+                            <strong>Orange bars:</strong> Ground truth baseline
+                          </Typography>
+                          <Typography component="li" variant="body2" sx={{ mb: 0.5 }}>
+                            <strong>Blue line:</strong> Experimental run
+                          </Typography>
+                          <Typography component="li" variant="body2">
+                            <strong>Good match:</strong> Blue closely follows orange
+                          </Typography>
+                        </Box>
+                      </Grid>
+                      <Grid item xs={12} md={6}>
+                        <Typography variant="subtitle2" gutterBottom fontWeight="bold" color="primary.main">
+                          Understanding Metrics
+                        </Typography>
+                        <Box component="ul" sx={{ pl: 2 }}>
+                          <Typography component="li" variant="body2" sx={{ mb: 0.5 }}>
+                            <strong>KL/JS/Wasserstein:</strong> Lower = more similar (0 = identical)
+                          </Typography>
+                          <Typography component="li" variant="body2" sx={{ mb: 0.5 }}>
+                            <strong>P-value ≥ 0.05:</strong> Statistically similar (good!)
+                          </Typography>
+                          <Typography component="li" variant="body2">
+                            <strong>MAE:</strong> Average probability difference (lower is better)
+                          </Typography>
+                        </Box>
+                      </Grid>
+                    </Grid>
+                  </Paper>
+                </Box>
+              )}
+
+              {/* Navigation */}
+              <Box sx={{ mt: 3, display: 'flex', gap: 1 }}>
+                <Button
+                  onClick={handleBack}
+                  startIcon={<NavigateBeforeIcon />}
+                >
+                  Back to Experiments
+                </Button>
+                {comparisonResults && (
+                  <Button
+                    variant="outlined"
+                    onClick={() => {
+                      setComparisonResults(null);
+                      setActiveStep(1);
+                    }}
+                  >
+                    Run Another Comparison
+                  </Button>
+                )}
+              </Box>
+            </StepContent>
+          </Step>
+        </Stepper>
+      </Paper>
 
       {/* SSR Ground Truth Creation Dialog */}
       <Dialog open={ssrDialogOpen} onClose={() => setSSRDialogOpen(false)} maxWidth="md" fullWidth>
@@ -936,7 +1293,7 @@ const GroundTruthTestingPage: React.FC = () => {
           <Box sx={{ pt: 2 }}>
             <Alert severity="info" sx={{ mb: 3 }}>
               This will run the full SSR pipeline using your survey's persona groups to generate a
-              high-quality ground truth baseline. Higher profile counts produce better ground truths.
+              high-quality ground truth baseline. Higher profile counts produce better results but take longer.
             </Alert>
 
             <Grid container spacing={2}>
@@ -947,7 +1304,7 @@ const GroundTruthTestingPage: React.FC = () => {
                   required
                   value={ssrConfig.name}
                   onChange={(e) => setSSRConfig({ ...ssrConfig, name: e.target.value })}
-                  placeholder="e.g., GPT-4 Baseline n=500 seed=42"
+                  placeholder="e.g., GPT-4 Baseline n=500"
                 />
               </Grid>
 
@@ -959,7 +1316,7 @@ const GroundTruthTestingPage: React.FC = () => {
                   rows={2}
                   value={ssrConfig.description}
                   onChange={(e) => setSSRConfig({ ...ssrConfig, description: e.target.value })}
-                  placeholder="e.g., High-quality baseline for comparison"
+                  placeholder="Optional: Describe this ground truth"
                 />
               </Grid>
 
@@ -981,7 +1338,7 @@ const GroundTruthTestingPage: React.FC = () => {
                     setSSRConfig({ ...ssrConfig, num_profiles: parseInt(e.target.value) })
                   }
                   inputProps={{ min: 10, max: 2000 }}
-                  helperText="Recommended: 50-100 for testing, 500+ for production quality (takes longer)"
+                  helperText="Recommended: 50-100 for testing, 500+ for production"
                 />
               </Grid>
 
@@ -1008,7 +1365,7 @@ const GroundTruthTestingPage: React.FC = () => {
                       setSSRConfig({
                         ...ssrConfig,
                         llm_provider: e.target.value as 'openai' | 'anthropic',
-                        model: e.target.value === 'openai' ? 'gpt-3.5-turbo' : 'claude-3-haiku-20240307',
+                        model: e.target.value === 'openai' ? 'gpt-4o-mini' : 'claude-3-haiku-20240307',
                       })
                     }
                   >
@@ -1065,8 +1422,6 @@ const GroundTruthTestingPage: React.FC = () => {
                   inputProps={{ min: 0.1, max: 5, step: 0.1 }}
                 />
               </Grid>
-
-              {/* Normalize method is always 'paper' (from research paper arXiv:2510.08338v2) */}
             </Grid>
 
             {createSSRMutation.isPending && (
@@ -1080,7 +1435,20 @@ const GroundTruthTestingPage: React.FC = () => {
 
             {createSSRMutation.isError && (
               <Alert severity="error" sx={{ mt: 2 }}>
-                Error creating ground truth. Please check your configuration and try again.
+                <Typography variant="body2" gutterBottom fontWeight="medium">
+                  Error creating ground truth
+                </Typography>
+                <Typography variant="body2">
+                  {(() => {
+                    const error = createSSRMutation.error as any;
+                    if (error?.response?.data?.detail) {
+                      return typeof error.response.data.detail === 'string'
+                        ? error.response.data.detail
+                        : JSON.stringify(error.response.data.detail, null, 2);
+                    }
+                    return error?.message || 'Please check your configuration and try again.';
+                  })()}
+                </Typography>
               </Alert>
             )}
           </Box>
@@ -1095,158 +1463,6 @@ const GroundTruthTestingPage: React.FC = () => {
             disabled={!ssrConfig.name || createSSRMutation.isPending}
           >
             {createSSRMutation.isPending ? 'Generating...' : 'Generate Ground Truth'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Experiment Configuration Dialog */}
-      <Dialog open={experimentDialogOpen} onClose={() => setExperimentDialogOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle>Configure Experiment</DialogTitle>
-        <DialogContent>
-          <Box sx={{ pt: 2 }}>
-            <Alert severity="info" sx={{ mb: 3 }}>
-              Configure the parameters for this experimental run. Results will be automatically compared
-              to the selected ground truth: <strong>{groundTruths?.find(gt => gt.id === selectedGroundTruth)?.name}</strong>
-            </Alert>
-
-            <Grid container spacing={2}>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  label="Number of Profiles"
-                  type="number"
-                  fullWidth
-                  required
-                  value={experimentConfig.num_profiles}
-                  onChange={(e) =>
-                    setExperimentConfig({ ...experimentConfig, num_profiles: parseInt(e.target.value) })
-                  }
-                  inputProps={{ min: 10, max: 2000 }}
-                  helperText="Recommended: 50-100 for testing"
-                />
-              </Grid>
-
-              <Grid item xs={12} md={6}>
-                <TextField
-                  label="Random Seed"
-                  type="number"
-                  fullWidth
-                  required
-                  value={experimentConfig.seed}
-                  onChange={(e) => setExperimentConfig({ ...experimentConfig, seed: parseInt(e.target.value) })}
-                  inputProps={{ min: 0, max: 10000 }}
-                  helperText="Different seed = different results"
-                />
-              </Grid>
-
-              <Grid item xs={12} md={6}>
-                <FormControl fullWidth required>
-                  <InputLabel>LLM Provider</InputLabel>
-                  <Select
-                    value={experimentConfig.llm_provider}
-                    label="LLM Provider"
-                    onChange={(e) =>
-                      setExperimentConfig({
-                        ...experimentConfig,
-                        llm_provider: e.target.value as 'openai' | 'anthropic',
-                        model: e.target.value === 'openai' ? 'gpt-3.5-turbo' : 'claude-3-haiku-20240307',
-                      })
-                    }
-                  >
-                    {LLM_PROVIDERS.map((provider) => (
-                      <MenuItem key={provider.value} value={provider.value}>
-                        {provider.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-
-              <Grid item xs={12} md={6}>
-                <FormControl fullWidth required>
-                  <InputLabel>Model</InputLabel>
-                  <Select
-                    value={experimentConfig.model}
-                    label="Model"
-                    onChange={(e) => setExperimentConfig({ ...experimentConfig, model: e.target.value })}
-                  >
-                    {getExperimentModelOptions().map((model) => (
-                      <MenuItem key={model.value} value={model.value}>
-                        {model.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-
-              <Grid item xs={12} md={4}>
-                <TextField
-                  label="LLM Temperature"
-                  type="number"
-                  fullWidth
-                  required
-                  value={experimentConfig.llm_temperature}
-                  onChange={(e) =>
-                    setExperimentConfig({ ...experimentConfig, llm_temperature: parseFloat(e.target.value) })
-                  }
-                  inputProps={{ min: 0, max: 2, step: 0.1 }}
-                />
-              </Grid>
-
-              <Grid item xs={12} md={4}>
-                <TextField
-                  label="SSR Temperature"
-                  type="number"
-                  fullWidth
-                  required
-                  value={experimentConfig.ssr_temperature}
-                  onChange={(e) =>
-                    setExperimentConfig({ ...experimentConfig, ssr_temperature: parseFloat(e.target.value) })
-                  }
-                  inputProps={{ min: 0.1, max: 5, step: 0.1 }}
-                />
-              </Grid>
-
-              {/* Normalize method is always 'paper' (from research paper arXiv:2510.08338v2) */}
-            </Grid>
-
-            {runSurveyMutation.isPending && (
-              <Box sx={{ mt: 3 }}>
-                <Typography variant="body2" gutterBottom>
-                  Running experiment... This may take several minutes.
-                </Typography>
-                <LinearProgress />
-              </Box>
-            )}
-
-            {compareToGroundTruthMutation.isPending && (
-              <Box sx={{ mt: 3 }}>
-                <Typography variant="body2" gutterBottom>
-                  Comparing results to ground truth...
-                </Typography>
-                <LinearProgress />
-              </Box>
-            )}
-
-            {runSurveyMutation.isError && (
-              <Alert severity="error" sx={{ mt: 2 }}>
-                Error running experiment. Please try again.
-              </Alert>
-            )}
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            onClick={() => setExperimentDialogOpen(false)}
-            disabled={runSurveyMutation.isPending || compareToGroundTruthMutation.isPending}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleRunExperiment}
-            variant="contained"
-            disabled={runSurveyMutation.isPending || compareToGroundTruthMutation.isPending}
-          >
-            {runSurveyMutation.isPending ? 'Running...' : 'Run Experiment'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1280,13 +1496,6 @@ const GroundTruthTestingPage: React.FC = () => {
 
                 <Grid item xs={12} md={6}>
                   <Typography variant="subtitle2" color="text.secondary">
-                    Survey ID
-                  </Typography>
-                  <Typography variant="body1">{viewingGroundTruth.survey_id}</Typography>
-                </Grid>
-
-                <Grid item xs={12} md={6}>
-                  <Typography variant="subtitle2" color="text.secondary">
                     Source
                   </Typography>
                   <Chip
@@ -1298,23 +1507,23 @@ const GroundTruthTestingPage: React.FC = () => {
 
                 <Grid item xs={12} md={6}>
                   <Typography variant="subtitle2" color="text.secondary">
-                    Number of Profiles
+                    Created
                   </Typography>
-                  <Typography variant="body1">{viewingGroundTruth.num_profiles}</Typography>
+                  <Typography variant="body2">{formatDate(viewingGroundTruth.created_at)}</Typography>
                 </Grid>
 
                 <Grid item xs={12} md={6}>
                   <Typography variant="subtitle2" color="text.secondary">
-                    Number of Responses
+                    Profiles
                   </Typography>
-                  <Typography variant="body1">{viewingGroundTruth.num_responses}</Typography>
+                  <Typography variant="body2">{viewingGroundTruth.num_profiles}</Typography>
                 </Grid>
 
                 <Grid item xs={12} md={6}>
                   <Typography variant="subtitle2" color="text.secondary">
-                    Created At
+                    Responses
                   </Typography>
-                  <Typography variant="body1">{formatDate(viewingGroundTruth.created_at)}</Typography>
+                  <Typography variant="body2">{viewingGroundTruth.num_responses}</Typography>
                 </Grid>
 
                 {viewingGroundTruth.generation_config && (
@@ -1328,72 +1537,19 @@ const GroundTruthTestingPage: React.FC = () => {
 
                     <Grid item xs={12} md={6}>
                       <Typography variant="subtitle2" color="text.secondary">
-                        LLM Provider
-                      </Typography>
-                      <Typography variant="body1">
-                        {viewingGroundTruth.generation_config.llm_provider}
-                      </Typography>
-                    </Grid>
-
-                    <Grid item xs={12} md={6}>
-                      <Typography variant="subtitle2" color="text.secondary">
                         Model
                       </Typography>
-                      <Typography variant="body1">{viewingGroundTruth.generation_config.model}</Typography>
-                    </Grid>
-
-                    <Grid item xs={12} md={4}>
-                      <Typography variant="subtitle2" color="text.secondary">
-                        LLM Temperature
-                      </Typography>
-                      <Typography variant="body1">
-                        {viewingGroundTruth.generation_config.llm_temperature}
-                      </Typography>
-                    </Grid>
-
-                    <Grid item xs={12} md={4}>
-                      <Typography variant="subtitle2" color="text.secondary">
-                        SSR Temperature
-                      </Typography>
-                      <Typography variant="body1">
-                        {viewingGroundTruth.generation_config.ssr_temperature}
-                      </Typography>
-                    </Grid>
-
-                    <Grid item xs={12} md={4}>
-                      <Typography variant="subtitle2" color="text.secondary">
-                        Normalize Method
-                      </Typography>
-                      <Typography variant="body1">
-                        {viewingGroundTruth.generation_config.normalize_method}
-                      </Typography>
+                      <Typography variant="body2">{viewingGroundTruth.generation_config.model}</Typography>
                     </Grid>
 
                     <Grid item xs={12} md={6}>
                       <Typography variant="subtitle2" color="text.secondary">
-                        Random Seed
+                        Seed
                       </Typography>
-                      <Typography variant="body1">{viewingGroundTruth.generation_config.seed}</Typography>
+                      <Typography variant="body2">{viewingGroundTruth.generation_config.seed}</Typography>
                     </Grid>
                   </>
                 )}
-
-                <Grid item xs={12}>
-                  <Divider sx={{ mt: 2, mb: 1 }} />
-                  <Alert severity="info">
-                    <Typography variant="body2">
-                      This ground truth contains{' '}
-                      <strong>
-                        {viewingGroundTruth.num_profiles} profiles
-                      </strong>{' '}
-                      and{' '}
-                      <strong>
-                        {viewingGroundTruth.num_responses} responses
-                      </strong>{' '}
-                      that can be used as a baseline for comparison with experimental survey runs.
-                    </Typography>
-                  </Alert>
-                </Grid>
               </Grid>
             </Box>
           ) : (

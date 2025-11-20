@@ -3,55 +3,675 @@
  * Explains how the SSR Pipeline system works
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
-  Container,
   Paper,
   Grid,
   Divider,
   Alert,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Chip,
 } from '@mui/material';
 import {
-  Info as InfoIcon,
+  ExpandMore as ExpandMoreIcon,
   ShowChart as ChartIcon,
   Assessment as MetricsIcon,
+  Architecture as ArchitectureIcon,
+  AccountTree as FlowIcon,
+  Storage as DataIcon,
+  Dataset as DatasetIcon,
+  Info as InfoIcon,
 } from '@mui/icons-material';
 import SystemWorkflowDiagram from '../components/SystemWorkflowDiagram';
 import ArchitectureDiagram from '../components/ArchitectureDiagram';
+import PageHeader from '../components/PageHeader';
 
 const SystemOverviewPage: React.FC = () => {
+  const [expandedSections, setExpandedSections] = useState<string[]>([]);
+
+  const handleAccordionChange = (panel: string) => (event: React.SyntheticEvent, isExpanded: boolean) => {
+    setExpandedSections(prev =>
+      isExpanded
+        ? [...prev, panel]
+        : prev.filter(p => p !== panel)
+    );
+  };
+
   return (
-    <Container maxWidth="xl">
-      <Box sx={{ py: 4 }}>
-        {/* Header */}
-        <Box sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 2 }}>
-          <InfoIcon sx={{ fontSize: 40, color: 'primary.main' }} />
-          <Box>
-            <Typography variant="h3" component="h1">
-              System Overview
-            </Typography>
-            <Typography variant="body1" color="text.secondary">
-              Understanding the SSR Pipeline workflow and technical architecture
-            </Typography>
-          </Box>
-        </Box>
+    <Box>
+      <PageHeader
+        title="System Overview"
+        subtitle="Understanding the SSR Pipeline workflow and technical architecture"
+        icon={<InfoIcon sx={{ fontSize: 28 }} />}
+      />
 
-        {/* System Workflow Diagram */}
-        <SystemWorkflowDiagram />
+        {/* Workflow Section */}
+        <Accordion
+          expanded={expandedSections.includes('workflow')}
+          onChange={handleAccordionChange('workflow')}
+          sx={{ mb: 2 }}
+        >
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <FlowIcon sx={{ fontSize: 28, color: 'primary.main' }} />
+              <Typography variant="h5" sx={{ fontWeight: 500 }}>
+                System Workflow
+              </Typography>
+            </Box>
+          </AccordionSummary>
+          <AccordionDetails>
+            <SystemWorkflowDiagram />
+          </AccordionDetails>
+        </Accordion>
 
-        {/* Architecture Diagram */}
-        <ArchitectureDiagram />
+        {/* Architecture Section */}
+        <Accordion
+          expanded={expandedSections.includes('architecture')}
+          onChange={handleAccordionChange('architecture')}
+          sx={{ mb: 2 }}
+        >
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <ArchitectureIcon sx={{ fontSize: 28, color: 'primary.main' }} />
+              <Typography variant="h5" sx={{ fontWeight: 500 }}>
+                Technical Architecture
+              </Typography>
+            </Box>
+          </AccordionSummary>
+          <AccordionDetails>
+            <ArchitectureDiagram />
+          </AccordionDetails>
+        </Accordion>
+
+        {/* Data Dictionary Section */}
+        <Accordion
+          expanded={expandedSections.includes('data')}
+          onChange={handleAccordionChange('data')}
+          sx={{ mb: 2 }}
+        >
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <DataIcon sx={{ fontSize: 28, color: 'primary.main' }} />
+              <Typography variant="h5" sx={{ fontWeight: 500 }}>
+                Data Dictionary
+              </Typography>
+            </Box>
+          </AccordionSummary>
+          <AccordionDetails>
+            <Box sx={{ p: 2 }}>
+              {/* Ground Truth Dataset */}
+              <Box sx={{ mb: 6 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                  <DatasetIcon sx={{ fontSize: 24, color: 'success.main' }} />
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                    Ground Truth Dataset Structure
+                  </Typography>
+                </Box>
+
+                <Alert severity="info" sx={{ mb: 3 }}>
+                  Ground truth datasets contain aggregated probability distributions from high-fidelity survey runs,
+                  used as reference data for validating and comparing test runs.
+                </Alert>
+
+                <TableContainer component={Paper} variant="outlined" sx={{ mb: 3 }}>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow sx={{ bgcolor: 'grey.100' }}>
+                        <TableCell sx={{ fontWeight: 'bold', width: '20%' }}>Field</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold', width: '15%' }}>Type</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold', width: '65%' }}>Description</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      <TableRow>
+                        <TableCell><code>id</code></TableCell>
+                        <TableCell><Chip label="string" size="small" /></TableCell>
+                        <TableCell>Unique identifier for the ground truth (e.g., "gt_20231214_143022")</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell><code>name</code></TableCell>
+                        <TableCell><Chip label="string" size="small" /></TableCell>
+                        <TableCell>Human-readable name for the ground truth dataset</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell><code>description</code></TableCell>
+                        <TableCell><Chip label="string" size="small" /></TableCell>
+                        <TableCell>Detailed description of what this ground truth represents</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell><code>survey_id</code></TableCell>
+                        <TableCell><Chip label="string" size="small" /></TableCell>
+                        <TableCell>Reference to the survey configuration used</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell><code>survey_name</code></TableCell>
+                        <TableCell><Chip label="string" size="small" /></TableCell>
+                        <TableCell>Name of the associated survey</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell><code>source</code></TableCell>
+                        <TableCell><Chip label="string" size="small" /></TableCell>
+                        <TableCell>Source type: "ssr_generated" (from LLM) or "uploaded" (real survey data)</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell><code>created_at</code></TableCell>
+                        <TableCell><Chip label="datetime" size="small" /></TableCell>
+                        <TableCell>ISO 8601 timestamp of creation</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell><code>generation_config</code></TableCell>
+                        <TableCell><Chip label="object" size="small" /></TableCell>
+                        <TableCell>Configuration used for generation (LLM model, temperature, sample size, etc.)</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell><code>aggregated_distributions</code></TableCell>
+                        <TableCell><Chip label="object" size="small" color="primary" /></TableCell>
+                        <TableCell>
+                          Nested object containing aggregated probability distributions by category and question.
+                          Structure: <code>{`{category: {question_id: {mean_probabilities, std_probabilities, sample_size, ...}}}`}</code>
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell><code>raw_distributions</code></TableCell>
+                        <TableCell><Chip label="object" size="small" color="secondary" /></TableCell>
+                        <TableCell>
+                          (Optional) Individual respondent-level distributions for detailed analysis.
+                          Structure: <code>{`{category: {question_id: {respondent_id: {...}}}}`}</code>
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+
+                <Paper variant="outlined" sx={{ p: 2, bgcolor: 'grey.50' }}>
+                  <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 'bold' }}>
+                    Example: Aggregated Distribution for a Question
+                  </Typography>
+                  <Box component="pre" sx={{
+                    bgcolor: 'background.paper',
+                    p: 2,
+                    borderRadius: 1,
+                    overflow: 'auto',
+                    fontSize: '0.8rem',
+                    fontFamily: 'monospace'
+                  }}>
+{`{
+  "category_A": {
+    "Q1_satisfaction": {
+      "mean_probabilities": [0.05, 0.10, 0.15, 0.35, 0.35],
+      "std_probabilities": [0.02, 0.03, 0.04, 0.05, 0.04],
+      "sample_size": 500,
+      "mean_mode": 5,
+      "mean_expected_value": 3.85,
+      "mean_entropy": 1.42
+    }
+  }
+}`}
+                  </Box>
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                    This shows that across 500 respondents, the average probability distribution for Q1
+                    leans toward ratings 4 and 5 (35% each), with an expected value of 3.85.
+                  </Typography>
+                </Paper>
+              </Box>
+
+              {/* LLM Survey Run Dataset */}
+              <Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                  <DatasetIcon sx={{ fontSize: 24, color: 'primary.main' }} />
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                    LLM Survey Run Dataset Structure
+                  </Typography>
+                </Box>
+
+                <Alert severity="info" sx={{ mb: 3 }}>
+                  Survey run datasets contain the complete output from running a survey with LLM-generated
+                  respondents, including text responses and SSR probability distributions.
+                </Alert>
+
+                <TableContainer component={Paper} variant="outlined" sx={{ mb: 3 }}>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow sx={{ bgcolor: 'grey.100' }}>
+                        <TableCell sx={{ fontWeight: 'bold', width: '20%' }}>Field</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold', width: '15%' }}>Type</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold', width: '65%' }}>Description</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      <TableRow>
+                        <TableCell><code>run_id</code></TableCell>
+                        <TableCell><Chip label="string" size="small" /></TableCell>
+                        <TableCell>Unique identifier for the survey run (e.g., "run_20231214_143022")</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell><code>survey_id</code></TableCell>
+                        <TableCell><Chip label="string" size="small" /></TableCell>
+                        <TableCell>Reference to the survey configuration used</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell><code>survey_name</code></TableCell>
+                        <TableCell><Chip label="string" size="small" /></TableCell>
+                        <TableCell>Name of the survey that was run</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell><code>timestamp</code></TableCell>
+                        <TableCell><Chip label="datetime" size="small" /></TableCell>
+                        <TableCell>ISO 8601 timestamp when the run was executed</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell><code>num_profiles</code></TableCell>
+                        <TableCell><Chip label="integer" size="small" /></TableCell>
+                        <TableCell>Number of synthetic respondent profiles generated</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell><code>num_responses</code></TableCell>
+                        <TableCell><Chip label="integer" size="small" /></TableCell>
+                        <TableCell>Total number of LLM text responses generated (profiles × questions)</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell><code>num_distributions</code></TableCell>
+                        <TableCell><Chip label="integer" size="small" /></TableCell>
+                        <TableCell>Total number of SSR probability distributions calculated</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell><code>config</code></TableCell>
+                        <TableCell><Chip label="object" size="small" /></TableCell>
+                        <TableCell>
+                          Run configuration including: <code>llm_provider</code>, <code>model</code>,
+                          <code>llm_temperature</code>, <code>ssr_temperature</code>, <code>normalize_method</code>, <code>seed</code>
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell><code>distributions</code></TableCell>
+                        <TableCell><Chip label="object" size="small" color="primary" /></TableCell>
+                        <TableCell>
+                          Nested object containing individual respondent distributions by category and question.
+                          Structure: <code>{`{category: {question_id: {respondent_id: {...}}}}`}</code>
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+
+                <Paper variant="outlined" sx={{ p: 2, bgcolor: 'grey.50' }}>
+                  <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 'bold' }}>
+                    Example: Individual Respondent Distribution
+                  </Typography>
+                  <Box component="pre" sx={{
+                    bgcolor: 'background.paper',
+                    p: 2,
+                    borderRadius: 1,
+                    overflow: 'auto',
+                    fontSize: '0.8rem',
+                    fontFamily: 'monospace'
+                  }}>
+{`{
+  "category_A": {
+    "Q1_satisfaction": {
+      "R001": {
+        "probabilities": [0.02, 0.08, 0.15, 0.40, 0.35],
+        "mode": 4,
+        "expected_value": 3.98,
+        "entropy": 1.35,
+        "text_response": "I'm quite satisfied with the product overall...",
+        "gender": "Female",
+        "age_group": "25-34",
+        "persona_group": "Early Adopters",
+        "occupation": "Software Engineer"
+      },
+      "R002": {
+        "probabilities": [0.05, 0.12, 0.23, 0.35, 0.25],
+        "mode": 4,
+        "expected_value": 3.63,
+        "entropy": 1.52,
+        "text_response": "It's good but there's room for improvement...",
+        "gender": "Male",
+        "age_group": "35-44",
+        "persona_group": "Mainstream Users",
+        "occupation": "Teacher"
+      }
+    }
+  }
+}`}
+                  </Box>
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                    Each respondent's entry includes their probability distribution, derived metrics,
+                    original text response, and demographic information.
+                  </Typography>
+                </Paper>
+
+                <Box sx={{ mt: 3 }}>
+                  <Typography variant="subtitle2" gutterBottom sx={{ fontWeight: 'bold' }}>
+                    Key Differences: Ground Truth vs. Survey Run
+                  </Typography>
+                  <TableContainer component={Paper} variant="outlined">
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell sx={{ fontWeight: 'bold' }}>Aspect</TableCell>
+                          <TableCell sx={{ fontWeight: 'bold' }}>Ground Truth</TableCell>
+                          <TableCell sx={{ fontWeight: 'bold' }}>Survey Run</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        <TableRow>
+                          <TableCell><strong>Data Level</strong></TableCell>
+                          <TableCell>Aggregated (averaged across respondents)</TableCell>
+                          <TableCell>Individual respondent level</TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell><strong>Purpose</strong></TableCell>
+                          <TableCell>Reference/validation dataset</TableCell>
+                          <TableCell>Test data to be analyzed</TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell><strong>Sample Size</strong></TableCell>
+                          <TableCell>Typically large (500-2000 profiles)</TableCell>
+                          <TableCell>Variable (10-500 profiles)</TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell><strong>Text Responses</strong></TableCell>
+                          <TableCell>Not stored (only distributions)</TableCell>
+                          <TableCell>Stored with each response</TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell><strong>Demographics</strong></TableCell>
+                          <TableCell>Summarized in generation_config</TableCell>
+                          <TableCell>Stored per respondent</TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Box>
+
+                {/* CSV Export Examples */}
+                <Box sx={{ mt: 5 }}>
+                  <Divider sx={{ mb: 4 }} />
+                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
+                    📄 CSV Export Format Examples
+                  </Typography>
+
+                  {/* Ground Truth CSV Export */}
+                  <Box sx={{ mb: 4 }}>
+                    <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold', color: 'success.main' }}>
+                      Ground Truth Aggregated Data (CSV Export)
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" paragraph>
+                      This format is used when exporting ground truth data for analysis in Excel, R, or Python.
+                    </Typography>
+
+                    <TableContainer component={Paper} variant="outlined" sx={{ mb: 2 }}>
+                      <Table size="small" sx={{
+                        '& th': { bgcolor: 'success.light', color: 'success.contrastText', fontWeight: 'bold', fontSize: '0.75rem' },
+                        '& td': { fontSize: '0.75rem', fontFamily: 'monospace' }
+                      }}>
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>category</TableCell>
+                            <TableCell>question_id</TableCell>
+                            <TableCell>prob_1</TableCell>
+                            <TableCell>prob_2</TableCell>
+                            <TableCell>prob_3</TableCell>
+                            <TableCell>prob_4</TableCell>
+                            <TableCell>prob_5</TableCell>
+                            <TableCell>mean_mode</TableCell>
+                            <TableCell>mean_expected_value</TableCell>
+                            <TableCell>mean_entropy</TableCell>
+                            <TableCell>sample_size</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          <TableRow>
+                            <TableCell>category_A</TableCell>
+                            <TableCell>Q1_satisfaction</TableCell>
+                            <TableCell>0.05</TableCell>
+                            <TableCell>0.10</TableCell>
+                            <TableCell>0.15</TableCell>
+                            <TableCell>0.35</TableCell>
+                            <TableCell>0.35</TableCell>
+                            <TableCell>5</TableCell>
+                            <TableCell>3.85</TableCell>
+                            <TableCell>1.42</TableCell>
+                            <TableCell>500</TableCell>
+                          </TableRow>
+                          <TableRow sx={{ bgcolor: 'grey.50' }}>
+                            <TableCell>category_A</TableCell>
+                            <TableCell>Q2_recommend</TableCell>
+                            <TableCell>0.08</TableCell>
+                            <TableCell>0.12</TableCell>
+                            <TableCell>0.20</TableCell>
+                            <TableCell>0.30</TableCell>
+                            <TableCell>0.30</TableCell>
+                            <TableCell>4</TableCell>
+                            <TableCell>3.62</TableCell>
+                            <TableCell>1.51</TableCell>
+                            <TableCell>500</TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell>category_B</TableCell>
+                            <TableCell>Q1_satisfaction</TableCell>
+                            <TableCell>0.10</TableCell>
+                            <TableCell>0.15</TableCell>
+                            <TableCell>0.25</TableCell>
+                            <TableCell>0.28</TableCell>
+                            <TableCell>0.22</TableCell>
+                            <TableCell>4</TableCell>
+                            <TableCell>3.37</TableCell>
+                            <TableCell>1.58</TableCell>
+                            <TableCell>500</TableCell>
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                    <Typography variant="caption" color="text.secondary">
+                      <strong>Note:</strong> Each row represents the aggregated distribution for one question in one category.
+                      Probabilities (prob_1 to prob_5) sum to 1.0 for each row.
+                    </Typography>
+                  </Box>
+
+                  {/* Survey Run CSV Export */}
+                  <Box sx={{ mb: 4 }}>
+                    <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+                      Survey Run Individual Responses (CSV Export)
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" paragraph>
+                      This format includes all respondent-level data with demographics and full text responses.
+                    </Typography>
+
+                    <TableContainer component={Paper} variant="outlined" sx={{ mb: 2, maxWidth: '100%', overflowX: 'auto' }}>
+                      <Table size="small" sx={{
+                        '& th': { bgcolor: 'primary.light', color: 'primary.contrastText', fontWeight: 'bold', fontSize: '0.7rem', whiteSpace: 'nowrap' },
+                        '& td': { fontSize: '0.7rem', fontFamily: 'monospace', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis' }
+                      }}>
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>respondent_id</TableCell>
+                            <TableCell>category</TableCell>
+                            <TableCell>question_id</TableCell>
+                            <TableCell>text_response</TableCell>
+                            <TableCell>prob_1</TableCell>
+                            <TableCell>prob_2</TableCell>
+                            <TableCell>prob_3</TableCell>
+                            <TableCell>prob_4</TableCell>
+                            <TableCell>prob_5</TableCell>
+                            <TableCell>mode</TableCell>
+                            <TableCell>expected_value</TableCell>
+                            <TableCell>entropy</TableCell>
+                            <TableCell>gender</TableCell>
+                            <TableCell>age_group</TableCell>
+                            <TableCell>persona_group</TableCell>
+                            <TableCell>occupation</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          <TableRow>
+                            <TableCell>R001</TableCell>
+                            <TableCell>category_A</TableCell>
+                            <TableCell>Q1_satisfaction</TableCell>
+                            <TableCell>I'm quite satisfied...</TableCell>
+                            <TableCell>0.02</TableCell>
+                            <TableCell>0.08</TableCell>
+                            <TableCell>0.15</TableCell>
+                            <TableCell>0.40</TableCell>
+                            <TableCell>0.35</TableCell>
+                            <TableCell>4</TableCell>
+                            <TableCell>3.98</TableCell>
+                            <TableCell>1.35</TableCell>
+                            <TableCell>Female</TableCell>
+                            <TableCell>25-34</TableCell>
+                            <TableCell>Early Adopters</TableCell>
+                            <TableCell>Software Engineer</TableCell>
+                          </TableRow>
+                          <TableRow sx={{ bgcolor: 'grey.50' }}>
+                            <TableCell>R002</TableCell>
+                            <TableCell>category_A</TableCell>
+                            <TableCell>Q1_satisfaction</TableCell>
+                            <TableCell>It's good but...</TableCell>
+                            <TableCell>0.05</TableCell>
+                            <TableCell>0.12</TableCell>
+                            <TableCell>0.23</TableCell>
+                            <TableCell>0.35</TableCell>
+                            <TableCell>0.25</TableCell>
+                            <TableCell>4</TableCell>
+                            <TableCell>3.63</TableCell>
+                            <TableCell>1.52</TableCell>
+                            <TableCell>Male</TableCell>
+                            <TableCell>35-44</TableCell>
+                            <TableCell>Mainstream Users</TableCell>
+                            <TableCell>Teacher</TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell>R001</TableCell>
+                            <TableCell>category_A</TableCell>
+                            <TableCell>Q2_recommend</TableCell>
+                            <TableCell>Absolutely would...</TableCell>
+                            <TableCell>0.01</TableCell>
+                            <TableCell>0.05</TableCell>
+                            <TableCell>0.10</TableCell>
+                            <TableCell>0.30</TableCell>
+                            <TableCell>0.54</TableCell>
+                            <TableCell>5</TableCell>
+                            <TableCell>4.31</TableCell>
+                            <TableCell>1.15</TableCell>
+                            <TableCell>Female</TableCell>
+                            <TableCell>25-34</TableCell>
+                            <TableCell>Early Adopters</TableCell>
+                            <TableCell>Software Engineer</TableCell>
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                    <Typography variant="caption" color="text.secondary">
+                      <strong>Note:</strong> Each row represents one respondent's answer to one question.
+                      Multiple rows per respondent (one per question). Text responses are truncated in this view.
+                    </Typography>
+                  </Box>
+
+                  {/* Comparison Summary CSV */}
+                  <Box>
+                    <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold', color: 'warning.main' }}>
+                      Comparison Results Summary (CSV Export)
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" paragraph>
+                      This format is generated when comparing a survey run against ground truth.
+                    </Typography>
+
+                    <TableContainer component={Paper} variant="outlined" sx={{ mb: 2 }}>
+                      <Table size="small" sx={{
+                        '& th': { bgcolor: 'warning.light', color: 'warning.contrastText', fontWeight: 'bold', fontSize: '0.75rem' },
+                        '& td': { fontSize: '0.75rem', fontFamily: 'monospace' }
+                      }}>
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>category</TableCell>
+                            <TableCell>question_id</TableCell>
+                            <TableCell>pearson_correlation</TableCell>
+                            <TableCell>spearman_correlation</TableCell>
+                            <TableCell>mean_absolute_error</TableCell>
+                            <TableCell>confusion_matrix_diagonal</TableCell>
+                            <TableCell>sample_size_test</TableCell>
+                            <TableCell>sample_size_ground_truth</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          <TableRow>
+                            <TableCell>category_A</TableCell>
+                            <TableCell>Q1_satisfaction</TableCell>
+                            <TableCell>0.82</TableCell>
+                            <TableCell>0.79</TableCell>
+                            <TableCell>0.43</TableCell>
+                            <TableCell>0.68</TableCell>
+                            <TableCell>100</TableCell>
+                            <TableCell>500</TableCell>
+                          </TableRow>
+                          <TableRow sx={{ bgcolor: 'grey.50' }}>
+                            <TableCell>category_A</TableCell>
+                            <TableCell>Q2_recommend</TableCell>
+                            <TableCell>0.76</TableCell>
+                            <TableCell>0.74</TableCell>
+                            <TableCell>0.51</TableCell>
+                            <TableCell>0.62</TableCell>
+                            <TableCell>100</TableCell>
+                            <TableCell>500</TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell>category_B</TableCell>
+                            <TableCell>Q1_satisfaction</TableCell>
+                            <TableCell>0.71</TableCell>
+                            <TableCell>0.69</TableCell>
+                            <TableCell>0.58</TableCell>
+                            <TableCell>0.55</TableCell>
+                            <TableCell>100</TableCell>
+                            <TableCell>500</TableCell>
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                    <Typography variant="caption" color="text.secondary">
+                      <strong>Note:</strong> Each row shows validation metrics for one question, comparing test run against ground truth.
+                      Higher correlations and lower MAE indicate better agreement.
+                    </Typography>
+                  </Box>
+
+                  <Alert severity="info" sx={{ mt: 3 }}>
+                    <Typography variant="body2">
+                      <strong>How to export:</strong> Look for the "Download CSV" or export button on the Survey History
+                      and Ground Truth Testing pages. Each export will include column headers and all relevant data in the format shown above.
+                    </Typography>
+                  </Alert>
+                </Box>
+              </Box>
+            </Box>
+          </AccordionDetails>
+        </Accordion>
 
         {/* Metrics Guide */}
-        <Paper sx={{ p: 4, mt: 4 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-            <MetricsIcon sx={{ fontSize: 32, color: 'primary.main' }} />
-            <Typography variant="h4">
-              Understanding the Metrics
-            </Typography>
-          </Box>
+        <Accordion
+          expanded={expandedSections.includes('metrics')}
+          onChange={handleAccordionChange('metrics')}
+          sx={{ mb: 2 }}
+        >
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <MetricsIcon sx={{ fontSize: 28, color: 'primary.main' }} />
+              <Typography variant="h5" sx={{ fontWeight: 500 }}>
+                Understanding the Metrics
+              </Typography>
+            </Box>
+          </AccordionSummary>
+          <AccordionDetails>
+            <Box sx={{ p: 2 }}>
 
           <Alert severity="info" sx={{ mb: 3 }}>
             S.A.G.E uses Semantic Similarity Rating (SSR) to convert natural language responses into quantitative probability distributions. This guide explains how to interpret the key metrics.
@@ -278,6 +898,99 @@ const SystemOverviewPage: React.FC = () => {
               <Divider />
             </Grid>
 
+            {/* Distribution Distance Metrics */}
+            <Grid item xs={12}>
+              <Typography variant="h5" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 2 }}>
+                <ChartIcon color="primary" />
+                Distribution Distance Metrics
+              </Typography>
+              <Typography variant="body1" paragraph>
+                These metrics measure the similarity between probability distributions (comparing full distributions, not just point estimates):
+              </Typography>
+            </Grid>
+
+            <Grid item xs={12} md={4}>
+              <Paper variant="outlined" sx={{ p: 2, height: '100%' }}>
+                <Typography variant="h6" gutterBottom color="primary">
+                  KL Divergence (DKL)
+                </Typography>
+                <Typography variant="body2" paragraph>
+                  <strong>Range:</strong> 0 to ∞ (not symmetric)
+                </Typography>
+                <Typography variant="body2" paragraph>
+                  <strong>Measures:</strong> Kullback-Leibler divergence - how much one probability distribution differs from a reference distribution
+                </Typography>
+                <Box component="ul" sx={{ fontSize: '0.875rem' }}>
+                  <li>DKL = 0: Identical distributions</li>
+                  <li>DKL &lt; 0.1: Very similar distributions</li>
+                  <li>DKL = 0.1 - 0.5: Moderate difference</li>
+                  <li>DKL &gt; 0.5: Significant difference</li>
+                </Box>
+                <Typography variant="body2" sx={{ mt: 2, fontStyle: 'italic', color: 'text.secondary' }}>
+                  Best for: Information theory applications. Note: Not symmetric - DKL(P||Q) ≠ DKL(Q||P)
+                </Typography>
+              </Paper>
+            </Grid>
+
+            <Grid item xs={12} md={4}>
+              <Paper variant="outlined" sx={{ p: 2, height: '100%' }}>
+                <Typography variant="h6" gutterBottom color="primary">
+                  JS Divergence (DJS)
+                </Typography>
+                <Typography variant="body2" paragraph>
+                  <strong>Range:</strong> 0 to 1 (symmetric)
+                </Typography>
+                <Typography variant="body2" paragraph>
+                  <strong>Measures:</strong> Jensen-Shannon divergence - symmetric version of KL divergence, bounded between 0 and 1
+                </Typography>
+                <Box component="ul" sx={{ fontSize: '0.875rem' }}>
+                  <li>DJS = 0: Identical distributions</li>
+                  <li>DJS &lt; 0.1: Very similar</li>
+                  <li>DJS = 0.1 - 0.3: Moderate difference</li>
+                  <li>DJS &gt; 0.3: Significant difference</li>
+                </Box>
+                <Typography variant="body2" sx={{ mt: 2, fontStyle: 'italic', color: 'text.secondary' }}>
+                  Best for: General distribution comparison. Symmetric and bounded, making it easier to interpret than KL
+                </Typography>
+              </Paper>
+            </Grid>
+
+            <Grid item xs={12} md={4}>
+              <Paper variant="outlined" sx={{ p: 2, height: '100%' }}>
+                <Typography variant="h6" gutterBottom color="primary">
+                  Wasserstein Distance (W)
+                </Typography>
+                <Typography variant="body2" paragraph>
+                  <strong>Range:</strong> 0 to max scale distance
+                </Typography>
+                <Typography variant="body2" paragraph>
+                  <strong>Measures:</strong> Earth Mover's Distance - minimum "work" needed to transform one distribution into another
+                </Typography>
+                <Box component="ul" sx={{ fontSize: '0.875rem' }}>
+                  <li>W = 0: Identical distributions</li>
+                  <li>W &lt; 0.5: Very similar (for 1-5 scale)</li>
+                  <li>W = 0.5 - 1.0: Moderate difference</li>
+                  <li>W &gt; 1.0: Significant difference</li>
+                </Box>
+                <Typography variant="body2" sx={{ mt: 2, fontStyle: 'italic', color: 'text.secondary' }}>
+                  Best for: Ordered distributions (like Likert scales). Accounts for distance between scale points
+                </Typography>
+              </Paper>
+            </Grid>
+
+            <Grid item xs={12}>
+              <Alert severity="info" sx={{ mt: 2 }}>
+                <Typography variant="body2">
+                  <strong>When to use distribution metrics:</strong> Use these when comparing full probability distributions rather than just point estimates (E[X]).
+                  They capture the entire shape and spread of the distribution, making them ideal for validating SSR output quality.
+                </Typography>
+              </Alert>
+            </Grid>
+
+            <Grid item xs={12}>
+              <Divider />
+            </Grid>
+
             {/* Confusion Matrix */}
             <Grid item xs={12}>
               <Typography variant="h6" gutterBottom color="primary">
@@ -342,9 +1055,10 @@ const SystemOverviewPage: React.FC = () => {
               </Paper>
             </Grid>
           </Grid>
-        </Paper>
-      </Box>
-    </Container>
+            </Box>
+          </AccordionDetails>
+        </Accordion>
+    </Box>
   );
 };
 

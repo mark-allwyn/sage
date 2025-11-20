@@ -20,6 +20,11 @@ try:
 except ImportError:
     Anthropic = None
 
+try:
+    import ollama
+except ImportError:
+    ollama = None
+
 from .survey import Survey, Question
 
 
@@ -64,22 +69,25 @@ class LLMClient:
         model: str = "gpt-4",
         api_key: Optional[str] = None,
         temperature: float = 0.7,
-        max_tokens: int = 500
+        max_tokens: int = 500,
+        ollama_base_url: Optional[str] = None
     ):
         """
         Initialize LLM client.
 
         Args:
-            provider: LLM provider ('openai' or 'anthropic')
+            provider: LLM provider ('openai', 'anthropic', or 'ollama')
             model: Model name
             api_key: API key (if None, will use environment variable)
             temperature: Sampling temperature
             max_tokens: Maximum tokens in response
+            ollama_base_url: Base URL for Ollama server (default: http://localhost:11434)
         """
         self.provider = provider
         self.model = model
         self.temperature = temperature
         self.max_tokens = max_tokens
+        self.ollama_base_url = ollama_base_url or "http://localhost:11434"
 
         if provider == "openai":
             if OpenAI is None:
@@ -91,6 +99,11 @@ class LLMClient:
                 raise ImportError("anthropic package not installed. Run: pip install anthropic")
             api_key = api_key or os.getenv("ANTHROPIC_API_KEY")
             self.client = Anthropic(api_key=api_key)
+        elif provider == "ollama":
+            if ollama is None:
+                raise ImportError("ollama package not installed. Run: pip install ollama")
+            # Ollama client doesn't require API key
+            self.client = None  # Will use ollama.chat() directly
         else:
             raise ValueError(f"Unsupported provider: {provider}")
 
@@ -112,14 +125,14 @@ class LLMClient:
             images: List of image paths to include
 
         Returns:
-            Message dict suitable for OpenAI or Anthropic APIs
+            Message dict suitable for OpenAI, Anthropic, or Ollama APIs
         """
         if not images or len(images) == 0:
             # Text-only message
             return {"role": "user", "content": text_content}
 
         # Multi-modal message with images
-        if self.provider == "openai":
+        if self.provider == "openai" or self.provider == "ollama":
             # OpenAI format: list of content blocks
             content_blocks = [{"type": "text", "text": text_content}]
 
@@ -227,6 +240,26 @@ class LLMClient:
                 messages=[user_message]
             )
             return response.content[0].text
+
+        elif self.provider == "ollama":
+            messages = []
+            if system_message:
+                messages.append({"role": "system", "content": system_message})
+
+            # Construct multi-modal message if images provided
+            user_message = self._construct_multi_modal_message(prompt, images)
+            messages.append(user_message)
+
+            # Call Ollama API
+            response = ollama.chat(
+                model=self.model,
+                messages=messages,
+                options={
+                    "temperature": self.temperature,
+                    "num_predict": self.max_tokens
+                }
+            )
+            return response['message']['content']
 
     def generate_responses(
         self,
@@ -346,6 +379,7 @@ class LLMClient:
             )
 
         responses = []
+        errors = []
         total = len(respondent_profiles) * len(survey.questions)
 
         # Create all tasks upfront
@@ -373,9 +407,32 @@ class LLMClient:
                         response = future.result()
                         if response:
                             responses.append(response)
+                        else:
+                            errors.append("Response generation returned None")
                     except Exception as e:
-                        print(f"\nError generating response: {e}")
+                        error_msg = str(e)
+                        errors.append(error_msg)
+                        print(f"\nError generating response: {error_msg}")
                     pbar.update(1)
+
+        # Check if too many errors occurred
+        error_rate = len(errors) / total if total > 0 else 0
+        if error_rate > 0.5:  # If more than 50% of requests failed
+            # Extract the most common error message
+            if errors:
+                first_error = errors[0]
+                # Check for specific API errors
+                if "credit balance is too low" in first_error.lower():
+                    raise Exception(f"API Error: Insufficient credits. {len(errors)}/{total} requests failed. Please add credits to your {self.provider.title()} account at https://console.{self.provider}.com")
+                elif "api key" in first_error.lower() or "authentication" in first_error.lower():
+                    raise Exception(f"API Error: Authentication failed. {len(errors)}/{total} requests failed. Please check your {self.provider.upper()}_API_KEY")
+                elif "rate limit" in first_error.lower():
+                    raise Exception(f"API Error: Rate limit exceeded. {len(errors)}/{total} requests failed. Please wait a moment and try again")
+                else:
+                    raise Exception(f"API Error: {len(errors)}/{total} requests failed. First error: {first_error[:200]}")
+        elif errors:
+            # Some errors but not critical - just log them
+            print(f"\nWarning: {len(errors)}/{total} requests failed, but continuing with {len(responses)} successful responses")
 
         return responses
 
