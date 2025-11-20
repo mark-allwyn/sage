@@ -239,7 +239,7 @@ export const createGroundTruthFromSSR = async (
   request: CreateGroundTruthFromSSRRequest
 ): Promise<{ id: string; status: string; name: string; num_profiles: number; num_responses: number }> => {
   const response = await api.post('/api/ground-truths/from-ssr', request, {
-    timeout: 600000, // 10 minutes for ground truth generation
+    timeout: 1200000, // 20 minutes for ground truth generation (handles large sample sizes)
   });
   return response.data;
 };

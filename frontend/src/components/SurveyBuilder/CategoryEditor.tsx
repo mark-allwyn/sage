@@ -66,6 +66,10 @@ const CategoryEditor: React.FC<CategoryEditorProps> = ({ categories, setCategori
       name: editingCategory.name,
       description: editingCategory.description || '',
       context: editingCategory.context || '',
+      // Include media fields
+      media_type: editingCategory.media_type,
+      media_url: editingCategory.media_url,
+      media_path: editingCategory.media_path,
     };
 
     if (editingIndex !== null) {
@@ -104,6 +108,11 @@ const CategoryEditor: React.FC<CategoryEditorProps> = ({ categories, setCategori
     try {
       const formData = new FormData();
       formData.append('file', file);
+
+      // Send old media path so backend can delete the old file
+      if (editingCategory.media_path) {
+        formData.append('old_media_path', editingCategory.media_path);
+      }
 
       const response = await axios.post<MediaUploadResponse>(
         'http://localhost:8000/api/upload/image',

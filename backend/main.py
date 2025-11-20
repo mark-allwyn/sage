@@ -1633,10 +1633,11 @@ async def compare_run_to_ground_truth(run_id: str, ground_truth_id: str):
 # ===================
 
 @app.post("/api/upload/image")
-async def upload_image(file: UploadFile = File(...)):
+async def upload_image(file: UploadFile = File(...), old_media_path: Optional[str] = Form(None)):
     """
     Upload an image file for a category.
     Returns the file path and URL for the uploaded image.
+    If old_media_path is provided, deletes the old image file.
     """
     try:
         # Validate file extension
@@ -1662,6 +1663,16 @@ async def upload_image(file: UploadFile = File(...)):
         # Save file
         with open(file_path, "wb") as f:
             f.write(content)
+
+        # Delete old image if provided and it exists
+        if old_media_path:
+            try:
+                old_path = Path(old_media_path)
+                if old_path.exists() and old_path.parent == IMAGES_DIR:
+                    old_path.unlink()
+                    logger.info(f"Deleted old image: {old_path.name}")
+            except Exception as e:
+                logger.warning(f"Could not delete old image {old_media_path}: {e}")
 
         # Return relative path for storage and URL for access
         relative_path = f"uploads/images/{unique_filename}"

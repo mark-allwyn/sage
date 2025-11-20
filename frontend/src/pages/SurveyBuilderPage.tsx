@@ -76,7 +76,7 @@ const SurveyBuilderPage: React.FC = () => {
   const AUTO_SAVE_KEY = 'sage_survey_builder_autosave';
 
   const { data: surveys, isLoading: surveysLoading, refetch: refetchSurveys } = useSurveys();
-  const { data: selectedSurvey, isLoading: surveyLoading } = useSurvey(selectedSurveyId, {
+  const { data: selectedSurvey, isLoading: surveyLoading, refetch: refetchSurvey } = useSurvey(selectedSurveyId, {
     enabled: !!selectedSurveyId && mode === 'edit',
   });
 
@@ -180,6 +180,9 @@ const SurveyBuilderPage: React.FC = () => {
         message: `Survey updated successfully: ${data.survey_id}`,
         severity: 'success',
       });
+      // Refresh surveys list and reload current survey to show updated data
+      refetchSurveys();
+      refetchSurvey();
     },
     onError: (error) => {
       setSnackbar({
@@ -496,7 +499,7 @@ const SurveyBuilderPage: React.FC = () => {
                   variant="contained"
                   size="large"
                   startIcon={isLoading ? <CircularProgress size={20} /> : <SaveIcon />}
-                  disabled={isLoading || !filename.trim()}
+                  disabled={isLoading || (mode === 'create' && !filename.trim())}
                   onClick={() => {
                     // Generate YAML from current survey data
                     const yaml = generateYAML(surveyData);
@@ -649,6 +652,16 @@ const generateYAML = (data: SurveyBuilderState): string => {
       yaml.push(`      name: "${cat.name}"`);
       yaml.push(`      description: "${cat.description}"`);
       yaml.push(`      context: "${cat.context}"`);
+      // Include media fields if present
+      if (cat.media_type) {
+        yaml.push(`      media_type: "${cat.media_type}"`);
+      }
+      if (cat.media_url) {
+        yaml.push(`      media_url: "${cat.media_url}"`);
+      }
+      if (cat.media_path) {
+        yaml.push(`      media_path: "${cat.media_path}"`);
+      }
     });
   }
 
@@ -663,6 +676,13 @@ const generateYAML = (data: SurveyBuilderState): string => {
     }
     if (q.categories_compared && q.categories_compared.length > 0) {
       yaml.push(`      categories_compared: [${q.categories_compared.join(', ')}]`);
+    }
+    // Include scale for likert, yes_no, and preference_scale questions
+    if (q.scale && Object.keys(q.scale).length > 0) {
+      yaml.push(`      scale:`);
+      Object.entries(q.scale).forEach(([key, value]) => {
+        yaml.push(`        ${key}: "${value}"`);
+      });
     }
     if (q.options && q.options.length > 0) {
       yaml.push(`      options:`);

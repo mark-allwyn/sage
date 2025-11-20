@@ -45,6 +45,17 @@ const YAMLPreview: React.FC<YAMLPreviewProps> = ({ surveyData }) => {
         yaml.push(`      name: "${escapeYAMLString(cat.name)}"`);
         yaml.push(`      description: "${escapeYAMLString(cat.description)}"`);
         yaml.push(`      context: "${escapeYAMLString(cat.context)}"`);
+
+        // Include media fields if present
+        if (cat.media_type) {
+          yaml.push(`      media_type: "${cat.media_type}"`);
+        }
+        if (cat.media_url) {
+          yaml.push(`      media_url: "${escapeYAMLString(cat.media_url)}"`);
+        }
+        if (cat.media_path) {
+          yaml.push(`      media_path: "${escapeYAMLString(cat.media_path)}"`);
+        }
       });
     }
 
@@ -60,6 +71,13 @@ const YAMLPreview: React.FC<YAMLPreviewProps> = ({ surveyData }) => {
         }
         if (q.categories_compared && q.categories_compared.length > 0) {
           yaml.push(`      categories_compared: [${q.categories_compared.join(', ')}]`);
+        }
+        // Include scale for likert, yes_no, and preference_scale questions
+        if (q.scale && Object.keys(q.scale).length > 0) {
+          yaml.push(`      scale:`);
+          Object.entries(q.scale).forEach(([key, value]) => {
+            yaml.push(`        ${key}: "${escapeYAMLString(value)}"`);
+          });
         }
         if (q.options && q.options.length > 0) {
           yaml.push(`      options:`);
