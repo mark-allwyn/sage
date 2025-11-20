@@ -1548,7 +1548,7 @@ const GroundTruthTestingPage: React.FC = () => {
         <DialogContent>
           <Box sx={{ pt: 2 }}>
             <Alert severity="info" sx={{ mb: 3 }}>
-              Upload ground truth data from real survey results in CSV format. The file should contain probability distributions for each respondent and question.
+              Upload ground truth data from real survey results in CSV format. The file should contain actual answers from respondents (not probability distributions).
             </Alert>
 
             <Grid container spacing={2}>
@@ -1599,7 +1599,7 @@ const GroundTruthTestingPage: React.FC = () => {
                   />
                 </Button>
                 <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-                  Expected format: Category, Question ID, Respondent ID, Rating, Probability
+                  Required columns: Respondent ID, Question ID, Answer. Optional: Category, Gender, Age Group, Persona Group, Occupation
                 </Typography>
               </Grid>
 

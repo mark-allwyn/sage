@@ -1223,7 +1223,7 @@ async def create_ground_truth_from_upload(request: UploadGroundTruthRequest):
 
 
 def parse_ground_truth_csv(csv_content: str, survey: Survey):
-    """Parse CSV ground truth data and validate against survey structure"""
+    """Parse CSV ground truth data (simple answer format) and validate against survey structure"""
     validation_errors = []
     validation_warnings = []
 
@@ -1231,22 +1231,27 @@ def parse_ground_truth_csv(csv_content: str, survey: Survey):
     csv_file = io.StringIO(csv_content)
     reader = csv.DictReader(csv_file)
 
-    # Detect format and collect data
+    # Collect rows
     rows = list(reader)
     if not rows:
         raise HTTPException(status_code=400, detail="CSV file is empty")
 
-    # Check required columns
-    required_cols_raw = {'Category', 'Question ID', 'Respondent ID', 'Rating', 'Probability'}
-    required_cols_agg = {'Category', 'Question ID', 'Rating', 'Probability'}
+    # Check required columns for simple answer format
+    required_cols = {'Respondent ID', 'Question ID', 'Answer'}
+    first_row_cols = set(rows[0].keys())
 
-    has_respondent_id = 'Respondent ID' in rows[0]
-    format_detected = 'raw' if has_respondent_id else 'aggregated'
+    if not required_cols.issubset(first_row_cols):
+        missing = required_cols - first_row_cols
+        raise HTTPException(
+            status_code=400,
+            detail=f"CSV missing required columns: {', '.join(missing)}. Expected format: Respondent ID, Question ID, Answer, Category (optional), Demographics (optional)"
+        )
 
-    # Organize data by respondent -> category -> question -> rating
-    raw_data = defaultdict(lambda: defaultdict(lambda: defaultdict(dict)))
+    # Organize data: respondent -> category -> question -> answer
+    raw_answers = defaultdict(lambda: defaultdict(lambda: defaultdict(dict)))
     categories = set()
     questions = set()
+    respondent_ids = set()
 
     # Build survey question map
     survey_questions = {}
@@ -1255,11 +1260,25 @@ def parse_ground_truth_csv(csv_content: str, survey: Survey):
 
     for line_num, row in enumerate(rows, start=2):  # Line 2 because of header
         try:
-            category = row.get('Category', '').strip()
+            respondent_id = row.get('Respondent ID', '').strip()
             question_id = row.get('Question ID', '').strip()
-            rating = int(row.get('Rating', '0'))
-            probability = float(row.get('Probability', '0.0'))
-            respondent_id = row.get('Respondent ID', '').strip() if has_respondent_id else 'agg'
+            answer = int(row.get('Answer', '0'))
+            category = row.get('Category', 'general').strip()
+
+            # Optional demographics
+            gender = row.get('Gender', '').strip()
+            age_group = row.get('Age Group', '').strip()
+            persona_group = row.get('Persona Group', '').strip()
+            occupation = row.get('Occupation', '').strip()
+
+            if not respondent_id or not question_id:
+                validation_errors.append({
+                    "line_number": line_num,
+                    "field": "Respondent ID or Question ID",
+                    "message": "Respondent ID and Question ID are required",
+                    "severity": "error"
+                })
+                continue
 
             # Validate question exists in survey
             if question_id not in survey_questions:
@@ -1271,8 +1290,28 @@ def parse_ground_truth_csv(csv_content: str, survey: Survey):
                 })
                 continue
 
-            # Validate category if present
             question = survey_questions[question_id]
+
+            # Validate answer is within valid range
+            if question.type == 'likert_5':
+                valid_range = (1, 5)
+            elif question.type == 'likert_7':
+                valid_range = (1, 7)
+            elif question.type == 'yes_no':
+                valid_range = (1, 2)
+            else:
+                valid_range = (1, len(question.options) if question.options else 5)
+
+            if not (valid_range[0] <= answer <= valid_range[1]):
+                validation_errors.append({
+                    "line_number": line_num,
+                    "field": "Answer",
+                    "message": f"Answer {answer} out of valid range {valid_range} for question type {question.type}",
+                    "severity": "error"
+                })
+                continue
+
+            # Validate category if present
             if question.category and category != question.category:
                 validation_warnings.append({
                     "line_number": line_num,
@@ -1283,9 +1322,16 @@ def parse_ground_truth_csv(csv_content: str, survey: Survey):
 
             categories.add(category)
             questions.add(question_id)
+            respondent_ids.add(respondent_id)
 
-            # Store probability for this rating
-            raw_data[respondent_id][category][question_id][rating] = probability
+            # Store answer with demographics
+            raw_answers[respondent_id][category][question_id] = {
+                "answer": answer,
+                "gender": gender,
+                "age_group": age_group,
+                "persona_group": persona_group,
+                "occupation": occupation
+            }
 
         except (ValueError, KeyError) as e:
             validation_errors.append({
@@ -1302,30 +1348,10 @@ def parse_ground_truth_csv(csv_content: str, survey: Survey):
             "validation_warnings": validation_warnings
         }
 
-    # Validate probabilities sum to 1.0
-    for respondent_id, categories_data in raw_data.items():
-        for category, questions_data in categories_data.items():
-            for question_id, ratings in questions_data.items():
-                prob_sum = sum(ratings.values())
-                if not (0.99 <= prob_sum <= 1.01):  # Allow small tolerance
-                    validation_errors.append({
-                        "field": f"{category}/{question_id}",
-                        "message": f"Probabilities sum to {prob_sum:.3f}, expected 1.0",
-                        "severity": "error"
-                    })
-
-    if validation_errors:
-        return {
-            "success": False,
-            "validation_errors": validation_errors,
-            "validation_warnings": validation_warnings
-        }
-
-    # Calculate aggregated distributions
+    # Calculate answer frequency distributions (aggregated statistics)
     aggregated_distributions = defaultdict(lambda: defaultdict(dict))
     raw_distributions = defaultdict(lambda: defaultdict(lambda: defaultdict(dict)))
 
-    # Get max rating from survey questions
     for category in categories:
         for question_id in questions:
             if question_id not in survey_questions:
@@ -1343,60 +1369,67 @@ def parse_ground_truth_csv(csv_content: str, survey: Survey):
             else:
                 num_ratings = len(question.options) if question.options else 5
 
-            # Collect all respondent distributions for this question
-            respondent_probs = []
-            for respondent_id in raw_data.keys():
-                if category in raw_data[respondent_id] and question_id in raw_data[respondent_id][category]:
-                    # Build full probability array
-                    probs = [raw_data[respondent_id][category][question_id].get(i+1, 0.0)
-                            for i in range(num_ratings)]
-                    respondent_probs.append(probs)
+            # Collect all answers for this question
+            answers_list = []
+            for respondent_id in respondent_ids:
+                if category in raw_answers[respondent_id] and question_id in raw_answers[respondent_id][category]:
+                    answer_data = raw_answers[respondent_id][category][question_id]
+                    answer = answer_data["answer"]
+                    answers_list.append(answer)
 
-                    # Store raw distribution
+                    # Store raw answer (not as distribution)
                     raw_distributions[category][question_id][respondent_id] = {
-                        "probabilities": probs,
-                        "mode": int(np.argmax(probs) + 1),
-                        "expected_value": float(sum((i+1) * p for i, p in enumerate(probs))),
-                        "entropy": float(-sum(p * np.log(p + 1e-10) for p in probs if p > 0)),
-                        "text_response": "",
-                        "gender": "",
-                        "age_group": "",
-                        "persona_group": "",
-                        "occupation": ""
+                        "answer": answer,
+                        "gender": answer_data["gender"],
+                        "age_group": answer_data["age_group"],
+                        "persona_group": answer_data["persona_group"],
+                        "occupation": answer_data["occupation"]
                     }
 
-            if respondent_probs:
-                # Calculate mean and std
-                mean_probs = np.mean(respondent_probs, axis=0).tolist()
-                std_probs = np.std(respondent_probs, axis=0).tolist()
+            if answers_list:
+                # Calculate frequency distribution from answers
+                answer_counts = defaultdict(int)
+                for ans in answers_list:
+                    answer_counts[ans] += 1
+
+                # Convert counts to probabilities (frequencies)
+                total = len(answers_list)
+                freq_probs = [answer_counts.get(i+1, 0) / total for i in range(num_ratings)]
+
+                # Calculate statistics
+                mean_answer = float(np.mean(answers_list))
+                std_answer = float(np.std(answers_list))
+                mode_answer = int(max(answer_counts.items(), key=lambda x: x[1])[0]) if answer_counts else 0
 
                 aggregated_distributions[category][question_id] = {
-                    "mean_probabilities": mean_probs,
-                    "std_probabilities": std_probs,
-                    "sample_size": len(respondent_probs),
-                    "mean_mode": float(np.mean([np.argmax(p) + 1 for p in respondent_probs])),
-                    "mean_expected_value": float(np.mean([sum((i+1) * pr for i, pr in enumerate(p)) for p in respondent_probs])),
-                    "mean_entropy": float(np.mean([-sum(pr * np.log(pr + 1e-10) for pr in p if pr > 0) for p in respondent_probs]))
+                    "answer_frequencies": freq_probs,  # Frequency distribution
+                    "answer_counts": dict(answer_counts),  # Raw counts
+                    "sample_size": total,
+                    "mean_answer": mean_answer,
+                    "std_answer": std_answer,
+                    "mode_answer": mode_answer,
+                    "min_answer": int(min(answers_list)),
+                    "max_answer": int(max(answers_list))
                 }
 
     # Create sample data for preview
     sample_data = []
-    for respondent_id in list(raw_data.keys())[:3]:  # First 3 respondents
-        for category in list(raw_data[respondent_id].keys())[:2]:  # First 2 categories
-            for question_id in list(raw_data[respondent_id][category].keys())[:2]:  # First 2 questions
-                for rating, prob in list(raw_data[respondent_id][category][question_id].items())[:3]:  # First 3 ratings
+    for respondent_id in list(respondent_ids)[:5]:  # First 5 respondents
+        for category in list(categories):
+            if category in raw_answers[respondent_id]:
+                for question_id in list(raw_answers[respondent_id][category].keys())[:3]:  # First 3 questions
+                    answer_data = raw_answers[respondent_id][category][question_id]
                     sample_data.append({
                         "category": category,
                         "question_id": question_id,
-                        "respondent_id": respondent_id if has_respondent_id else None,
-                        "rating": rating,
-                        "probability": prob
+                        "respondent_id": respondent_id,
+                        "answer": answer_data["answer"]
                     })
 
     return {
         "success": True,
-        "format_detected": format_detected,
-        "num_respondents": len(raw_data) if format_detected == 'raw' else None,
+        "format_detected": "simple_answers",
+        "num_respondents": len(respondent_ids),
         "num_questions": len(questions),
         "num_categories": len(categories),
         "categories": sorted(list(categories)),
@@ -1405,8 +1438,8 @@ def parse_ground_truth_csv(csv_content: str, survey: Survey):
         "validation_errors": validation_errors,
         "validation_warnings": validation_warnings,
         "aggregated_distributions": dict(aggregated_distributions),
-        "raw_distributions": dict(raw_distributions) if format_detected == 'raw' else None,
-        "num_responses": sum(len(raw_data[r][c][q]) for r in raw_data for c in raw_data[r] for q in raw_data[r][c])
+        "raw_distributions": dict(raw_distributions),
+        "num_responses": len(rows)
     }
 
 
