@@ -113,7 +113,7 @@ export interface GenerateProfilesRequest {
 export interface GenerateResponsesRequest {
   survey_id: string;
   profiles: RespondentProfile[];
-  llm_provider: 'openai' | 'anthropic' | 'ollama';
+  llm_provider: 'openai' | 'anthropic' | 'ollama' | 'gemini';
   model: string;
   temperature: number;
 }
@@ -128,7 +128,7 @@ export interface ApplySSRRequest {
 export interface RunSurveyRequest {
   survey_id: string;
   num_profiles: number;
-  llm_provider: 'openai' | 'anthropic';
+  llm_provider: 'openai' | 'anthropic' | 'ollama' | 'gemini';
   model: string;
   llm_temperature: number;
   ssr_temperature: number;
@@ -186,7 +186,7 @@ export interface SurveyBuilderState {
 export interface RunSurveyConfig {
   survey_id: string;
   num_profiles: number;
-  llm_provider: 'openai' | 'anthropic' | 'ollama';
+  llm_provider: 'openai' | 'anthropic' | 'ollama' | 'gemini';
   model: string;
   llm_temperature: number;
   ssr_temperature: number;
@@ -364,7 +364,7 @@ export interface CreateGroundTruthFromSSRRequest {
   name: string;
   description: string;
   num_profiles: number;
-  llm_provider: 'openai' | 'anthropic' | 'ollama';
+  llm_provider: 'openai' | 'anthropic' | 'ollama' | 'gemini';
   model: string;
   llm_temperature: number;
   ssr_temperature: number;
