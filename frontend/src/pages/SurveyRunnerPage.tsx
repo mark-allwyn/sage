@@ -18,9 +18,6 @@ import {
   Grid,
   Button,
   Snackbar,
-  Tooltip,
-  IconButton,
-  Divider,
 } from '@mui/material';
 import { PlayArrow as PlayArrowIcon, CreateOutlined as CreateIcon, Visibility as VisibilityIcon } from '@mui/icons-material';
 import { useSurveys, useSurvey } from '../services/hooks';
@@ -28,14 +25,15 @@ import RunConfigPanel from '../components/SurveyRunner/RunConfigPanel';
 import RunProgress from '../components/SurveyRunner/RunProgress';
 import ResponseDataset from '../components/SurveyRunner/ResponseDataset';
 import { RunSurveyConfig, RunSurveyResponse } from '../services/types';
-import { SurveyRunnerSkeleton } from '../components/LoadingSkeleton';
 import { EmptyState } from '../components/EmptyState';
 import PageHeader from '../components/PageHeader';
 
 const SurveyRunnerPage: React.FC = () => {
   const navigate = useNavigate();
   const { surveyId: urlSurveyId } = useParams<{ surveyId?: string }>();
-  const [selectedSurveyId, setSelectedSurveyId] = useState<string>(urlSurveyId || '');
+  // Only use URL survey ID if it's valid (not empty and not 'unknown')
+  const initialSurveyId = urlSurveyId && urlSurveyId !== 'unknown' ? urlSurveyId : '';
+  const [selectedSurveyId, setSelectedSurveyId] = useState<string>(initialSurveyId);
   const [runConfig, setRunConfig] = useState<RunSurveyConfig>({
     survey_id: '',
     num_profiles: 50,
@@ -65,6 +63,8 @@ const SurveyRunnerPage: React.FC = () => {
 
   const [progressMessages, setProgressMessages] = useState<string[]>([]);
   const [currentProgress, setCurrentProgress] = useState(0);
+  const [currentStep, setCurrentStep] = useState<string>('');
+  const [progressDetails, setProgressDetails] = useState<any>(null);
   const [isStreaming, setIsStreaming] = useState(false);
 
   const handleRunSurvey = async () => {
@@ -113,6 +113,8 @@ const SurveyRunnerPage: React.FC = () => {
     setIsStreaming(true);
     setProgressMessages([]);
     setCurrentProgress(0);
+    setCurrentStep('');
+    setProgressDetails(null);
     setRunResult(null);
 
     try {
@@ -162,6 +164,8 @@ const SurveyRunnerPage: React.FC = () => {
               if (data.status === 'progress' || data.status === 'running' || data.status === 'starting') {
                 setProgressMessages((prev) => [...prev, data.message]);
                 setCurrentProgress(data.progress || 0);
+                setCurrentStep(data.step || '');
+                setProgressDetails(data.details || null);
               } else if (data.status === 'complete' || data.status === 'completed') {
                 console.log('Survey completed! Data:', data);
                 console.log('Run ID:', data.result?.run_id);
@@ -365,7 +369,12 @@ const SurveyRunnerPage: React.FC = () => {
             />
           </Grid>
           <Grid item xs={12} lg={8}>
-            <RunProgress progress={currentProgress} messages={progressMessages} />
+            <RunProgress
+              progress={currentProgress}
+              messages={progressMessages}
+              currentStep={currentStep}
+              details={progressDetails}
+            />
           </Grid>
         </Grid>
       )}

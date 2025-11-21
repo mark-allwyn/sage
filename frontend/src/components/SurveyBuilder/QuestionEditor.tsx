@@ -9,22 +9,16 @@ import {
   Paper,
   Typography,
   Button,
-  TextField,
-  Grid,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   IconButton,
   Card,
   CardContent,
-  CardActions,
   Chip,
-  OutlinedInput,
+  Grid,
   Tooltip,
 } from '@mui/material';
 import { Add as AddIcon, Delete as DeleteIcon, Edit as EditIcon, HelpOutline as HelpIcon } from '@mui/icons-material';
-import { Question, QuestionType, Category, QUESTION_TYPES } from '../../services/types';
+import { Question, Category } from '../../services/types';
+import QuestionEditorDialog from './QuestionEditorDialog';
 
 interface QuestionEditorProps {
   questions: Question[];
@@ -35,10 +29,7 @@ interface QuestionEditorProps {
 const QuestionEditor: React.FC<QuestionEditorProps> = ({ questions, setQuestions, categories }) => {
   const [editingQuestion, setEditingQuestion] = useState<Partial<Question> | null>(null);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
-
-  // Debug logging
-  console.log('QuestionEditor render - editingQuestion:', editingQuestion);
-  console.log('QuestionEditor render - editingIndex:', editingIndex);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const handleAdd = () => {
     setEditingQuestion({
@@ -47,14 +38,13 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({ questions, setQuestions
       type: 'likert_5',
     });
     setEditingIndex(null);
+    setDialogOpen(true);
   };
 
   const handleEdit = (index: number) => {
-    console.log('Edit clicked for index:', index);
-    console.log('Question to edit:', questions[index]);
     setEditingQuestion({ ...questions[index] });
     setEditingIndex(index);
-    console.log('Edit form should now be visible');
+    setDialogOpen(true);
   };
 
   const handleSave = () => {
@@ -82,6 +72,7 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({ questions, setQuestions
 
     setEditingQuestion(null);
     setEditingIndex(null);
+    setDialogOpen(false);
   };
 
   const handleDelete = (index: number) => {
@@ -92,6 +83,7 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({ questions, setQuestions
   const handleCancel = () => {
     setEditingQuestion(null);
     setEditingIndex(null);
+    setDialogOpen(false);
   };
 
   return (
@@ -113,521 +105,50 @@ const QuestionEditor: React.FC<QuestionEditorProps> = ({ questions, setQuestions
       {/* Existing Questions */}
       <Grid container spacing={2} sx={{ mb: 2 }}>
         {questions.map((q, index) => (
-          <React.Fragment key={index}>
-            <Grid item xs={12}>
-              <Card variant="outlined">
-                <CardContent>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <Box sx={{ flexGrow: 1 }}>
-                      <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                        {q.id}
-                      </Typography>
-                      <Typography variant="body1" gutterBottom>
-                        {q.text}
-                      </Typography>
-                      <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 1 }}>
-                        <Chip label={q.type} size="small" color="primary" />
-                        {q.category && <Chip label={`Category: ${q.category}`} size="small" />}
-                        {q.categories_compared && q.categories_compared.length > 0 && (
-                          <Chip label={`Comparing: ${q.categories_compared.join(', ')}`} size="small" />
-                        )}
-                      </Box>
-                    </Box>
-                    <Box sx={{ display: 'flex', gap: 0.5 }}>
-                      <IconButton onClick={() => handleEdit(index)} color="primary" size="small">
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton onClick={() => handleDelete(index)} color="error" size="small">
-                        <DeleteIcon />
-                      </IconButton>
+          <Grid item xs={12} key={index}>
+            <Card variant="outlined">
+              <CardContent>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <Box sx={{ flexGrow: 1 }}>
+                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                      {q.id}
+                    </Typography>
+                    <Typography variant="body1" gutterBottom>
+                      {q.text}
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 1 }}>
+                      <Chip label={q.type} size="small" color="primary" />
+                      {q.category && <Chip label={`Category: ${q.category}`} size="small" />}
+                      {q.categories_compared && q.categories_compared.length > 0 && (
+                        <Chip label={`Comparing: ${q.categories_compared.join(', ')}`} size="small" />
+                      )}
                     </Box>
                   </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-
-            {/* Edit Form - Show directly under the question being edited */}
-            {editingQuestion && editingIndex === index && (
-              <Grid item xs={12}>
-                <Card sx={{ backgroundColor: '#f9f9f9' }}>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>
-                      Edit Question
-                    </Typography>
-                    <Grid container spacing={2}>
-                      <Grid item xs={12}>
-                        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                          <TextField
-                            fullWidth
-                            label="Question ID"
-                            value={editingQuestion.id || ''}
-                            onChange={(e) => setEditingQuestion({ ...editingQuestion, id: e.target.value })}
-                            required
-                            helperText="Unique identifier (e.g., 'q1', 'brand_awareness')"
-                          />
-                          <Tooltip title="A unique ID for this question. Use lowercase with underscores (e.g., 'q1', 'brand_awareness', 'purchase_intent')">
-                            <IconButton size="small" sx={{ mt: 1 }}>
-                              <HelpIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        </Box>
-                      </Grid>
-                      <Grid item xs={12}>
-                        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                          <TextField
-                            fullWidth
-                            label="Question Text"
-                            value={editingQuestion.text || ''}
-                            onChange={(e) => setEditingQuestion({ ...editingQuestion, text: e.target.value })}
-                            multiline
-                            rows={2}
-                            required
-                            helperText="The actual question to ask respondents"
-                          />
-                          <Tooltip title="Write the question exactly as you want it presented to respondents. Be clear and specific. For rating questions, you can include the scale in the question text.">
-                            <IconButton size="small" sx={{ mt: 1 }}>
-                              <HelpIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        </Box>
-                      </Grid>
-                      <Grid item xs={12} md={6}>
-                        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                          <FormControl fullWidth>
-                            <InputLabel>Question Type</InputLabel>
-                            <Select
-                              value={editingQuestion.type || 'likert_5'}
-                              label="Question Type"
-                              onChange={(e) => setEditingQuestion({ ...editingQuestion, type: e.target.value as QuestionType })}
-                            >
-                              {QUESTION_TYPES.map((qt) => (
-                                <MenuItem key={qt.value} value={qt.value}>
-                                  {qt.label}
-                                </MenuItem>
-                              ))}
-                            </Select>
-                          </FormControl>
-                          <Tooltip title="Select the response format: Likert scales (1-5, 1-7, 1-10) for ratings, Multiple Choice for selecting options, Ranking for ordering items, or Open-Ended for text responses">
-                            <IconButton size="small" sx={{ mt: 1 }}>
-                              <HelpIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        </Box>
-                      </Grid>
-                      {categories.length > 0 && (
-                        <>
-                          <Grid item xs={12} md={6}>
-                            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                              <FormControl fullWidth>
-                                <InputLabel>Category (Single)</InputLabel>
-                                <Select
-                                  value={editingQuestion.category || ''}
-                                  label="Category (Single)"
-                                  onChange={(e) => setEditingQuestion({ ...editingQuestion, category: e.target.value, categories_compared: undefined })}
-                                >
-                                  <MenuItem value="">
-                                    <em>None</em>
-                                  </MenuItem>
-                                  {categories.map((cat) => (
-                                    <MenuItem key={cat.id} value={cat.id}>
-                                      {cat.name}
-                                    </MenuItem>
-                                  ))}
-                                </Select>
-                              </FormControl>
-                              <Tooltip title="Use this when asking about a single category (e.g., 'How much do you like Product A?'). Leave empty if question doesn't relate to a specific category.">
-                                <IconButton size="small" sx={{ mt: 1 }}>
-                                  <HelpIcon fontSize="small" />
-                                </IconButton>
-                              </Tooltip>
-                            </Box>
-                          </Grid>
-                          <Grid item xs={12}>
-                            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                              <FormControl fullWidth>
-                                <InputLabel>Categories Compared (Multi)</InputLabel>
-                                <Select
-                                  multiple
-                                  value={editingQuestion.categories_compared || []}
-                                  label="Categories Compared (Multi)"
-                                  onChange={(e) => setEditingQuestion({ ...editingQuestion, categories_compared: e.target.value as string[], category: undefined })}
-                                  input={<OutlinedInput label="Categories Compared (Multi)" />}
-                                  renderValue={(selected) => (
-                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                      {selected.map((value) => (
-                                        <Chip key={value} label={value} size="small" />
-                                      ))}
-                                    </Box>
-                                  )}
-                                >
-                                  {categories.map((cat) => (
-                                    <MenuItem key={cat.id} value={cat.id}>
-                                      {cat.name}
-                                    </MenuItem>
-                                  ))}
-                                </Select>
-                              </FormControl>
-                              <Tooltip title="Use this for comparison questions (e.g., 'Rank these products by preference'). Select multiple categories to compare. Don't use with Category (Single).">
-                                <IconButton size="small" sx={{ mt: 1 }}>
-                                  <HelpIcon fontSize="small" />
-                                </IconButton>
-                              </Tooltip>
-                            </Box>
-                          </Grid>
-                        </>
-                      )}
-
-                      {/* Answer Options - for multiple choice, yes/no, etc. */}
-                      {(editingQuestion.type === 'multiple_choice' || editingQuestion.type === 'yes_no') && (
-                        <Grid item xs={12}>
-                          <Typography variant="subtitle2" gutterBottom>
-                            Answer Options (one per line)
-                          </Typography>
-                          <TextField
-                            fullWidth
-                            multiline
-                            rows={4}
-                            value={(editingQuestion.options || []).join('\n')}
-                            onChange={(e) => {
-                              const options = e.target.value.split('\n').filter(opt => opt.trim() !== '');
-                              setEditingQuestion({ ...editingQuestion, options });
-                            }}
-                            placeholder="Enter each option on a new line"
-                            helperText="Each line will be a separate answer option"
-                          />
-                        </Grid>
-                      )}
-
-                      {/* Scale Definition - for likert scales */}
-                      {editingQuestion.type?.includes('likert') && (
-                        <Grid item xs={12}>
-                          <Typography variant="subtitle2" gutterBottom>
-                            Scale Labels (format: 1: Label Text, one per line)
-                          </Typography>
-                          <TextField
-                            fullWidth
-                            multiline
-                            rows={6}
-                            value={
-                              editingQuestion.scale
-                                ? Object.entries(editingQuestion.scale)
-                                    .sort(([a], [b]) => Number(a) - Number(b))
-                                    .map(([key, value]) => `${key}: ${value}`)
-                                    .join('\n')
-                                : ''
-                            }
-                            onChange={(e) => {
-                              const lines = e.target.value.split('\n');
-                              const scale: Record<number, string> = {};
-                              lines.forEach(line => {
-                                const match = line.match(/^(\d+):\s*(.+)$/);
-                                if (match) {
-                                  scale[Number(match[1])] = match[2].trim();
-                                }
-                              });
-                              setEditingQuestion({ ...editingQuestion, scale: Object.keys(scale).length > 0 ? scale : undefined });
-                            }}
-                            placeholder="1: Strongly Disagree&#10;2: Disagree&#10;3: Neutral&#10;4: Agree&#10;5: Strongly Agree"
-                            helperText="Define the text label for each numeric value (e.g., '1: Strongly Disagree')"
-                          />
-                        </Grid>
-                      )}
-
-                      {/* Scale Definition - for preference/comparison scales */}
-                      {editingQuestion.type?.includes('preference') && (
-                        <Grid item xs={12}>
-                          <Typography variant="subtitle2" gutterBottom>
-                            Comparison Scale Labels (format: 1: Label Text, one per line)
-                          </Typography>
-                          <TextField
-                            fullWidth
-                            multiline
-                            rows={6}
-                            value={
-                              editingQuestion.scale
-                                ? Object.entries(editingQuestion.scale)
-                                    .sort(([a], [b]) => Number(a) - Number(b))
-                                    .map(([key, value]) => `${key}: ${value}`)
-                                    .join('\n')
-                                : ''
-                            }
-                            onChange={(e) => {
-                              const lines = e.target.value.split('\n');
-                              const scale: Record<number, string> = {};
-                              lines.forEach(line => {
-                                const match = line.match(/^(\d+):\s*(.+)$/);
-                                if (match) {
-                                  scale[Number(match[1])] = match[2].trim();
-                                }
-                              });
-                              setEditingQuestion({ ...editingQuestion, scale: Object.keys(scale).length > 0 ? scale : undefined });
-                            }}
-                            placeholder={
-                              editingQuestion.categories_compared && editingQuestion.categories_compared.length >= 2
-                                ? `1: Strongly prefer {${editingQuestion.categories_compared[0]}}&#10;2: Prefer {${editingQuestion.categories_compared[0]}}&#10;3: No preference&#10;4: Prefer {${editingQuestion.categories_compared[1]}}&#10;5: Strongly prefer {${editingQuestion.categories_compared[1]}}`
-                                : "1: Strongly prefer first option&#10;2: Prefer first option&#10;3: No preference&#10;4: Prefer second option&#10;5: Strongly prefer second option"
-                            }
-                            helperText={
-                              editingQuestion.categories_compared && editingQuestion.categories_compared.length >= 2
-                                ? `Use {${editingQuestion.categories_compared[0]}} and {${editingQuestion.categories_compared[1]}} as placeholders for the category names`
-                                : "Use {category_id} as placeholders for category names (select categories first)"
-                            }
-                          />
-                        </Grid>
-                      )}
-                    </Grid>
-                  </CardContent>
-                  <CardActions>
-                    <Button onClick={handleCancel}>Cancel</Button>
-                    <Button variant="contained" onClick={handleSave} disabled={!editingQuestion.text || !editingQuestion.id}>
-                      Update Question
-                    </Button>
-                  </CardActions>
-                </Card>
-              </Grid>
-            )}
-          </React.Fragment>
+                  <Box sx={{ display: 'flex', gap: 0.5 }}>
+                    <IconButton onClick={() => handleEdit(index)} color="primary" size="small">
+                      <EditIcon />
+                    </IconButton>
+                    <IconButton onClick={() => handleDelete(index)} color="error" size="small">
+                      <DeleteIcon />
+                    </IconButton>
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
         ))}
       </Grid>
 
-      {/* Add Form - Only show when adding new question (editingIndex === null) */}
-      {editingQuestion && editingIndex === null && (
-        <Card sx={{ mt: 2, backgroundColor: '#f9f9f9' }}>
-          <CardContent>
-            <Typography variant="h6" gutterBottom>
-              {editingIndex !== null ? 'Edit Question' : 'New Question'}
-            </Typography>
-            <Grid container spacing={2}>
-              <Grid item xs={12}>
-                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                  <TextField
-                    fullWidth
-                    label="Question ID"
-                    value={editingQuestion.id || ''}
-                    onChange={(e) => setEditingQuestion({ ...editingQuestion, id: e.target.value })}
-                    required
-                    helperText="Unique identifier (e.g., 'q1', 'brand_awareness')"
-                  />
-                  <Tooltip title="A unique ID for this question. Use lowercase with underscores (e.g., 'q1', 'brand_awareness', 'purchase_intent')">
-                    <IconButton size="small" sx={{ mt: 1 }}>
-                      <HelpIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                </Box>
-              </Grid>
-              <Grid item xs={12}>
-                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                  <TextField
-                    fullWidth
-                    label="Question Text"
-                    value={editingQuestion.text || ''}
-                    onChange={(e) => setEditingQuestion({ ...editingQuestion, text: e.target.value })}
-                    multiline
-                    rows={2}
-                    required
-                    helperText="The actual question to ask respondents"
-                  />
-                  <Tooltip title="Write the question exactly as you want it presented to respondents. Be clear and specific. For rating questions, you can include the scale in the question text.">
-                    <IconButton size="small" sx={{ mt: 1 }}>
-                      <HelpIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                </Box>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                  <FormControl fullWidth>
-                    <InputLabel>Question Type</InputLabel>
-                    <Select
-                      value={editingQuestion.type || 'likert_5'}
-                      label="Question Type"
-                      onChange={(e) => setEditingQuestion({ ...editingQuestion, type: e.target.value as QuestionType })}
-                    >
-                      {QUESTION_TYPES.map((qt) => (
-                        <MenuItem key={qt.value} value={qt.value}>
-                          {qt.label}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                  <Tooltip title="Select the response format: Likert scales (1-5, 1-7, 1-10) for ratings, Multiple Choice for selecting options, Ranking for ordering items, or Open-Ended for text responses">
-                    <IconButton size="small" sx={{ mt: 1 }}>
-                      <HelpIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                </Box>
-              </Grid>
-              {categories.length > 0 && (
-                <>
-                  <Grid item xs={12} md={6}>
-                    <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                      <FormControl fullWidth>
-                        <InputLabel>Category (Single)</InputLabel>
-                        <Select
-                          value={editingQuestion.category || ''}
-                          label="Category (Single)"
-                          onChange={(e) => setEditingQuestion({ ...editingQuestion, category: e.target.value, categories_compared: undefined })}
-                        >
-                          <MenuItem value="">
-                            <em>None</em>
-                          </MenuItem>
-                          {categories.map((cat) => (
-                            <MenuItem key={cat.id} value={cat.id}>
-                              {cat.name}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                      <Tooltip title="Use this when asking about a single category (e.g., 'How much do you like Product A?'). Leave empty if question doesn't relate to a specific category.">
-                        <IconButton size="small" sx={{ mt: 1 }}>
-                          <HelpIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                      <FormControl fullWidth>
-                        <InputLabel>Categories Compared (Multi)</InputLabel>
-                        <Select
-                          multiple
-                          value={editingQuestion.categories_compared || []}
-                          label="Categories Compared (Multi)"
-                          onChange={(e) => setEditingQuestion({ ...editingQuestion, categories_compared: e.target.value as string[], category: undefined })}
-                          input={<OutlinedInput label="Categories Compared (Multi)" />}
-                          renderValue={(selected) => (
-                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                              {selected.map((value) => (
-                                <Chip key={value} label={value} size="small" />
-                              ))}
-                            </Box>
-                          )}
-                        >
-                          {categories.map((cat) => (
-                            <MenuItem key={cat.id} value={cat.id}>
-                              {cat.name}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                      <Tooltip title="Use this for comparison questions (e.g., 'Rank these products by preference'). Select multiple categories to compare. Don't use with Category (Single).">
-                        <IconButton size="small" sx={{ mt: 1 }}>
-                          <HelpIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
-                  </Grid>
-                </>
-              )}
-
-              {/* Answer Options - for multiple choice, yes/no, etc. */}
-              {(editingQuestion.type === 'multiple_choice' || editingQuestion.type === 'yes_no') && (
-                <Grid item xs={12}>
-                  <Typography variant="subtitle2" gutterBottom>
-                    Answer Options (one per line)
-                  </Typography>
-                  <TextField
-                    fullWidth
-                    multiline
-                    rows={4}
-                    value={(editingQuestion.options || []).join('\n')}
-                    onChange={(e) => {
-                      const options = e.target.value.split('\n').filter(opt => opt.trim() !== '');
-                      setEditingQuestion({ ...editingQuestion, options });
-                    }}
-                    placeholder="Enter each option on a new line"
-                    helperText="Each line will be a separate answer option"
-                  />
-                </Grid>
-              )}
-
-              {/* Scale Definition - for likert scales */}
-              {editingQuestion.type?.includes('likert') && (
-                <Grid item xs={12}>
-                  <Typography variant="subtitle2" gutterBottom>
-                    Scale Labels (format: 1: Label Text, one per line)
-                  </Typography>
-                  <TextField
-                    fullWidth
-                    multiline
-                    rows={6}
-                    value={
-                      editingQuestion.scale
-                        ? Object.entries(editingQuestion.scale)
-                            .sort(([a], [b]) => Number(a) - Number(b))
-                            .map(([key, value]) => `${key}: ${value}`)
-                            .join('\n')
-                        : ''
-                    }
-                    onChange={(e) => {
-                      const lines = e.target.value.split('\n');
-                      const scale: Record<number, string> = {};
-                      lines.forEach(line => {
-                        const match = line.match(/^(\d+):\s*(.+)$/);
-                        if (match) {
-                          scale[Number(match[1])] = match[2].trim();
-                        }
-                      });
-                      setEditingQuestion({ ...editingQuestion, scale: Object.keys(scale).length > 0 ? scale : undefined });
-                    }}
-                    placeholder="1: Strongly Disagree&#10;2: Disagree&#10;3: Neutral&#10;4: Agree&#10;5: Strongly Agree"
-                    helperText="Define the text label for each numeric value (e.g., '1: Strongly Disagree')"
-                  />
-                </Grid>
-              )}
-
-              {/* Scale Definition - for preference/comparison scales */}
-              {editingQuestion.type?.includes('preference') && (
-                <Grid item xs={12}>
-                  <Typography variant="subtitle2" gutterBottom>
-                    Comparison Scale Labels (format: 1: Label Text, one per line)
-                  </Typography>
-                  <TextField
-                    fullWidth
-                    multiline
-                    rows={6}
-                    value={
-                      editingQuestion.scale
-                        ? Object.entries(editingQuestion.scale)
-                            .sort(([a], [b]) => Number(a) - Number(b))
-                            .map(([key, value]) => `${key}: ${value}`)
-                            .join('\n')
-                        : ''
-                    }
-                    onChange={(e) => {
-                      const lines = e.target.value.split('\n');
-                      const scale: Record<number, string> = {};
-                      lines.forEach(line => {
-                        const match = line.match(/^(\d+):\s*(.+)$/);
-                        if (match) {
-                          scale[Number(match[1])] = match[2].trim();
-                        }
-                      });
-                      setEditingQuestion({ ...editingQuestion, scale: Object.keys(scale).length > 0 ? scale : undefined });
-                    }}
-                    placeholder={
-                      editingQuestion.categories_compared && editingQuestion.categories_compared.length >= 2
-                        ? `1: Strongly prefer {${editingQuestion.categories_compared[0]}}&#10;2: Prefer {${editingQuestion.categories_compared[0]}}&#10;3: No preference&#10;4: Prefer {${editingQuestion.categories_compared[1]}}&#10;5: Strongly prefer {${editingQuestion.categories_compared[1]}}`
-                        : "1: Strongly prefer first option&#10;2: Prefer first option&#10;3: No preference&#10;4: Prefer second option&#10;5: Strongly prefer second option"
-                    }
-                    helperText={
-                      editingQuestion.categories_compared && editingQuestion.categories_compared.length >= 2
-                        ? `Use {${editingQuestion.categories_compared[0]}} and {${editingQuestion.categories_compared[1]}} as placeholders for the category names`
-                        : "Use {category_id} as placeholders for category names (select categories first)"
-                    }
-                  />
-                </Grid>
-              )}
-            </Grid>
-          </CardContent>
-          <CardActions>
-            <Button onClick={handleCancel}>Cancel</Button>
-            <Button variant="contained" onClick={handleSave} disabled={!editingQuestion.text || !editingQuestion.id}>
-              {editingIndex !== null ? 'Update Question' : 'Add Question'}
-            </Button>
-          </CardActions>
-        </Card>
-      )}
+      {/* Question Editor Dialog */}
+      <QuestionEditorDialog
+        open={dialogOpen}
+        question={editingQuestion}
+        isEditing={editingIndex !== null}
+        categories={categories}
+        onSave={handleSave}
+        onCancel={handleCancel}
+        onQuestionChange={setEditingQuestion}
+      />
 
       {questions.length === 0 && !editingQuestion && (
         <Typography color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>

@@ -144,11 +144,11 @@ class Category:
 
         # Collect image paths/URLs
         if self.media_type == 'image':
-            # Single image
-            if self.media_url:
-                result['images'].append(self.media_url)
-            elif self.media_path:
+            # Single image - prioritize local path for base64 encoding
+            if self.media_path:
                 result['images'].append(self.media_path)
+            elif self.media_url:
+                result['images'].append(self.media_url)
 
         elif self.media_type == 'webpage':
             # Screenshot of webpage

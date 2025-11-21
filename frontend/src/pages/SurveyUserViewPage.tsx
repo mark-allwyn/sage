@@ -325,6 +325,9 @@ const SurveyUserViewPage: React.FC = () => {
                       answerOptions = currentQuestion.options;
                     } else if (currentQuestion.scale && Object.keys(currentQuestion.scale).length > 0) {
                       answerOptions = Object.values(currentQuestion.scale);
+                    } else if (currentQuestion.type === 'yes_no') {
+                      // Yes/No questions have hardcoded options
+                      answerOptions = ['No', 'Yes'];
                     }
 
                     if (answerOptions.length === 0) {

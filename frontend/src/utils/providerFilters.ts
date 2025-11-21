@@ -8,9 +8,7 @@ import {
   LLMProvider,
   LLM_PROVIDERS,
   OPENAI_MODELS,
-  ANTHROPIC_MODELS,
-  GEMINI_MODELS,
-  OLLAMA_MODELS
+  ANTHROPIC_MODELS
 } from '../services/types';
 
 /**
@@ -38,11 +36,9 @@ export const getEnabledModelsForProvider = (
   if (!providerConfig || !providerConfig.enabled) return [];
 
   // Get all models for this provider
-  let allModels;
+  let allModels: Array<{ value: string; label: string; supportsVision?: boolean }> = [];
   if (provider === 'openai') allModels = OPENAI_MODELS;
   else if (provider === 'anthropic') allModels = ANTHROPIC_MODELS;
-  else if (provider === 'gemini') allModels = GEMINI_MODELS;
-  else allModels = OLLAMA_MODELS;
 
   // If provider has specific models configured, filter to only those
   if (providerConfig.models && providerConfig.models.length > 0) {

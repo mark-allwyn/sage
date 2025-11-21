@@ -110,11 +110,15 @@ export const useCreateSurvey = (
 
   return useMutation<{ survey_id: string; status: string; path: string }, Error, CreateSurveyRequest>({
     mutationFn: api.createSurvey,
-    onSuccess: () => {
+    ...options,
+    onSuccess: (...args) => {
       // Invalidate surveys list to refetch
       queryClient.invalidateQueries({ queryKey: queryKeys.surveys });
+      // Call the provided onSuccess callback if it exists
+      if (options?.onSuccess) {
+        options.onSuccess(...args);
+      }
     },
-    ...options,
   });
 };
 
@@ -136,12 +140,17 @@ export const useUpdateSurvey = (
     { surveyId: string; request: CreateSurveyRequest }
   >({
     mutationFn: ({ surveyId, request }) => api.updateSurvey(surveyId, request),
-    onSuccess: (data) => {
+    ...options,
+    onSuccess: (...args) => {
+      const [data] = args;
       // Invalidate surveys list and specific survey to refetch
       queryClient.invalidateQueries({ queryKey: queryKeys.surveys });
       queryClient.invalidateQueries({ queryKey: queryKeys.survey(data.survey_id) });
+      // Call the provided onSuccess callback if it exists
+      if (options?.onSuccess) {
+        options.onSuccess(...args);
+      }
     },
-    ...options,
   });
 };
 
@@ -155,12 +164,17 @@ export const useDeleteSurvey = (
 
   return useMutation<{ survey_id: string; status: string }, Error, string>({
     mutationFn: api.deleteSurvey,
-    onSuccess: (data) => {
+    ...options,
+    onSuccess: (...args) => {
+      const [data] = args;
       // Invalidate surveys list and remove specific survey from cache
       queryClient.invalidateQueries({ queryKey: queryKeys.surveys });
       queryClient.removeQueries({ queryKey: queryKeys.survey(data.survey_id) });
+      // Call the provided onSuccess callback if it exists
+      if (options?.onSuccess) {
+        options.onSuccess(...args);
+      }
     },
-    ...options,
   });
 };
 

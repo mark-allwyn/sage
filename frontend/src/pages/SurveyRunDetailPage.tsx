@@ -34,6 +34,7 @@ import {
 } from '@mui/icons-material';
 import { useSurveyRun, useSurvey, useGroundTruths, useCompareToGroundTruth } from '../services/hooks';
 import ResponseDataset from '../components/SurveyRunner/ResponseDataset';
+import ComparisonResults from '../components/ComparisonResults';
 import { exportSurveyRunToCSV, exportComparisonToCSV } from '../utils/csvExport';
 
 const SurveyRunDetailPage: React.FC = () => {
@@ -73,7 +74,14 @@ const SurveyRunDetailPage: React.FC = () => {
   };
 
   const handleExportCSV = () => {
-    if (!run || !survey) return;
+    if (!run) {
+      alert('Cannot export: Survey run data is not loaded');
+      return;
+    }
+    if (!survey) {
+      alert(`Cannot export: Survey configuration "${run.survey_id}" not found. The survey file may have been deleted or renamed.`);
+      return;
+    }
     exportSurveyRunToCSV(run, survey);
   };
 
@@ -341,140 +349,17 @@ const SurveyRunDetailPage: React.FC = () => {
       <Dialog
         open={comparisonResultsOpen}
         onClose={() => setComparisonResultsOpen(false)}
-        maxWidth="md"
+        maxWidth="lg"
         fullWidth
       >
         <DialogTitle>Ground Truth Comparison Results</DialogTitle>
         <DialogContent>
           {comparisonResults && (
-            <Box>
-              {/* Overall Metrics */}
-              <Paper sx={{ p: 3, mb: 3, bgcolor: 'primary.50' }}>
-                <Typography variant="h6" gutterBottom color="primary">
-                  Overall Metrics
-                </Typography>
-                <Grid container spacing={2}>
-                  <Grid item xs={6} md={3}>
-                    <Typography variant="caption" color="text.secondary">KL Divergence</Typography>
-                    <Typography variant="h6">
-                      {comparisonResults.comparison.overall_metrics.mean_kl_divergence?.toFixed(4) ?? 'N/A'}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      ±{comparisonResults.comparison.overall_metrics.std_kl_divergence?.toFixed(4) ?? 'N/A'}
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={6} md={3}>
-                    <Typography variant="caption" color="text.secondary">JS Divergence</Typography>
-                    <Typography variant="h6">
-                      {comparisonResults.comparison.overall_metrics.mean_js_divergence?.toFixed(4) ?? 'N/A'}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      ±{comparisonResults.comparison.overall_metrics.std_js_divergence?.toFixed(4) ?? 'N/A'}
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={6} md={3}>
-                    <Typography variant="caption" color="text.secondary">Wasserstein Distance</Typography>
-                    <Typography variant="h6">
-                      {comparisonResults.comparison.overall_metrics.mean_wasserstein?.toFixed(4) ?? 'N/A'}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      ±{comparisonResults.comparison.overall_metrics.std_wasserstein?.toFixed(4) ?? 'N/A'}
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={6} md={3}>
-                    <Typography variant="caption" color="text.secondary">Mean Absolute Error</Typography>
-                    <Typography variant="h6">
-                      {comparisonResults.comparison.overall_metrics.mean_mae?.toFixed(4) ?? 'N/A'}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      ±{comparisonResults.comparison.overall_metrics.std_mae?.toFixed(4) ?? 'N/A'}
-                    </Typography>
-                  </Grid>
-                </Grid>
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-                  Questions compared: {comparisonResults.comparison.overall_metrics.num_questions_compared ?? 0}
-                </Typography>
-              </Paper>
-
-              {/* By Category Metrics */}
-              {Object.keys(comparisonResults.comparison.by_category).length > 0 && (
-                <Box sx={{ mb: 3 }}>
-                  <Typography variant="h6" gutterBottom>
-                    Metrics by Category
-                  </Typography>
-                  {Object.entries(comparisonResults.comparison.by_category).map(([category, metrics]: [string, any]) => (
-                    <Paper key={category} variant="outlined" sx={{ p: 2, mb: 2 }}>
-                      <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                        {category}
-                      </Typography>
-                      <Grid container spacing={2}>
-                        <Grid item xs={6} md={3}>
-                          <Typography variant="caption" color="text.secondary">KL Divergence</Typography>
-                          <Typography variant="body1">{metrics.mean_kl_divergence?.toFixed(4) ?? 'N/A'}</Typography>
-                        </Grid>
-                        <Grid item xs={6} md={3}>
-                          <Typography variant="caption" color="text.secondary">JS Divergence</Typography>
-                          <Typography variant="body1">{metrics.mean_js_divergence?.toFixed(4) ?? 'N/A'}</Typography>
-                        </Grid>
-                        <Grid item xs={6} md={3}>
-                          <Typography variant="caption" color="text.secondary">Wasserstein</Typography>
-                          <Typography variant="body1">{metrics.mean_wasserstein?.toFixed(4) ?? 'N/A'}</Typography>
-                        </Grid>
-                        <Grid item xs={6} md={3}>
-                          <Typography variant="caption" color="text.secondary">MAE</Typography>
-                          <Typography variant="body1">{metrics.mean_mae?.toFixed(4) ?? 'N/A'}</Typography>
-                        </Grid>
-                      </Grid>
-                    </Paper>
-                  ))}
-                </Box>
-              )}
-
-              {/* By Question Metrics */}
-              <Box>
-                <Typography variant="h6" gutterBottom>
-                  Metrics by Question
-                </Typography>
-                <Box sx={{ maxHeight: 400, overflow: 'auto' }}>
-                  {Object.entries(comparisonResults.comparison.by_question).map(([questionKey, metrics]: [string, any]) => (
-                    <Paper key={questionKey} variant="outlined" sx={{ p: 2, mb: 1 }}>
-                      <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
-                        {questionKey}
-                      </Typography>
-                      <Grid container spacing={1}>
-                        <Grid item xs={6} md={2}>
-                          <Typography variant="caption" color="text.secondary">KL</Typography>
-                          <Typography variant="body2">{metrics.kl_divergence?.toFixed(4) ?? 'N/A'}</Typography>
-                        </Grid>
-                        <Grid item xs={6} md={2}>
-                          <Typography variant="caption" color="text.secondary">JS</Typography>
-                          <Typography variant="body2">{metrics.js_divergence?.toFixed(4) ?? 'N/A'}</Typography>
-                        </Grid>
-                        <Grid item xs={6} md={2}>
-                          <Typography variant="caption" color="text.secondary">Wasserstein</Typography>
-                          <Typography variant="body2">{metrics.wasserstein_distance?.toFixed(4) ?? 'N/A'}</Typography>
-                        </Grid>
-                        <Grid item xs={6} md={2}>
-                          <Typography variant="caption" color="text.secondary">MAE</Typography>
-                          <Typography variant="body2">{metrics.mean_absolute_error?.toFixed(4) ?? 'N/A'}</Typography>
-                        </Grid>
-                        <Grid item xs={6} md={2}>
-                          <Typography variant="caption" color="text.secondary">Chi-Squared</Typography>
-                          <Typography variant="body2">{metrics.chi_squared?.toFixed(2) ?? 'N/A'}</Typography>
-                        </Grid>
-                        <Grid item xs={6} md={2}>
-                          <Chip
-                            label={metrics.significant_difference ? 'Significant' : 'Not Significant'}
-                            size="small"
-                            color={metrics.significant_difference ? 'warning' : 'success'}
-                          />
-                        </Grid>
-                      </Grid>
-                    </Paper>
-                  ))}
-                </Box>
-              </Box>
-            </Box>
+            <ComparisonResults
+              comparisonResults={comparisonResults}
+              groundTruths={groundTruths}
+              survey={survey}
+            />
           )}
         </DialogContent>
         <DialogActions>

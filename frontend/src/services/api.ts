@@ -38,7 +38,7 @@ const api: AxiosInstance = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 300000, // 5 minutes for long-running operations
+  timeout: 1800000, // 30 minutes for long-running operations (experiments can take a while)
 });
 
 // Add request interceptor for logging (development only)

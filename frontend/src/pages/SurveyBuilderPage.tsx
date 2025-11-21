@@ -3,7 +3,7 @@
  * Create and edit survey configurations
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -26,15 +26,36 @@ import {
   DialogContent,
   DialogContentText,
   DialogActions,
+  Stepper,
+  Step,
+  StepLabel,
+  StepButton,
+  Switch,
+  FormControlLabel,
 } from '@mui/material';
-import { Save as SaveIcon, Code as CodeIcon, Delete as DeleteIcon, Add as AddIcon, Visibility as VisibilityIcon, PlayArrow as PlayArrowIcon, Create as CreateIcon, ContentCopy as CopyIcon } from '@mui/icons-material';
+import {
+  Save as SaveIcon,
+  Code as CodeIcon,
+  Delete as DeleteIcon,
+  Add as AddIcon,
+  Visibility as VisibilityIcon,
+  PlayArrow as PlayArrowIcon,
+  Create as CreateIcon,
+  ContentCopy as CopyIcon,
+  ArrowBack as ArrowBackIcon,
+  ArrowForward as ArrowForwardIcon,
+} from '@mui/icons-material';
 import SurveyForm from '../components/SurveyBuilder/SurveyForm';
 import YAMLPreview from '../components/SurveyBuilder/YAMLPreview';
+import CategoryEditor from '../components/SurveyBuilder/CategoryEditor';
+import QuestionEditor from '../components/SurveyBuilder/QuestionEditor';
+import PersonaGroupEditor from '../components/SurveyBuilder/PersonaGroupEditor';
 import { useCreateSurvey, useUpdateSurvey, useDeleteSurvey, useSurveys, useSurvey } from '../services/hooks';
 import { getErrorMessage } from '../services/api';
 import { SurveyBuilderState } from '../services/types';
 import { SurveyBuilderSkeleton } from '../components/LoadingSkeleton';
 import PageHeader from '../components/PageHeader';
+import { useUnsavedChanges } from '../hooks/useUnsavedChanges';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -68,12 +89,29 @@ const SurveyBuilderPage: React.FC = () => {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [lastSavedTime, setLastSavedTime] = useState<Date | null>(null);
-  const [successDialogOpen, setSuccessDialogOpen] = useState(false);
-  const [lastCreatedSurveyId, setLastCreatedSurveyId] = useState<string>('');
+  const loadedSurveyIdRef = useRef<string>('');
   const [autoSaveMessage, setAutoSaveMessage] = useState<string>('');
 
+  // Wizard mode state
+  const [wizardMode, setWizardMode] = useState(false);
+  const [activeStep, setActiveStep] = useState(0);
+
   const AUTO_SAVE_KEY = 'sage_survey_builder_autosave';
+
+  // Wizard steps
+  const wizardSteps = [
+    { label: 'Basic Information', optional: false },
+    { label: 'Categories', optional: true },
+    { label: 'Questions', optional: false },
+    { label: 'Persona Groups', optional: false },
+    { label: 'Review & Save', optional: false },
+  ];
+
+  // Track unsaved changes and warn on navigation
+  useUnsavedChanges({
+    when: hasUnsavedChanges,
+    message: 'You have unsaved changes to your survey. Do you want to leave without saving?'
+  });
 
   const { data: surveys, isLoading: surveysLoading, refetch: refetchSurveys } = useSurveys();
   const { data: selectedSurvey, isLoading: surveyLoading } = useSurvey(selectedSurveyId, {
@@ -81,8 +119,9 @@ const SurveyBuilderPage: React.FC = () => {
   });
 
   // Load selected survey data into form when editing
+  // Only load once per survey selection to prevent overwriting user edits
   useEffect(() => {
-    if (selectedSurvey && mode === 'edit') {
+    if (selectedSurvey && mode === 'edit' && selectedSurveyId && loadedSurveyIdRef.current !== selectedSurveyId) {
       setSurveyData({
         name: selectedSurvey.name,
         description: selectedSurvey.description || '',
@@ -93,6 +132,7 @@ const SurveyBuilderPage: React.FC = () => {
         demographics: selectedSurvey.demographics || ['age_group', 'gender', 'occupation'],
       });
       setFilename(selectedSurveyId + '.yaml');
+      loadedSurveyIdRef.current = selectedSurveyId;
     }
   }, [selectedSurvey, selectedSurveyId, mode]);
 
@@ -148,21 +188,18 @@ const SurveyBuilderPage: React.FC = () => {
 
   const createSurveyMutation = useCreateSurvey({
     onSuccess: (data) => {
-      setLastCreatedSurveyId(data.survey_id);
-      setSuccessDialogOpen(true);
       // Clear auto-save
       localStorage.removeItem(AUTO_SAVE_KEY);
-      // Reset form
-      setSurveyData({
-        name: '',
-        description: '',
-        context: '',
-        questions: [],
-        persona_groups: [],
-        categories: [],
-        demographics: ['age_group', 'gender', 'occupation'],
+      // Show success notification
+      setSnackbar({
+        open: true,
+        message: `Survey created successfully: ${data.survey_id}`,
+        severity: 'success',
       });
-      setFilename('');
+      // Automatically switch to edit mode with the newly created survey
+      setMode('edit');
+      setSelectedSurveyId(data.survey_id);
+      loadedSurveyIdRef.current = ''; // Reset ref to allow loading the new survey
     },
     onError: (error) => {
       setSnackbar({
@@ -180,6 +217,8 @@ const SurveyBuilderPage: React.FC = () => {
         message: `Survey updated successfully: ${data.survey_id}`,
         severity: 'success',
       });
+      // Reset the ref so the updated data can be loaded
+      loadedSurveyIdRef.current = '';
     },
     onError: (error) => {
       setSnackbar({
@@ -228,6 +267,7 @@ const SurveyBuilderPage: React.FC = () => {
 
   const handleModeChange = (newMode: 'create' | 'edit') => {
     setMode(newMode);
+    loadedSurveyIdRef.current = ''; // Reset loaded survey tracking
     if (newMode === 'create') {
       setSelectedSurveyId('');
       setSurveyData({
@@ -299,6 +339,34 @@ const SurveyBuilderPage: React.FC = () => {
 
   const handleCloseSnackbar = () => {
     setSnackbar({ ...snackbar, open: false });
+  };
+
+  // Wizard navigation
+  const handleNext = () => {
+    setActiveStep((prevStep) => Math.min(prevStep + 1, wizardSteps.length - 1));
+  };
+
+  const handleBack = () => {
+    setActiveStep((prevStep) => Math.max(prevStep - 1, 0));
+  };
+
+  const handleStepClick = (step: number) => {
+    setActiveStep(step);
+  };
+
+  const canProceedToNextStep = () => {
+    switch (activeStep) {
+      case 0: // Basic Information
+        return surveyData.name.trim().length > 0;
+      case 1: // Categories (optional)
+        return true;
+      case 2: // Questions
+        return surveyData.questions.length > 0;
+      case 3: // Persona Groups
+        return surveyData.persona_groups.length > 0;
+      default:
+        return true;
+    }
   };
 
   const isLoading = createSurveyMutation.isPending || updateSurveyMutation.isPending || deleteSurveyMutation.isPending;
@@ -512,8 +580,225 @@ const SurveyBuilderPage: React.FC = () => {
         </Paper>
       )}
 
-      {/* Tabs - Only show when in create mode or edit mode with selected survey */}
+      {/* Wizard Mode Toggle */}
       {(mode === 'create' || (mode === 'edit' && selectedSurveyId)) && (
+        <Paper sx={{ p: 2, mb: 3 }}>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={wizardMode}
+                onChange={(e) => {
+                  setWizardMode(e.target.checked);
+                  if (e.target.checked) {
+                    setActiveStep(0); // Reset to first step when enabling wizard
+                  }
+                }}
+              />
+            }
+            label="Wizard Mode"
+          />
+          <Typography variant="caption" color="text.secondary" sx={{ ml: 2 }}>
+            {wizardMode ? 'Step-by-step guided mode' : 'Free-form editing mode'}
+          </Typography>
+        </Paper>
+      )}
+
+      {/* Wizard Mode View */}
+      {wizardMode && (mode === 'create' || (mode === 'edit' && selectedSurveyId)) && (
+        <>
+          <Paper sx={{ mb: 3, p: 3 }}>
+            <Stepper activeStep={activeStep} alternativeLabel>
+              {wizardSteps.map((step, index) => (
+                <Step key={step.label}>
+                  <StepButton onClick={() => handleStepClick(index)}>
+                    <StepLabel optional={step.optional ? <Typography variant="caption">Optional</Typography> : undefined}>
+                      {step.label}
+                    </StepLabel>
+                  </StepButton>
+                </Step>
+              ))}
+            </Stepper>
+          </Paper>
+
+          {/* Step Content */}
+          <Box>
+            {/* Step 0: Basic Information */}
+            {activeStep === 0 && (
+              <Paper sx={{ p: 4, mb: 3 }}>
+                <Typography variant="h5" gutterBottom>
+                  Basic Information
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  Enter the core details about your survey
+                </Typography>
+                <Grid container spacing={3}>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="Survey Name"
+                      value={surveyData.name}
+                      onChange={(e) => setSurveyData({ ...surveyData, name: e.target.value })}
+                      required
+                      helperText="A descriptive name for your survey"
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="Description"
+                      value={surveyData.description}
+                      onChange={(e) => setSurveyData({ ...surveyData, description: e.target.value })}
+                      multiline
+                      rows={3}
+                      helperText="A brief description of the survey's purpose"
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="Context"
+                      value={surveyData.context}
+                      onChange={(e) => setSurveyData({ ...surveyData, context: e.target.value })}
+                      multiline
+                      rows={3}
+                      helperText="Additional context or instructions for the survey"
+                    />
+                  </Grid>
+                </Grid>
+              </Paper>
+            )}
+
+            {/* Step 1: Categories */}
+            {activeStep === 1 && (
+              <CategoryEditor
+                categories={surveyData.categories}
+                setCategories={(categories) => setSurveyData({ ...surveyData, categories })}
+              />
+            )}
+
+            {/* Step 2: Questions */}
+            {activeStep === 2 && (
+              <QuestionEditor
+                questions={surveyData.questions}
+                setQuestions={(questions) => setSurveyData({ ...surveyData, questions })}
+                categories={surveyData.categories}
+              />
+            )}
+
+            {/* Step 3: Persona Groups */}
+            {activeStep === 3 && (
+              <PersonaGroupEditor
+                personaGroups={surveyData.persona_groups}
+                setPersonaGroups={(persona_groups) => setSurveyData({ ...surveyData, persona_groups })}
+              />
+            )}
+
+            {/* Step 4: Review & Save */}
+            {activeStep === 4 && (
+              <Paper sx={{ p: 4, mb: 3 }}>
+                <Typography variant="h5" gutterBottom>
+                  Review & Save
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  Review your survey configuration before saving
+                </Typography>
+
+                <Grid container spacing={3}>
+                  <Grid item xs={12}>
+                    <Box sx={{ p: 2, backgroundColor: 'background.default', borderRadius: 1 }}>
+                      <Typography variant="subtitle2" gutterBottom>
+                        Survey Name
+                      </Typography>
+                      <Typography variant="body1">{surveyData.name || '(Not set)'}</Typography>
+                    </Box>
+                  </Grid>
+
+                  <Grid item xs={12} md={4}>
+                    <Box sx={{ p: 2, backgroundColor: 'background.default', borderRadius: 1 }}>
+                      <Typography variant="subtitle2" gutterBottom>
+                        Categories
+                      </Typography>
+                      <Typography variant="h4">{surveyData.categories.length}</Typography>
+                    </Box>
+                  </Grid>
+
+                  <Grid item xs={12} md={4}>
+                    <Box sx={{ p: 2, backgroundColor: 'background.default', borderRadius: 1 }}>
+                      <Typography variant="subtitle2" gutterBottom>
+                        Questions
+                      </Typography>
+                      <Typography variant="h4">{surveyData.questions.length}</Typography>
+                    </Box>
+                  </Grid>
+
+                  <Grid item xs={12} md={4}>
+                    <Box sx={{ p: 2, backgroundColor: 'background.default', borderRadius: 1 }}>
+                      <Typography variant="subtitle2" gutterBottom>
+                        Persona Groups
+                      </Typography>
+                      <Typography variant="h4">{surveyData.persona_groups.length}</Typography>
+                    </Box>
+                  </Grid>
+
+                  <Grid item xs={12}>
+                    <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', mt: 2 }}>
+                      <Button
+                        variant="contained"
+                        size="large"
+                        color="success"
+                        startIcon={isLoading ? <CircularProgress size={20} /> : <SaveIcon />}
+                        disabled={isLoading || !filename.trim()}
+                        onClick={() => {
+                          // Generate YAML from current survey data
+                          const yaml = generateYAML(surveyData);
+                          handleSave(yaml);
+                        }}
+                        sx={{ minWidth: 200 }}
+                      >
+                        {isLoading ? 'Saving...' : mode === 'edit' ? 'Update Survey' : 'Save Survey'}
+                      </Button>
+                    </Box>
+                  </Grid>
+                </Grid>
+              </Paper>
+            )}
+
+            {/* Navigation Buttons */}
+            <Paper sx={{ p: 3, mb: 3 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Button
+                  startIcon={<ArrowBackIcon />}
+                  onClick={handleBack}
+                  disabled={activeStep === 0}
+                  variant="outlined"
+                >
+                  Previous
+                </Button>
+
+                <Typography variant="body2" color="text.secondary" sx={{ alignSelf: 'center' }}>
+                  Step {activeStep + 1} of {wizardSteps.length}
+                </Typography>
+
+                {activeStep < wizardSteps.length - 1 ? (
+                  <Button
+                    endIcon={<ArrowForwardIcon />}
+                    onClick={handleNext}
+                    disabled={!canProceedToNextStep()}
+                    variant="contained"
+                  >
+                    Next
+                  </Button>
+                ) : (
+                  <Box sx={{ width: 100 }} />
+                )}
+              </Box>
+            </Paper>
+          </Box>
+        </>
+      )}
+
+      {/* Traditional Tabs View - Only show when NOT in wizard mode */}
+      {!wizardMode && (mode === 'create' || (mode === 'edit' && selectedSurveyId)) && (
         <>
           <Paper sx={{ mb: 3 }}>
             <Tabs value={tabValue} onChange={handleTabChange}>
@@ -554,63 +839,6 @@ const SurveyBuilderPage: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Success Dialog with Next Steps */}
-      <Dialog
-        open={successDialogOpen}
-        onClose={() => setSuccessDialogOpen(false)}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>Survey Created Successfully!</DialogTitle>
-        <DialogContent>
-          <DialogContentText sx={{ mb: 3 }}>
-            Your survey has been created. What would you like to do next?
-          </DialogContentText>
-          <Grid container spacing={2}>
-            <Grid item xs={12}>
-              <Button
-                variant="contained"
-                size="large"
-                fullWidth
-                startIcon={<PlayArrowIcon />}
-                onClick={() => {
-                  setSuccessDialogOpen(false);
-                  navigate(`/runner/${lastCreatedSurveyId}`);
-                }}
-                sx={{ py: 1.5 }}
-              >
-                Run This Survey Now
-              </Button>
-            </Grid>
-            <Grid item xs={6}>
-              <Button
-                variant="outlined"
-                size="large"
-                fullWidth
-                startIcon={<VisibilityIcon />}
-                onClick={() => {
-                  setSuccessDialogOpen(false);
-                  navigate(`/preview/${lastCreatedSurveyId}`);
-                }}
-              >
-                Preview
-              </Button>
-            </Grid>
-            <Grid item xs={6}>
-              <Button
-                variant="outlined"
-                size="large"
-                fullWidth
-                startIcon={<AddIcon />}
-                onClick={() => setSuccessDialogOpen(false)}
-              >
-                Create Another
-              </Button>
-            </Grid>
-          </Grid>
-        </DialogContent>
-      </Dialog>
-
       {/* Snackbar for notifications */}
       <Snackbar
         open={snackbar.open}
@@ -636,10 +864,14 @@ const generateYAML = (data: SurveyBuilderState): string => {
   yaml.push(`  context: "${data.context}"`);
 
   // Demographics
-  yaml.push('  demographics:');
-  data.demographics.forEach(demo => {
-    yaml.push(`    - ${demo}`);
-  });
+  if (data.demographics && data.demographics.length > 0) {
+    yaml.push('  demographics:');
+    data.demographics.forEach(demo => {
+      yaml.push(`    - ${demo}`);
+    });
+  } else {
+    yaml.push('  demographics: []');
+  }
 
   // Categories (if any)
   if (data.categories && data.categories.length > 0) {
@@ -649,6 +881,15 @@ const generateYAML = (data: SurveyBuilderState): string => {
       yaml.push(`      name: "${cat.name}"`);
       yaml.push(`      description: "${cat.description}"`);
       yaml.push(`      context: "${cat.context}"`);
+      if (cat.media_type) {
+        yaml.push(`      media_type: "${cat.media_type}"`);
+      }
+      if (cat.media_url) {
+        yaml.push(`      media_url: "${cat.media_url}"`);
+      }
+      if (cat.media_path) {
+        yaml.push(`      media_path: "${cat.media_path}"`);
+      }
     });
   }
 
@@ -664,6 +905,12 @@ const generateYAML = (data: SurveyBuilderState): string => {
     if (q.categories_compared && q.categories_compared.length > 0) {
       yaml.push(`      categories_compared: [${q.categories_compared.join(', ')}]`);
     }
+    if (q.scale) {
+      yaml.push(`      scale:`);
+      Object.entries(q.scale).forEach(([key, value]) => {
+        yaml.push(`        ${key}: "${value}"`);
+      });
+    }
     if (q.options && q.options.length > 0) {
       yaml.push(`      options:`);
       q.options.forEach(opt => {
@@ -678,25 +925,40 @@ const generateYAML = (data: SurveyBuilderState): string => {
     yaml.push(`    - name: "${pg.name}"`);
     yaml.push(`      description: "${pg.description}"`);
     yaml.push(`      weight: ${pg.weight}`);
-    yaml.push(`      personas:`);
-    pg.personas.forEach(p => {
-      yaml.push(`        - "${p}"`);
-    });
-    yaml.push(`      target_demographics:`);
-    if (pg.target_demographics.gender) {
-      yaml.push(`        gender: [${pg.target_demographics.gender.map(g => `"${g}"`).join(', ')}]`);
+    if (pg.personas && pg.personas.length > 0) {
+      yaml.push(`      personas:`);
+      pg.personas.forEach(p => {
+        yaml.push(`        - "${p}"`);
+      });
+    } else {
+      yaml.push(`      personas: []`);
     }
-    if (pg.target_demographics.age_group) {
-      yaml.push(`        age_group: [${pg.target_demographics.age_group.map(a => `"${a}"`).join(', ')}]`);
-    }
-    if (pg.target_demographics.occupation) {
-      yaml.push(`        occupation: [${pg.target_demographics.occupation.map(o => `"${o}"`).join(', ')}]`);
-    }
-    if (pg.target_demographics.income_level) {
-      yaml.push(`        income_level: [${pg.target_demographics.income_level.map(il => `"${il}"`).join(', ')}]`);
-    }
-    if (pg.target_demographics.tech_comfort_level) {
-      yaml.push(`        tech_comfort_level: [${pg.target_demographics.tech_comfort_level.map(tcl => `"${tcl}"`).join(', ')}]`);
+    const hasTargetDemographics = pg.target_demographics && (
+      pg.target_demographics.gender?.length ||
+      pg.target_demographics.age_group?.length ||
+      pg.target_demographics.occupation?.length ||
+      pg.target_demographics.income_level?.length ||
+      pg.target_demographics.tech_comfort_level?.length
+    );
+    if (hasTargetDemographics) {
+      yaml.push(`      target_demographics:`);
+      if (pg.target_demographics.gender) {
+        yaml.push(`        gender: [${pg.target_demographics.gender.map(g => `"${g}"`).join(', ')}]`);
+      }
+      if (pg.target_demographics.age_group) {
+        yaml.push(`        age_group: [${pg.target_demographics.age_group.map(a => `"${a}"`).join(', ')}]`);
+      }
+      if (pg.target_demographics.occupation) {
+        yaml.push(`        occupation: [${pg.target_demographics.occupation.map(o => `"${o}"`).join(', ')}]`);
+      }
+      if (pg.target_demographics.income_level) {
+        yaml.push(`        income_level: [${pg.target_demographics.income_level.map(il => `"${il}"`).join(', ')}]`);
+      }
+      if (pg.target_demographics.tech_comfort_level) {
+        yaml.push(`        tech_comfort_level: [${pg.target_demographics.tech_comfort_level.map(tcl => `"${tcl}"`).join(', ')}]`);
+      }
+    } else {
+      yaml.push(`      target_demographics: {}`);
     }
   });
 

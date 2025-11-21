@@ -1,0 +1,121 @@
+survey:
+  name: "Lucky Luck Scratch Card - Image Comparison Study"
+  description: "Compare two visual designs for the Lucky Luck scratch card to determine which is more appealing and effective"
+  context: "We are testing two different visual designs for a new scratch card called 'Lucky Luck'. Please carefully review each design and provide your honest opinion about which you prefer."
+  demographics: ["age_group", "gender", "occupation"]
+  categories:
+    - id: design_a
+      name: "Design A - Warm Brown Horse"
+      description: "Version with warm brown/orange colored horse"
+      context: ""
+      media_type: "image"
+      media_url: "http://localhost:8000/uploads/images/6e7f646ec02c49f2b3ba8a6598fac0b2.png"
+      media_path: "uploads/images/6e7f646ec02c49f2b3ba8a6598fac0b2.png"
+    - id: design_b
+      name: "Design B - Cool Gray Donkey"
+      description: "Version with cool gray/taupe colored horse"
+      context: ""
+      media_type: "image"
+      media_url: "http://localhost:8000/uploads/images/0a4fbe2e116786bfcabb29d7e8bd610b.png"
+      media_path: "uploads/images/0a4fbe2e116786bfcabb29d7e8bd610b.png"
+  questions:
+    - id: appeal_a
+      text: "How appealing do you find this scratch card design?"
+      type: likert_5
+      category: design_a
+      scale:
+        1: "Not appealing at all"
+        2: "Slightly appealing"
+        3: "Moderately appealing"
+        4: "Very appealing"
+        5: "Extremely appealing"
+    - id: purchase_intent_a
+      text: "How likely would you be to purchase this scratch card?"
+      type: likert_5
+      category: design_a
+      scale:
+        1: "Very unlikely"
+        2: "Unlikely"
+        3: "Neutral"
+        4: "Likely"
+        5: "Very likely"
+    - id: trustworthy_a
+      text: "Does this design look trustworthy and legitimate?"
+      type: yes_no
+      category: design_a
+    - id: excitement_a
+      text: "How much excitement does this design generate?"
+      type: likert_7
+      category: design_a
+      scale:
+        1: "No excitement"
+        2: "Very little"
+        3: "Little"
+        4: "Moderate"
+        5: "Good"
+        6: "High"
+        7: "Very high excitement"
+    - id: appeal_b
+      text: "How appealing do you find this scratch card design?"
+      type: likert_5
+      category: design_b
+      scale:
+        1: "Not appealing at all"
+        2: "Slightly appealing"
+        3: "Moderately appealing"
+        4: "Very appealing"
+        5: "Extremely appealing"
+    - id: purchase_intent_b
+      text: "How likely would you be to purchase this scratch card?"
+      type: likert_5
+      category: design_b
+      scale:
+        1: "Very unlikely"
+        2: "Unlikely"
+        3: "Neutral"
+        4: "Likely"
+        5: "Very likely"
+    - id: trustworthy_b
+      text: "Does this design look trustworthy and legitimate?"
+      type: yes_no
+      category: design_b
+    - id: excitement_b
+      text: "How much excitement does this design generate?"
+      type: likert_7
+      category: design_b
+      scale:
+        1: "No excitement"
+        2: "Very little"
+        3: "Little"
+        4: "Moderate"
+        5: "Good"
+        6: "High"
+        7: "Very high excitement"
+  persona_groups:
+    - name: "Regular Lottery Players"
+      description: "People who buy scratch cards at least once a month"
+      weight: 0.33
+      personas:
+        - "Regular player who buys scratch cards weekly"
+      target_demographics:
+        gender: ["Male", "Female"]
+        age_group: ["25-34", "35-44", "45-54"]
+        occupation: ["Professional", "Manager", "Technical", "Administrative", "Other"]
+    - name: "Occasional Players"
+      description: "People who buy scratch cards occasionally (few times a year)"
+      weight: 0.33
+      personas:
+        - "Occasional player who buys scratch cards a few times per year"
+      target_demographics:
+        gender: ["Male", "Female"]
+        age_group: ["18-24", "25-34", "35-44"]
+        occupation: ["Student", "Professional", "Service", "Sales", "Administrative", "Other"]
+    - name: "Non-Players"
+      description: "People who have never or rarely bought scratch cards"
+      weight: 0.34
+      personas:
+        - "Person who rarely or never plays lottery games"
+      target_demographics:
+        gender: ["Male", "Female"]
+        age_group: ["18-24", "25-34", "35-44", "45-54"]
+        occupation: ["Student", "Professional", "Technical", "Service", "Administrative", "Other"]

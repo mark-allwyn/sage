@@ -848,7 +848,7 @@ const GroundTruthTestingPage: React.FC = () => {
                                 label="LLM Provider"
                                 onChange={(e) => {
                                   // Update provider and model atomically
-                                  const newProvider = e.target.value as 'openai' | 'anthropic' | 'gemini' | 'ollama';
+                                  const newProvider = e.target.value as 'openai' | 'anthropic';
                                   const newModel = getDefaultModel(newProvider, settings);
                                   setExperimentConfig({
                                     ...experimentConfig,

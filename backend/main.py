@@ -124,7 +124,7 @@ app.add_middleware(
 # ===================
 
 # Setup upload directories
-UPLOAD_DIR = Path("backend/uploads")
+UPLOAD_DIR = Path("uploads")
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 # Subdirectories for different media types
@@ -213,7 +213,7 @@ class ApplySSRRequest(BaseModel):
 class RunSurveyRequest(BaseModel):
     survey_id: str
     num_profiles: int = Field(default=100, ge=10, le=500)
-    llm_provider: str = Field(default="openai", pattern="^(openai|anthropic|ollama)$")
+    llm_provider: str = Field(default="openai", pattern="^(openai|anthropic)$")
     model: str = "gpt-4"
     llm_temperature: float = Field(default=0.7, ge=0.0, le=2.0)
     ssr_temperature: float = Field(default=1.0, ge=0.1, le=5.0)
@@ -225,7 +225,7 @@ class CreateGroundTruthFromSSRRequest(BaseModel):
     name: str
     description: str
     num_profiles: int = Field(default=500, ge=10, le=2000)
-    llm_provider: str = Field(default="openai", pattern="^(openai|anthropic|ollama)$")
+    llm_provider: str = Field(default="openai", pattern="^(openai|anthropic)$")
     model: str = "gpt-4"
     llm_temperature: float = Field(default=0.7, ge=0.0, le=2.0)
     ssr_temperature: float = Field(default=1.0, ge=0.1, le=5.0)
@@ -315,8 +315,6 @@ def load_settings() -> SystemSettings:
         providers={
             "openai": ProviderConfig(enabled=False, api_key=None, models=[]),
             "anthropic": ProviderConfig(enabled=False, api_key=None, models=[]),
-            "gemini": ProviderConfig(enabled=False, api_key=None, models=[]),
-            "ollama": ProviderConfig(enabled=True, api_key=None, models=["gemma3:latest"]),
         }
     )
 
@@ -341,7 +339,6 @@ def get_api_key_for_provider(provider: str) -> Optional[str]:
     env_var_map = {
         "openai": "OPENAI_API_KEY",
         "anthropic": "ANTHROPIC_API_KEY",
-        "gemini": "GEMINI_API_KEY",
     }
 
     if provider in env_var_map:
@@ -749,26 +746,55 @@ async def run_survey_stream(request: RunSurveyRequest):
                 ssr_temperature=request.ssr_temperature,
                 normalize_method=request.normalize_method,
                 num_profiles=request.num_profiles,
-                seed=request.seed
+                seed=request.seed,
+                survey_id=request.survey_id
             )
 
             pipeline = SurveyPipeline(survey, config)
+
+            # Create a thread-safe queue for progress updates
+            import queue
+            progress_queue = queue.Queue()
 
             # Define progress callback for streaming updates
             def progress_callback(progress: PipelineProgress):
                 msg_data = {
                     'status': progress.status,
                     'message': progress.message,
-                    'progress': progress.progress
+                    'progress': progress.progress,
+                    'step': progress.step,
+                    'details': progress.details
                 }
-                # Note: Can't yield from callback, will collect and yield after
-                nonlocal last_progress
-                last_progress = msg_data
+                # Put update in thread-safe queue
+                progress_queue.put(msg_data)
 
-            last_progress = None
+            # Run pipeline in background thread with progress callback
+            async def run_pipeline():
+                return await pipeline.run_async(progress_callback)
 
-            # Run pipeline (currently runs synchronously in background thread)
-            result = await pipeline.run_async()
+            # Start pipeline as background task
+            pipeline_task = asyncio.create_task(run_pipeline())
+
+            # Stream progress updates as they come in
+            while not pipeline_task.done():
+                try:
+                    # Check for progress updates (non-blocking)
+                    msg_data = progress_queue.get_nowait()
+                    yield f"data: {json.dumps(msg_data)}\n\n"
+                except queue.Empty:
+                    # No updates available, yield control and wait a bit
+                    await asyncio.sleep(0.1)
+
+            # Drain any remaining messages after completion
+            while not progress_queue.empty():
+                try:
+                    msg_data = progress_queue.get_nowait()
+                    yield f"data: {json.dumps(msg_data)}\n\n"
+                except queue.Empty:
+                    break
+
+            # Get the pipeline result
+            result = await pipeline_task
 
             # Convert PipelineResult dataclass to dict for JSON serialization
             result_dict = {
@@ -971,8 +997,8 @@ async def get_survey_runs(survey_id: Optional[str] = None):
     if survey_id:
         runs = [run for run in runs if run["survey_id"] == survey_id]
 
-    # Sort by timestamp descending (newest first)
-    runs.sort(key=lambda x: x.get("timestamp", ""), reverse=True)
+    # Sort by timestamp descending (newest first), handling None values
+    runs.sort(key=lambda x: x.get("timestamp") or "", reverse=True)
 
     return runs
 
@@ -1433,6 +1459,55 @@ async def get_settings():
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/api/available-models/{survey_id}")
+async def get_available_models(survey_id: str):
+    """Get available models filtered for survey compatibility (vision support if needed)"""
+    try:
+        from ssr_core.model_validator import ModelValidator
+        import httpx
+
+        # Load survey to check if it has media
+        survey = load_survey(survey_id)
+        has_media = survey.has_media_categories()
+
+        # Load settings to get configured providers
+        settings = load_settings()
+
+        available_models = {}
+
+        for provider, config in settings.providers.items():
+            if not config.enabled:
+                continue
+
+            # For OpenAI/Anthropic, get from settings and filter
+            configured_models = config.models or []
+
+            if has_media:
+                # Only return vision-capable models
+                vision_models = ModelValidator.get_vision_models(provider)
+                models = [m for m in configured_models if m in vision_models] or vision_models
+            else:
+                models = configured_models or ModelValidator.get_vision_models(provider)
+
+            if models:
+                available_models[provider] = {
+                    'models': models,
+                    'enabled': config.enabled
+                }
+
+        return {
+            'survey_id': survey_id,
+            'has_media': has_media,
+            'providers': available_models
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting available models: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.put("/api/settings/provider")
 async def update_provider_settings(request: UpdateProviderRequest):
     """Update settings for a specific provider"""
@@ -1473,8 +1548,6 @@ async def reset_settings():
             providers={
                 "openai": ProviderConfig(enabled=False, api_key=None, models=[]),
                 "anthropic": ProviderConfig(enabled=False, api_key=None, models=[]),
-                "gemini": ProviderConfig(enabled=False, api_key=None, models=[]),
-                "ollama": ProviderConfig(enabled=True, api_key=None, models=["gemma3:latest"]),
             }
         )
 

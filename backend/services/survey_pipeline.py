@@ -36,6 +36,7 @@ class PipelineConfig:
     num_profiles: int = 50
     seed: int = 100
     max_concurrent: int = DEFAULT_MAX_CONCURRENT
+    survey_id: str = "unknown"  # Survey ID for tracking
 
 
 @dataclass
@@ -201,7 +202,7 @@ class SurveyPipeline:
 
         result = PipelineResult(
             run_id=run_id,
-            survey_id=self.survey.id if hasattr(self.survey, 'id') else 'unknown',
+            survey_id=self.config.survey_id,
             survey_name=self.survey.name,
             timestamp=datetime.now().isoformat(),
             num_profiles=len(profiles),

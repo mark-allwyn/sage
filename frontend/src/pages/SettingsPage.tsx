@@ -47,8 +47,6 @@ import {
   LLM_PROVIDERS,
   OPENAI_MODELS,
   ANTHROPIC_MODELS,
-  GEMINI_MODELS,
-  OLLAMA_MODELS,
   LLMProvider,
   ProviderConfig,
 } from '../services/types';
@@ -62,15 +60,11 @@ const SettingsPage: React.FC = () => {
   const [providers, setProviders] = useState<{ [key in LLMProvider]: ProviderConfig }>({
     openai: { enabled: false, api_key: '', models: [] },
     anthropic: { enabled: false, api_key: '', models: [] },
-    gemini: { enabled: false, api_key: '', models: [] },
-    ollama: { enabled: true, api_key: '', models: ['gemma3:latest'] },
   });
 
   const [showApiKeys, setShowApiKeys] = useState<{ [key in LLMProvider]: boolean }>({
     openai: false,
     anthropic: false,
-    gemini: false,
-    ollama: false,
   });
 
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
@@ -88,10 +82,6 @@ const SettingsPage: React.FC = () => {
         return OPENAI_MODELS;
       case 'anthropic':
         return ANTHROPIC_MODELS;
-      case 'gemini':
-        return GEMINI_MODELS;
-      case 'ollama':
-        return OLLAMA_MODELS;
       default:
         return [];
     }
@@ -162,7 +152,6 @@ const SettingsPage: React.FC = () => {
   const getProviderStatus = (provider: LLMProvider): 'active' | 'configured' | 'disabled' => {
     const config = providers[provider];
     if (!config.enabled) return 'disabled';
-    if (provider === 'ollama') return 'active'; // Ollama doesn't need API key
 
     // Check if API key is masked (from backend)
     if (config.api_key && config.api_key.length > 0 && !config.api_key.startsWith('****')) {
@@ -337,9 +326,8 @@ const SettingsPage: React.FC = () => {
                 </AccordionSummary>
                 <AccordionDetails>
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                    {/* API Key Input (not for Ollama) */}
-                    {provider.value !== 'ollama' && (
-                      <TextField
+                    {/* API Key Input */}
+                    <TextField
                         fullWidth
                         label="API Key"
                         type={showApiKeys[provider.value] ? 'text' : 'password'}
@@ -366,7 +354,6 @@ const SettingsPage: React.FC = () => {
                           ),
                         }}
                       />
-                    )}
 
                     {/* Model Selection */}
                     <FormControl fullWidth disabled={!config.enabled}>
@@ -424,21 +411,6 @@ const SettingsPage: React.FC = () => {
                       {updateProvider.isPending ? 'Saving...' : `Save ${provider.label} Settings`}
                     </Button>
 
-                    {/* Provider-specific notes */}
-                    {provider.value === 'ollama' && (
-                      <Alert severity="info">
-                        <Typography variant="body2">
-                          Ollama runs locally and doesn't require an API key. Make sure Ollama is running and the selected models are downloaded.
-                        </Typography>
-                      </Alert>
-                    )}
-                    {provider.value === 'gemini' && (
-                      <Alert severity="info">
-                        <Typography variant="body2">
-                          Get your Gemini API key from <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer">Google AI Studio</a>
-                        </Typography>
-                      </Alert>
-                    )}
                   </Box>
                 </AccordionDetails>
               </Accordion>

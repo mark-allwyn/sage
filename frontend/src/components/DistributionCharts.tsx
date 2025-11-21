@@ -77,7 +77,15 @@ const DistributionCharts: React.FC<DistributionChartsProps> = ({
     if (!survey) return null;
 
     const question = survey.questions.find(q => q.id === questionId);
-    if (!question || !question.scale) return null;
+    if (!question) return null;
+
+    // Handle yes_no questions specially
+    if (question.type === 'yes_no') {
+      return ['No', 'Yes'];
+    }
+
+    // For other question types, use the scale
+    if (!question.scale) return null;
 
     const scaleEntries = Object.entries(question.scale)
       .sort(([keyA], [keyB]) => Number(keyA) - Number(keyB));

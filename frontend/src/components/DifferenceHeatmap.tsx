@@ -55,7 +55,15 @@ const DifferenceHeatmap: React.FC<DifferenceHeatmapProps> = ({
     if (!survey) return null;
 
     const question = survey.questions.find(q => q.id === questionId);
-    if (!question || !question.scale) return null;
+    if (!question) return null;
+
+    // Handle yes_no questions specially
+    if (question.type === 'yes_no') {
+      return ['No', 'Yes'];
+    }
+
+    // For other question types, use the scale
+    if (!question.scale) return null;
 
     const scaleEntries = Object.entries(question.scale)
       .sort(([keyA], [keyB]) => Number(keyA) - Number(keyB));
@@ -371,8 +379,8 @@ const DifferenceHeatmap: React.FC<DifferenceHeatmapProps> = ({
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
         Each heatmap shows the difference (Experiment - Ground Truth) for each rating value.
-        Positive values (warmer colors) mean experiment rated higher, negative values (cooler would mean lower).
-        Smaller differences indicate better alignment.
+        Green colors indicate small differences (good alignment), while red/orange colors indicate large differences (poor alignment).
+        Positive values (+) mean the experiment rated higher than ground truth; negative values (-) mean it rated lower.
       </Typography>
 
       <Grid container spacing={3}>

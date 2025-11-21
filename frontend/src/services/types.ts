@@ -113,7 +113,7 @@ export interface GenerateProfilesRequest {
 export interface GenerateResponsesRequest {
   survey_id: string;
   profiles: RespondentProfile[];
-  llm_provider: 'openai' | 'anthropic' | 'ollama' | 'gemini';
+  llm_provider: 'openai' | 'anthropic';
   model: string;
   temperature: number;
 }
@@ -128,7 +128,7 @@ export interface ApplySSRRequest {
 export interface RunSurveyRequest {
   survey_id: string;
   num_profiles: number;
-  llm_provider: 'openai' | 'anthropic' | 'ollama' | 'gemini';
+  llm_provider: 'openai' | 'anthropic';
   model: string;
   llm_temperature: number;
   ssr_temperature: number;
@@ -186,7 +186,7 @@ export interface SurveyBuilderState {
 export interface RunSurveyConfig {
   survey_id: string;
   num_profiles: number;
-  llm_provider: 'openai' | 'anthropic' | 'ollama' | 'gemini';
+  llm_provider: 'openai' | 'anthropic';
   model: string;
   llm_temperature: number;
   ssr_temperature: number;
@@ -210,13 +210,11 @@ export const QUESTION_TYPES: { value: QuestionType; label: string }[] = [
   { value: 'preference_scale', label: 'Preference Scale (Comparative)' },
 ];
 
-export type LLMProvider = 'openai' | 'anthropic' | 'ollama' | 'gemini';
+export type LLMProvider = 'openai' | 'anthropic';
 
 export const LLM_PROVIDERS: { value: LLMProvider; label: string }[] = [
   { value: 'openai', label: 'OpenAI' },
   { value: 'anthropic', label: 'Anthropic (Claude)' },
-  { value: 'gemini', label: 'Google Gemini' },
-  { value: 'ollama', label: 'Ollama (Local)' },
 ];
 
 export const OPENAI_MODELS = [
@@ -236,22 +234,6 @@ export const ANTHROPIC_MODELS = [
   { value: 'claude-3-opus-20240229', label: 'Claude 3 Opus', supportsVision: true },
 ];
 
-export const GEMINI_MODELS = [
-  { value: 'gemini-2.0-flash-exp', label: 'Gemini 2.0 Flash (Latest, Experimental)', supportsVision: true },
-  { value: 'gemini-1.5-pro-latest', label: 'Gemini 1.5 Pro (Most Capable)', supportsVision: true },
-  { value: 'gemini-1.5-flash-latest', label: 'Gemini 1.5 Flash (Fast & Efficient)', supportsVision: true },
-  { value: 'gemini-1.5-flash-8b', label: 'Gemini 1.5 Flash 8B (Ultra Fast)', supportsVision: true },
-];
-
-export const OLLAMA_MODELS = [
-  { value: 'gemma3:27b', label: 'Gemma 3 27B (Highest Quality)', supportsVision: false },
-  { value: 'gemma3:latest', label: 'Gemma 3 4B (Balanced)', supportsVision: false },
-  { value: 'gemma3:1b', label: 'Gemma 3 1B (Fast)', supportsVision: false },
-  { value: 'llama3.2:latest', label: 'Llama 3.2 3B', supportsVision: false },
-  { value: 'llama3.2-vision:11b', label: 'Llama 3.2 Vision 11B', supportsVision: true },
-  { value: 'qwen3:latest', label: 'Qwen 3 5.2B', supportsVision: false },
-];
-
 // Helper function to check if a model supports vision
 export const isVisionCapableModel = (provider: LLMProvider, model: string): boolean => {
   let models;
@@ -259,10 +241,8 @@ export const isVisionCapableModel = (provider: LLMProvider, model: string): bool
     models = OPENAI_MODELS;
   } else if (provider === 'anthropic') {
     models = ANTHROPIC_MODELS;
-  } else if (provider === 'gemini') {
-    models = GEMINI_MODELS;
   } else {
-    models = OLLAMA_MODELS;
+    return false;
   }
   const modelInfo = models.find(m => m.value === model);
   return modelInfo?.supportsVision || false;
@@ -364,7 +344,7 @@ export interface CreateGroundTruthFromSSRRequest {
   name: string;
   description: string;
   num_profiles: number;
-  llm_provider: 'openai' | 'anthropic' | 'ollama' | 'gemini';
+  llm_provider: 'openai' | 'anthropic';
   model: string;
   llm_temperature: number;
   ssr_temperature: number;
@@ -449,8 +429,6 @@ export interface SystemSettings {
   providers: {
     openai: ProviderConfig;
     anthropic: ProviderConfig;
-    gemini: ProviderConfig;
-    ollama: ProviderConfig;
   };
 }
 

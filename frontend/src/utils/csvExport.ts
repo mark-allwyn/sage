@@ -56,62 +56,162 @@ export function downloadCSV(csvContent: string, filename: string): void {
  * Export survey run data to CSV
  */
 export function exportSurveyRunToCSV(run: any, survey: any): void {
-  const data: any[] = [];
+  console.log('exportSurveyRunToCSV called with:', { run, survey });
 
-  // Flatten distributions into rows
-  Object.entries(run.distributions || {}).forEach(([questionKey, dist]: [string, any]) => {
-    // Find the question details
-    const question = survey.questions.find((q: any) =>
-      q.question_id === questionKey ||
-      `${q.category_id}_${q.question_id}` === questionKey
-    );
-
-    // Get demographic groups
-    const demoGroups = Object.keys(dist.by_demographics || {});
-
-    demoGroups.forEach(demoKey => {
-      const demographics = dist.by_demographics[demoKey];
-      const probability = demographics.probabilities;
-
-      // Parse demographic key (format: "age:18-24,income:low")
-      const demoObj: any = {};
-      demoKey.split(',').forEach(pair => {
-        const [key, value] = pair.split(':');
-        demoObj[key] = value;
-      });
-
-      // Create row
-      const row = {
-        run_id: run.run_id,
-        survey_id: run.survey_id,
-        survey_name: run.survey_name || survey.name,
-        question_id: questionKey,
-        question_text: question?.question_text || questionKey,
-        question_type: question?.question_type || 'rating',
-        category: question?.category_id || '',
-        ...demoObj,
-        mode: demographics.mode,
-        expected_value: demographics.expected_value?.toFixed(4) || '',
-        entropy: demographics.entropy?.toFixed(4) || '',
-        ...Object.fromEntries(
-          Object.entries(probability).map(([option, prob]: [string, any]) =>
-            [`prob_${option}`, typeof prob === 'number' ? prob.toFixed(4) : prob]
-          )
-        ),
-      };
-
-      data.push(row);
-    });
-  });
-
-  if (data.length === 0) {
-    console.warn('No data to export');
+  if (!run) {
+    console.error('No run data provided to CSV export');
+    alert('Cannot export: No run data available');
     return;
   }
 
+  if (!survey) {
+    console.error('No survey data provided to CSV export');
+    alert('Cannot export: No survey data available');
+    return;
+  }
+
+  const data: any[] = [];
+
+  // Check if distributions are nested by category or flat
+  const distributions = run.distributions || {};
+  const firstKey = Object.keys(distributions)[0];
+  const isNestedByCategory = firstKey && distributions[firstKey] &&
+    typeof distributions[firstKey] === 'object' &&
+    !Array.isArray(distributions[firstKey]) &&
+    !distributions[firstKey].by_demographics;
+
+  if (isNestedByCategory) {
+    // Handle nested format: category -> question -> respondent -> probabilities
+    Object.entries(distributions).forEach(([categoryKey, categoryData]: [string, any]) => {
+      Object.entries(categoryData || {}).forEach(([questionKey, questionData]: [string, any]) => {
+        // Find the question details
+        const question = survey.questions.find((q: any) =>
+          q.id === questionKey || q.question_id === questionKey
+        );
+
+        // Each respondent has their own probabilities
+        Object.entries(questionData || {}).forEach(([respondentId, respData]: [string, any]) => {
+          if (!respData || !respData.probabilities) return;
+
+          const row: any = {
+            run_id: run.run_id,
+            survey_id: run.survey_id,
+            survey_name: run.survey_name || survey.name,
+            category: categoryKey,
+            question_id: questionKey,
+            question_text: question?.text || question?.question_text || questionKey,
+            question_type: question?.type || question?.question_type || 'rating',
+            respondent_id: respondentId,
+          };
+
+          // Build option labels array for this question
+          const optionLabels: string[] = [];
+          if (question) {
+            if (question.type === 'multiple_choice' && question.options) {
+              optionLabels.push(...question.options);
+            } else if (question.type === 'yes_no') {
+              optionLabels.push('No', 'Yes');
+            } else if ((question.type === 'likert_5' || question.type === 'likert_7' || question.type === 'preference_scale') && question.scale) {
+              // Extract labels from scale object in order
+              const numOptions = question.type === 'likert_5' ? 5 : question.type === 'likert_7' ? 7 : Object.keys(question.scale).length;
+              for (let i = 1; i <= numOptions; i++) {
+                optionLabels.push(question.scale[i.toString()] || `Option ${i}`);
+              }
+            }
+          }
+
+          // Add option labels as a single column (pipe-separated for readability)
+          row.option_labels = optionLabels.join(' | ');
+
+          // Add probability columns (stable column names)
+          if (Array.isArray(respData.probabilities)) {
+            respData.probabilities.forEach((prob: number, idx: number) => {
+              row[`prob_${idx + 1}`] = typeof prob === 'number' ? prob.toFixed(4) : prob;
+            });
+          }
+
+          data.push(row);
+        });
+      });
+    });
+  } else {
+    // Handle flat format: question -> by_demographics -> demographic_key -> probabilities
+    Object.entries(distributions).forEach(([questionKey, dist]: [string, any]) => {
+      // Find the question details
+      const question = survey.questions.find((q: any) =>
+        q.question_id === questionKey ||
+        `${q.category_id}_${q.question_id}` === questionKey
+      );
+
+      // Get demographic groups
+      const demoGroups = Object.keys(dist.by_demographics || {});
+
+      demoGroups.forEach(demoKey => {
+        const demographics = dist.by_demographics[demoKey];
+        const probability = demographics.probabilities;
+
+        // Parse demographic key (format: "age:18-24,income:low")
+        const demoObj: any = {};
+        demoKey.split(',').forEach(pair => {
+          const [key, value] = pair.split(':');
+          demoObj[key] = value;
+        });
+
+        // Build option labels array for this question
+        const optionLabels: string[] = [];
+        if (question) {
+          if (question.question_type === 'multiple_choice' && question.options) {
+            optionLabels.push(...question.options);
+          } else if (question.question_type === 'yes_no') {
+            optionLabels.push('No', 'Yes');
+          } else if ((question.question_type === 'likert_5' || question.question_type === 'likert_7' || question.question_type === 'preference_scale') && question.scale) {
+            // Extract labels from scale object in order
+            const numOptions = question.question_type === 'likert_5' ? 5 : question.question_type === 'likert_7' ? 7 : Object.keys(question.scale).length;
+            for (let i = 1; i <= numOptions; i++) {
+              optionLabels.push(question.scale[i.toString()] || `Option ${i}`);
+            }
+          }
+        }
+
+        // Create probability columns (stable column names)
+        const probColumns: any = {};
+        Object.entries(probability).forEach(([option, prob]: [string, any]) => {
+          probColumns[`prob_${option}`] = typeof prob === 'number' ? prob.toFixed(4) : prob;
+        });
+
+        const row = {
+          run_id: run.run_id,
+          survey_id: run.survey_id,
+          survey_name: run.survey_name || survey.name,
+          question_id: questionKey,
+          question_text: question?.question_text || questionKey,
+          question_type: question?.question_type || 'rating',
+          category: question?.category_id || '',
+          option_labels: optionLabels.join(' | '),
+          ...demoObj,
+          mode: demographics.mode,
+          expected_value: demographics.expected_value?.toFixed(4) || '',
+          entropy: demographics.entropy?.toFixed(4) || '',
+          ...probColumns,
+        };
+
+        data.push(row);
+      });
+    });
+  }
+
+  if (data.length === 0) {
+    console.warn('No data to export - distributions may be empty');
+    console.log('Run distributions:', run.distributions);
+    alert('Cannot export: No distribution data available in this survey run');
+    return;
+  }
+
+  console.log(`Exporting ${data.length} rows to CSV`);
   const csv = convertToCSV(data);
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
   downloadCSV(csv, `survey_run_${run.run_id}_${timestamp}.csv`);
+  console.log('CSV export completed successfully');
 }
 
 /**
