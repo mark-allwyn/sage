@@ -29,7 +29,11 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from '@mui/material';
+import { ExpandMore as ExpandMoreIcon } from '@mui/icons-material';
 import { CreateGroundTruthFromSSRRequest } from '../services/types';
 import { getDefaultModel } from '../utils/providerFilters';
 
@@ -117,7 +121,7 @@ const SSRGenerationDialog: React.FC<SSRGenerationDialogProps> = ({
               </Typography>
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12}>
               <TextField
                 label="Number of Profiles"
                 type="number"
@@ -132,88 +136,99 @@ const SSRGenerationDialog: React.FC<SSRGenerationDialogProps> = ({
               />
             </Grid>
 
-            <Grid item xs={12} md={6}>
-              <TextField
-                label="Random Seed"
-                type="number"
-                fullWidth
-                required
-                value={ssrConfig.seed}
-                onChange={(e) => onConfigChange({ ...ssrConfig, seed: parseInt(e.target.value) })}
-                inputProps={{ min: 0, max: 10000 }}
-                helperText="For reproducibility"
-              />
-            </Grid>
+            <Grid item xs={12}>
+              <Accordion defaultExpanded={false}>
+                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                  <Typography variant="subtitle2">Advanced Settings</Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} md={6}>
+                      <FormControl fullWidth required disabled={enabledProviders.length === 0}>
+                        <InputLabel>LLM Provider</InputLabel>
+                        <Select
+                          value={ssrConfig.llm_provider}
+                          label="LLM Provider"
+                          onChange={(e) => {
+                            // Update provider and model atomically
+                            const newProvider = e.target.value as 'openai' | 'anthropic';
+                            const newModel = getDefaultModel(newProvider, settings);
+                            onConfigChange({
+                              ...ssrConfig,
+                              llm_provider: newProvider,
+                              model: newModel || ''
+                            });
+                          }}
+                        >
+                          {enabledProviders.map((provider) => (
+                            <MenuItem key={provider.value} value={provider.value}>
+                              {provider.label}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    </Grid>
 
-            <Grid item xs={12} md={6}>
-              <FormControl fullWidth required disabled={enabledProviders.length === 0}>
-                <InputLabel>LLM Provider</InputLabel>
-                <Select
-                  value={ssrConfig.llm_provider}
-                  label="LLM Provider"
-                  onChange={(e) => {
-                    // Update provider and model atomically
-                    const newProvider = e.target.value as 'openai' | 'anthropic' | 'gemini' | 'ollama';
-                    const newModel = getDefaultModel(newProvider, settings);
-                    onConfigChange({
-                      ...ssrConfig,
-                      llm_provider: newProvider,
-                      model: newModel || ''
-                    });
-                  }}
-                >
-                  {enabledProviders.map((provider) => (
-                    <MenuItem key={provider.value} value={provider.value}>
-                      {provider.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
+                    <Grid item xs={12} md={6}>
+                      <FormControl fullWidth required disabled={enabledModels.length === 0}>
+                        <InputLabel>Model</InputLabel>
+                        <Select
+                          value={ssrConfig.model}
+                          label="Model"
+                          onChange={(e) => onConfigChange({ ...ssrConfig, model: e.target.value })}
+                        >
+                          {enabledModels.map((model) => (
+                            <MenuItem key={model.value} value={model.value}>
+                              {model.label}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    </Grid>
 
-            <Grid item xs={12} md={6}>
-              <FormControl fullWidth required disabled={enabledModels.length === 0}>
-                <InputLabel>Model</InputLabel>
-                <Select
-                  value={ssrConfig.model}
-                  label="Model"
-                  onChange={(e) => onConfigChange({ ...ssrConfig, model: e.target.value })}
-                >
-                  {enabledModels.map((model) => (
-                    <MenuItem key={model.value} value={model.value}>
-                      {model.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
+                    <Grid item xs={12} md={4}>
+                      <TextField
+                        label="LLM Temperature"
+                        type="number"
+                        fullWidth
+                        required
+                        value={ssrConfig.llm_temperature}
+                        onChange={(e) =>
+                          onConfigChange({ ...ssrConfig, llm_temperature: parseFloat(e.target.value) })
+                        }
+                        inputProps={{ min: 0, max: 2, step: 0.1 }}
+                      />
+                    </Grid>
 
-            <Grid item xs={12} md={4}>
-              <TextField
-                label="LLM Temperature"
-                type="number"
-                fullWidth
-                required
-                value={ssrConfig.llm_temperature}
-                onChange={(e) =>
-                  onConfigChange({ ...ssrConfig, llm_temperature: parseFloat(e.target.value) })
-                }
-                inputProps={{ min: 0, max: 2, step: 0.1 }}
-              />
-            </Grid>
+                    <Grid item xs={12} md={4}>
+                      <TextField
+                        label="SSR Temperature"
+                        type="number"
+                        fullWidth
+                        required
+                        value={ssrConfig.ssr_temperature}
+                        onChange={(e) =>
+                          onConfigChange({ ...ssrConfig, ssr_temperature: parseFloat(e.target.value) })
+                        }
+                        inputProps={{ min: 0.1, max: 5, step: 0.1 }}
+                      />
+                    </Grid>
 
-            <Grid item xs={12} md={4}>
-              <TextField
-                label="SSR Temperature"
-                type="number"
-                fullWidth
-                required
-                value={ssrConfig.ssr_temperature}
-                onChange={(e) =>
-                  onConfigChange({ ...ssrConfig, ssr_temperature: parseFloat(e.target.value) })
-                }
-                inputProps={{ min: 0.1, max: 5, step: 0.1 }}
-              />
+                    <Grid item xs={12} md={4}>
+                      <TextField
+                        label="Random Seed"
+                        type="number"
+                        fullWidth
+                        required
+                        value={ssrConfig.seed}
+                        onChange={(e) => onConfigChange({ ...ssrConfig, seed: parseInt(e.target.value) })}
+                        inputProps={{ min: 0, max: 10000 }}
+                        helperText="For reproducibility"
+                      />
+                    </Grid>
+                  </Grid>
+                </AccordionDetails>
+              </Accordion>
             </Grid>
           </Grid>
 

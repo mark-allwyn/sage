@@ -51,7 +51,7 @@ const SystemOverviewPage: React.FC = () => {
     <Box>
       <PageHeader
         title="System Overview"
-        subtitle="Understanding the SSR Pipeline workflow and technical architecture"
+        subtitle="Understanding S.A.G.E: Synthetic Audience Generation Engine - Workflow, architecture, and statistical metrics"
         icon={<InfoIcon sx={{ fontSize: 28 }} />}
       />
 

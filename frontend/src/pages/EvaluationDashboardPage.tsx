@@ -118,8 +118,6 @@ const EvaluationDashboardPage: React.FC = () => {
   const enabledProviders = getEnabledProviders(settings);
   const enabledOpenAIModels = getEnabledModelsForProvider('openai', settings);
   const enabledAnthropicModels = getEnabledModelsForProvider('anthropic', settings);
-  const enabledGeminiModels = getEnabledModelsForProvider('gemini', settings);
-  const enabledOllamaModels = getEnabledModelsForProvider('ollama', settings);
 
   // Mutations
   const compareMutation = useCompareEvaluations();
@@ -206,10 +204,19 @@ const EvaluationDashboardPage: React.FC = () => {
     setOpenCompareDialog(true);
   };
 
-  const getScoreColor = (score: number): string => {
-    if (score >= 0.8) return 'success';
-    if (score >= 0.6) return 'warning';
-    return 'error';
+  const getScoreColor = (score: number, metricName?: string): string => {
+    // For bias and hallucination, lower scores are better (inverted)
+    const isInvertedMetric = metricName && ['bias', 'hallucination'].includes(metricName.toLowerCase());
+
+    if (isInvertedMetric) {
+      if (score <= 0.2) return 'success';
+      if (score <= 0.4) return 'warning';
+      return 'error';
+    } else {
+      if (score >= 0.8) return 'success';
+      if (score >= 0.6) return 'warning';
+      return 'error';
+    }
   };
 
   const formatTimestamp = (timestamp: string): string => {
@@ -225,10 +232,19 @@ const EvaluationDashboardPage: React.FC = () => {
     return explanations[metricName.toLowerCase()] || 'No description available';
   };
 
-  const getScoreInterpretation = (score: number): string => {
-    if (score >= 0.8) return 'Excellent - High quality response';
-    if (score >= 0.6) return 'Good - Acceptable quality with room for improvement';
-    return 'Needs Improvement - Review and refine prompts or model settings';
+  const getScoreInterpretation = (score: number, metricName?: string): string => {
+    // For bias and hallucination, lower scores are better
+    const isInvertedMetric = metricName && ['bias', 'hallucination'].includes(metricName.toLowerCase());
+
+    if (isInvertedMetric) {
+      if (score <= 0.2) return 'Excellent - Minimal issues detected';
+      if (score <= 0.4) return 'Good - Acceptable quality with minor issues';
+      return 'Needs Improvement - Review and refine prompts or model settings';
+    } else {
+      if (score >= 0.8) return 'Excellent - High quality response';
+      if (score >= 0.6) return 'Good - Acceptable quality with room for improvement';
+      return 'Needs Improvement - Review and refine prompts or model settings';
+    }
   };
 
   return (
@@ -564,18 +580,6 @@ const EvaluationDashboardPage: React.FC = () => {
                           {model.label}
                         </MenuItem>
                       ))}
-                      {enabledGeminiModels.length > 0 && <MenuItem disabled>Google Gemini</MenuItem>}
-                      {enabledGeminiModels.map((model) => (
-                        <MenuItem key={model.value} value={model.value}>
-                          {model.label}
-                        </MenuItem>
-                      ))}
-                      {enabledOllamaModels.length > 0 && <MenuItem disabled>Ollama</MenuItem>}
-                      {enabledOllamaModels.map((model) => (
-                        <MenuItem key={model.value} value={model.value}>
-                          {model.label}
-                        </MenuItem>
-                      ))}
                       {enabledProviders.length === 0 && (
                         <MenuItem disabled>No providers enabled - check Settings</MenuItem>
                       )}
@@ -726,7 +730,7 @@ const EvaluationDashboardPage: React.FC = () => {
                         <LinearProgress
                           variant="determinate"
                           value={scores.mean * 100}
-                          color={getScoreColor(scores.mean) as any}
+                          color={getScoreColor(scores.mean, metricName) as any}
                           sx={{ flexGrow: 1, height: 8, borderRadius: 1 }}
                         />
                         <Typography variant="body2" fontWeight="bold">
@@ -737,7 +741,7 @@ const EvaluationDashboardPage: React.FC = () => {
                         Min: {(scores.min * 100).toFixed(1)}% | Max: {(scores.max * 100).toFixed(1)}% | Count: {scores.count}
                       </Typography>
                       <Typography variant="caption" display="block" color="text.secondary" sx={{ mt: 0.5, fontStyle: 'italic' }}>
-                        {getScoreInterpretation(scores.mean)}
+                        {getScoreInterpretation(scores.mean, metricName)}
                       </Typography>
                     </Paper>
                   </Grid>
@@ -819,7 +823,7 @@ const EvaluationDashboardPage: React.FC = () => {
                                   <Chip
                                     label={`${(metricData.score * 100).toFixed(1)}%`}
                                     size="small"
-                                    color={getScoreColor(metricData.score) as any}
+                                    color={getScoreColor(metricData.score, metricName) as any}
                                   />
                                 </Box>
                                 {metricData.reason && (
@@ -922,7 +926,7 @@ const EvaluationDashboardPage: React.FC = () => {
                                     <LinearProgress
                                       variant="determinate"
                                       value={metricData.mean * 100}
-                                      color={getScoreColor(metricData.mean) as any}
+                                      color={getScoreColor(metricData.mean, metricName) as any}
                                       sx={{ width: 80, height: 6, borderRadius: 1 }}
                                     />
                                     <Typography variant="body2" fontWeight="bold" sx={{ minWidth: 50 }}>
@@ -975,7 +979,7 @@ const EvaluationDashboardPage: React.FC = () => {
                                   <LinearProgress
                                     variant="determinate"
                                     value={metricData.mean * 100}
-                                    color={getScoreColor(metricData.mean) as any}
+                                    color={getScoreColor(metricData.mean, metricName) as any}
                                     sx={{ width: 80, height: 6, borderRadius: 1 }}
                                   />
                                   <Typography variant="body2" fontWeight="bold" sx={{ minWidth: 50 }}>
