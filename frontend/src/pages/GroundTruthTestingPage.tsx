@@ -61,8 +61,9 @@ import {
   ExpandLess as ExpandLessIcon,
   Casino as CasinoIcon,
 } from '@mui/icons-material';
-import DistributionCharts from '../components/DistributionCharts';
-import DifferenceHeatmap from '../components/DifferenceHeatmap';
+import ComparisonResults from '../components/ComparisonResults';
+import SSRGenerationDialog from '../components/SSRGenerationDialog';
+import CSVUploadDialog from '../components/CSVUploadDialog';
 import {
   useSurveys,
   useSurvey,
@@ -432,13 +433,6 @@ const GroundTruthTestingPage: React.FC = () => {
 
   const formatDate = (timestamp: string) => {
     return new Date(timestamp).toLocaleString();
-  };
-
-  const formatMetric = (value: number | null | undefined): string => {
-    if (value === null || value === undefined || isNaN(value)) {
-      return 'N/A';
-    }
-    return value.toFixed(4);
   };
 
   const steps = [
@@ -1116,268 +1110,11 @@ const GroundTruthTestingPage: React.FC = () => {
                   compact
                 />
               ) : (
-                <Box>
-                  {/* Header Information */}
-                  <Paper sx={{ p: 3, mb: 3 }} variant="outlined">
-                    <Typography variant="h6" gutterBottom>
-                      Comparison Summary
-                    </Typography>
-                    <Grid container spacing={2}>
-                      <Grid item xs={12} md={4}>
-                        <Typography variant="caption" color="text.secondary">
-                          Run ID
-                        </Typography>
-                        <Typography variant="body2" fontFamily="monospace">
-                          {comparisonResults.run_id}
-                        </Typography>
-                      </Grid>
-                      <Grid item xs={12} md={4}>
-                        <Typography variant="caption" color="text.secondary">
-                          Ground Truth
-                        </Typography>
-                        <Typography variant="body2">
-                          {groundTruths?.find(gt => gt.id === comparisonResults.ground_truth_id)?.name}
-                        </Typography>
-                      </Grid>
-                      <Grid item xs={12} md={4}>
-                        <Typography variant="caption" color="text.secondary">
-                          Survey
-                        </Typography>
-                        <Typography variant="body2">{survey?.name}</Typography>
-                      </Grid>
-                    </Grid>
-                  </Paper>
-
-                  {/* Overall Metrics */}
-                  <Paper sx={{ p: 3, mb: 3 }} variant="outlined">
-                    <Typography variant="h6" gutterBottom>
-                      Overall Metrics
-                    </Typography>
-                    <Divider sx={{ mb: 2 }} />
-                    <Grid container spacing={2}>
-                      <Grid item xs={12} md={3}>
-                        <Card variant="outlined">
-                          <CardContent>
-                            <Typography variant="caption" color="text.secondary" gutterBottom>
-                              Mean KL Divergence
-                            </Typography>
-                            <Typography variant="h5">
-                              {formatMetric(comparisonResults.comparison.overall_metrics.mean_kl_divergence)}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              ± {formatMetric(comparisonResults.comparison.overall_metrics.std_kl_divergence)}
-                            </Typography>
-                          </CardContent>
-                        </Card>
-                      </Grid>
-                      <Grid item xs={12} md={3}>
-                        <Card variant="outlined">
-                          <CardContent>
-                            <Typography variant="caption" color="text.secondary" gutterBottom>
-                              Mean JS Divergence
-                            </Typography>
-                            <Typography variant="h5">
-                              {formatMetric(comparisonResults.comparison.overall_metrics.mean_js_divergence)}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              ± {formatMetric(comparisonResults.comparison.overall_metrics.std_js_divergence)}
-                            </Typography>
-                          </CardContent>
-                        </Card>
-                      </Grid>
-                      <Grid item xs={12} md={3}>
-                        <Card variant="outlined">
-                          <CardContent>
-                            <Typography variant="caption" color="text.secondary" gutterBottom>
-                              Mean Wasserstein
-                            </Typography>
-                            <Typography variant="h5">
-                              {formatMetric(comparisonResults.comparison.overall_metrics.mean_wasserstein)}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              ± {formatMetric(comparisonResults.comparison.overall_metrics.std_wasserstein)}
-                            </Typography>
-                          </CardContent>
-                        </Card>
-                      </Grid>
-                      <Grid item xs={12} md={3}>
-                        <Card variant="outlined">
-                          <CardContent>
-                            <Typography variant="caption" color="text.secondary" gutterBottom>
-                              Mean Absolute Error
-                            </Typography>
-                            <Typography variant="h5">
-                              {formatMetric(comparisonResults.comparison.overall_metrics.mean_mae)}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              ± {formatMetric(comparisonResults.comparison.overall_metrics.std_mae)}
-                            </Typography>
-                          </CardContent>
-                        </Card>
-                      </Grid>
-                      <Grid item xs={12}>
-                        <Alert severity="info">
-                          Compared {comparisonResults.comparison.overall_metrics.num_questions_compared} questions.
-                          Lower values indicate better similarity to ground truth.
-                        </Alert>
-                      </Grid>
-                    </Grid>
-                  </Paper>
-
-                  {/* By Category Metrics */}
-                  {Object.keys(comparisonResults.comparison.by_category || {}).length > 0 && (
-                    <Paper sx={{ p: 3, mb: 3 }} variant="outlined">
-                      <Typography variant="h6" gutterBottom>
-                        Metrics by Category
-                      </Typography>
-                      <Divider sx={{ mb: 2 }} />
-                      <TableContainer>
-                        <Table size="small">
-                          <TableHead>
-                            <TableRow>
-                              <TableCell>Category</TableCell>
-                              <TableCell align="right">KL Divergence</TableCell>
-                              <TableCell align="right">JS Divergence</TableCell>
-                              <TableCell align="right">Wasserstein</TableCell>
-                              <TableCell align="right">MAE</TableCell>
-                              <TableCell align="right">Questions</TableCell>
-                            </TableRow>
-                          </TableHead>
-                          <TableBody>
-                            {Object.entries(comparisonResults.comparison.by_category).map(([category, metrics]: [string, any]) => (
-                              <TableRow key={category}>
-                                <TableCell>
-                                  <Typography variant="body2" fontWeight="medium">
-                                    {category}
-                                  </Typography>
-                                </TableCell>
-                                <TableCell align="right">{formatMetric(metrics.mean_kl_divergence)}</TableCell>
-                                <TableCell align="right">{formatMetric(metrics.mean_js_divergence)}</TableCell>
-                                <TableCell align="right">{formatMetric(metrics.mean_wasserstein)}</TableCell>
-                                <TableCell align="right">{formatMetric(metrics.mean_mae)}</TableCell>
-                                <TableCell align="right">
-                                  <Chip label={metrics.num_questions} size="small" />
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </TableContainer>
-                    </Paper>
-                  )}
-
-                  {/* By Question Metrics */}
-                  {Object.keys(comparisonResults.comparison.by_question || {}).length > 0 && (
-                    <Paper sx={{ p: 3, mb: 3 }} variant="outlined">
-                      <Typography variant="h6" gutterBottom>
-                        Metrics by Question
-                      </Typography>
-                      <Divider sx={{ mb: 2 }} />
-                      <TableContainer>
-                        <Table size="small">
-                          <TableHead>
-                            <TableRow>
-                              <TableCell>Question</TableCell>
-                              <TableCell align="right">KL Div</TableCell>
-                              <TableCell align="right">JS Div</TableCell>
-                              <TableCell align="right">Wasserstein</TableCell>
-                              <TableCell align="right">Chi²</TableCell>
-                              <TableCell align="right">P-Value</TableCell>
-                              <TableCell align="right">MAE</TableCell>
-                              <TableCell align="center">Significant?</TableCell>
-                            </TableRow>
-                          </TableHead>
-                          <TableBody>
-                            {Object.entries(comparisonResults.comparison.by_question).map(([questionKey, metrics]: [string, any]) => (
-                              <TableRow key={questionKey}>
-                                <TableCell>
-                                  <Typography variant="body2" fontFamily="monospace" fontSize="0.7rem">
-                                    {questionKey}
-                                  </Typography>
-                                </TableCell>
-                                <TableCell align="right">{formatMetric(metrics.kl_divergence)}</TableCell>
-                                <TableCell align="right">{formatMetric(metrics.js_divergence)}</TableCell>
-                                <TableCell align="right">{formatMetric(metrics.wasserstein_distance)}</TableCell>
-                                <TableCell align="right">{formatMetric(metrics.chi_squared)}</TableCell>
-                                <TableCell align="right">{formatMetric(metrics.chi_squared_p_value)}</TableCell>
-                                <TableCell align="right">{formatMetric(metrics.mean_absolute_error)}</TableCell>
-                                <TableCell align="center">
-                                  <Chip
-                                    label={metrics.significant_difference ? 'Yes' : 'No'}
-                                    color={metrics.significant_difference ? 'warning' : 'success'}
-                                    size="small"
-                                  />
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </TableContainer>
-                      <Alert severity="info" sx={{ mt: 2 }}>
-                        Statistical significance (p &lt; 0.05) indicates distributions are different. "No" means statistically similar to ground truth (good!).
-                      </Alert>
-                    </Paper>
-                  )}
-
-                  {/* Distribution Charts */}
-                  <Box sx={{ mb: 3 }}>
-                    <DistributionCharts
-                      testRunDistributions={comparisonResults.test_run_distributions}
-                      groundTruthDistributions={comparisonResults.ground_truth_distributions}
-                      survey={survey}
-                    />
-                  </Box>
-
-                  {/* Difference Heatmap */}
-                  <Box sx={{ mb: 3 }}>
-                    <DifferenceHeatmap
-                      testRunDistributions={comparisonResults.test_run_distributions}
-                      groundTruthDistributions={comparisonResults.ground_truth_distributions}
-                      survey={survey}
-                    />
-                  </Box>
-
-                  {/* Interpretation Guide */}
-                  <Paper sx={{ p: 3, bgcolor: '#f5f5f5' }}>
-                    <Typography variant="h6" gutterBottom fontWeight="bold">
-                      How to Interpret Results
-                    </Typography>
-                    <Grid container spacing={3} sx={{ mt: 1 }}>
-                      <Grid item xs={12} md={6}>
-                        <Typography variant="subtitle2" gutterBottom fontWeight="bold" color="primary.main">
-                          Reading the Charts
-                        </Typography>
-                        <Box component="ul" sx={{ pl: 2 }}>
-                          <Typography component="li" variant="body2" sx={{ mb: 0.5 }}>
-                            <strong>Orange bars:</strong> Ground truth baseline
-                          </Typography>
-                          <Typography component="li" variant="body2" sx={{ mb: 0.5 }}>
-                            <strong>Blue line:</strong> Experimental run
-                          </Typography>
-                          <Typography component="li" variant="body2">
-                            <strong>Good match:</strong> Blue closely follows orange
-                          </Typography>
-                        </Box>
-                      </Grid>
-                      <Grid item xs={12} md={6}>
-                        <Typography variant="subtitle2" gutterBottom fontWeight="bold" color="primary.main">
-                          Understanding Metrics
-                        </Typography>
-                        <Box component="ul" sx={{ pl: 2 }}>
-                          <Typography component="li" variant="body2" sx={{ mb: 0.5 }}>
-                            <strong>KL/JS/Wasserstein:</strong> Lower = more similar (0 = identical)
-                          </Typography>
-                          <Typography component="li" variant="body2" sx={{ mb: 0.5 }}>
-                            <strong>P-value ≥ 0.05:</strong> Statistically similar (good!)
-                          </Typography>
-                          <Typography component="li" variant="body2">
-                            <strong>MAE:</strong> Average probability difference (lower is better)
-                          </Typography>
-                        </Box>
-                      </Grid>
-                    </Grid>
-                  </Paper>
-                </Box>
+                <ComparisonResults
+                  comparisonResults={comparisonResults}
+                  groundTruths={groundTruths}
+                  survey={survey}
+                />
               )}
 
               {/* Navigation */}
@@ -1406,292 +1143,35 @@ const GroundTruthTestingPage: React.FC = () => {
       </Paper>
 
       {/* SSR Ground Truth Creation Dialog */}
-      <Dialog open={ssrDialogOpen} onClose={() => setSSRDialogOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle>Generate Ground Truth via SSR Pipeline</DialogTitle>
-        <DialogContent>
-          <Box sx={{ pt: 2 }}>
-            {enabledProviders.length === 0 && (
-              <Alert severity="warning" sx={{ mb: 2 }}>
-                No LLM providers are enabled. Please go to Settings to configure at least one provider (OpenAI, Anthropic, Gemini, or Ollama).
-              </Alert>
-            )}
-
-            <Alert severity="info" sx={{ mb: 3 }}>
-              This will run the full SSR pipeline using your survey's persona groups to generate a
-              high-quality ground truth baseline. Higher profile counts produce better results but take longer.
-            </Alert>
-
-            <Grid container spacing={2}>
-              <Grid item xs={12}>
-                <TextField
-                  label="Ground Truth Name"
-                  fullWidth
-                  required
-                  value={ssrConfig.name}
-                  onChange={(e) => setSSRConfig({ ...ssrConfig, name: e.target.value })}
-                  placeholder="e.g., GPT-4 Baseline n=500"
-                />
-              </Grid>
-
-              <Grid item xs={12}>
-                <TextField
-                  label="Description"
-                  fullWidth
-                  multiline
-                  rows={2}
-                  value={ssrConfig.description}
-                  onChange={(e) => setSSRConfig({ ...ssrConfig, description: e.target.value })}
-                  placeholder="Optional: Describe this ground truth"
-                />
-              </Grid>
-
-              <Grid item xs={12}>
-                <Divider />
-                <Typography variant="subtitle2" sx={{ mt: 2, mb: 1 }}>
-                  Configuration
-                </Typography>
-              </Grid>
-
-              <Grid item xs={12} md={6}>
-                <TextField
-                  label="Number of Profiles"
-                  type="number"
-                  fullWidth
-                  required
-                  value={ssrConfig.num_profiles}
-                  onChange={(e) =>
-                    setSSRConfig({ ...ssrConfig, num_profiles: parseInt(e.target.value) })
-                  }
-                  inputProps={{ min: 10, max: 2000 }}
-                  helperText="Recommended: 50-100 for testing, 500+ for production"
-                />
-              </Grid>
-
-              <Grid item xs={12} md={6}>
-                <TextField
-                  label="Random Seed"
-                  type="number"
-                  fullWidth
-                  required
-                  value={ssrConfig.seed}
-                  onChange={(e) => setSSRConfig({ ...ssrConfig, seed: parseInt(e.target.value) })}
-                  inputProps={{ min: 0, max: 10000 }}
-                  helperText="For reproducibility"
-                />
-              </Grid>
-
-              <Grid item xs={12} md={6}>
-                <FormControl fullWidth required disabled={enabledProviders.length === 0}>
-                  <InputLabel>LLM Provider</InputLabel>
-                  <Select
-                    value={ssrConfig.llm_provider}
-                    label="LLM Provider"
-                    onChange={(e) => {
-                      // Update provider and model atomically
-                      const newProvider = e.target.value as 'openai' | 'anthropic' | 'gemini' | 'ollama';
-                      const newModel = getDefaultModel(newProvider, settings);
-                      setSSRConfig({
-                        ...ssrConfig,
-                        llm_provider: newProvider,
-                        model: newModel || ''
-                      });
-                    }}
-                  >
-                    {enabledProviders.map((provider) => (
-                      <MenuItem key={provider.value} value={provider.value}>
-                        {provider.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-
-              <Grid item xs={12} md={6}>
-                <FormControl fullWidth required disabled={enabledSSRModels.length === 0}>
-                  <InputLabel>Model</InputLabel>
-                  <Select
-                    value={ssrConfig.model}
-                    label="Model"
-                    onChange={(e) => setSSRConfig({ ...ssrConfig, model: e.target.value })}
-                  >
-                    {enabledSSRModels.map((model) => (
-                      <MenuItem key={model.value} value={model.value}>
-                        {model.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-
-              <Grid item xs={12} md={4}>
-                <TextField
-                  label="LLM Temperature"
-                  type="number"
-                  fullWidth
-                  required
-                  value={ssrConfig.llm_temperature}
-                  onChange={(e) =>
-                    setSSRConfig({ ...ssrConfig, llm_temperature: parseFloat(e.target.value) })
-                  }
-                  inputProps={{ min: 0, max: 2, step: 0.1 }}
-                />
-              </Grid>
-
-              <Grid item xs={12} md={4}>
-                <TextField
-                  label="SSR Temperature"
-                  type="number"
-                  fullWidth
-                  required
-                  value={ssrConfig.ssr_temperature}
-                  onChange={(e) =>
-                    setSSRConfig({ ...ssrConfig, ssr_temperature: parseFloat(e.target.value) })
-                  }
-                  inputProps={{ min: 0.1, max: 5, step: 0.1 }}
-                />
-              </Grid>
-            </Grid>
-
-            {createSSRMutation.isPending && (
-              <Box sx={{ mt: 3 }}>
-                <Typography variant="body2" gutterBottom>
-                  Generating ground truth... This may take several minutes.
-                </Typography>
-                <LinearProgress />
-              </Box>
-            )}
-
-            {createSSRMutation.isError && (
-              <Alert severity="error" sx={{ mt: 2 }}>
-                <Typography variant="body2" gutterBottom fontWeight="medium">
-                  Error creating ground truth
-                </Typography>
-                <Typography variant="body2">
-                  {(() => {
-                    const error = createSSRMutation.error as any;
-                    if (error?.response?.data?.detail) {
-                      return typeof error.response.data.detail === 'string'
-                        ? error.response.data.detail
-                        : JSON.stringify(error.response.data.detail, null, 2);
-                    }
-                    return error?.message || 'Please check your configuration and try again.';
-                  })()}
-                </Typography>
-              </Alert>
-            )}
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setSSRDialogOpen(false)} disabled={createSSRMutation.isPending}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleCreateSSRGroundTruth}
-            variant="contained"
-            disabled={!ssrConfig.name || createSSRMutation.isPending}
-          >
-            {createSSRMutation.isPending ? 'Generating...' : 'Generate Ground Truth'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <SSRGenerationDialog
+        open={ssrDialogOpen}
+        onClose={() => setSSRDialogOpen(false)}
+        ssrConfig={ssrConfig}
+        onConfigChange={setSSRConfig}
+        onSubmit={handleCreateSSRGroundTruth}
+        enabledProviders={enabledProviders}
+        enabledModels={enabledSSRModels}
+        settings={settings}
+        isPending={createSSRMutation.isPending}
+        isError={createSSRMutation.isError}
+        error={createSSRMutation.error}
+      />
 
       {/* CSV Upload Dialog */}
-      <Dialog open={uploadDialogOpen} onClose={() => setUploadDialogOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle>Upload Ground Truth from CSV</DialogTitle>
-        <DialogContent>
-          <Box sx={{ pt: 2 }}>
-            <Alert severity="info" sx={{ mb: 3 }}>
-              Upload ground truth data from real survey results in CSV format. The file should contain actual answers from respondents (not probability distributions).
-            </Alert>
-
-            <Grid container spacing={2}>
-              <Grid item xs={12}>
-                <TextField
-                  label="Ground Truth Name"
-                  fullWidth
-                  required
-                  value={uploadName}
-                  onChange={(e) => setUploadName(e.target.value)}
-                  placeholder="e.g., Real Survey Results Q1 2024"
-                />
-              </Grid>
-
-              <Grid item xs={12}>
-                <TextField
-                  label="Description"
-                  fullWidth
-                  multiline
-                  rows={2}
-                  value={uploadDescription}
-                  onChange={(e) => setUploadDescription(e.target.value)}
-                  placeholder="Optional: Describe the source of this data"
-                />
-              </Grid>
-
-              <Grid item xs={12}>
-                <Divider />
-                <Typography variant="subtitle2" sx={{ mt: 2, mb: 1 }}>
-                  CSV File
-                </Typography>
-              </Grid>
-
-              <Grid item xs={12}>
-                <Button
-                  variant="outlined"
-                  component="label"
-                  fullWidth
-                  startIcon={<CloudUploadIcon />}
-                  sx={{ py: 2 }}
-                >
-                  {uploadFile ? uploadFile.name : 'Choose CSV File'}
-                  <input
-                    type="file"
-                    hidden
-                    accept=".csv"
-                    onChange={handleFileSelect}
-                  />
-                </Button>
-                <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-                  Required columns: Respondent ID, Question ID, Answer. Optional: Category, Gender, Age Group, Persona Group, Occupation
-                </Typography>
-              </Grid>
-
-              {uploadProgress > 0 && uploadProgress < 100 && (
-                <Grid item xs={12}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <LinearProgress variant="determinate" value={uploadProgress} sx={{ flexGrow: 1 }} />
-                    <Typography variant="body2">{uploadProgress}%</Typography>
-                  </Box>
-                </Grid>
-              )}
-
-              {uploadError && (
-                <Grid item xs={12}>
-                  <Alert severity="error">
-                    <Typography variant="body2" fontWeight="medium" gutterBottom>
-                      Upload Error
-                    </Typography>
-                    <Typography variant="body2">{uploadError}</Typography>
-                  </Alert>
-                </Grid>
-              )}
-            </Grid>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setUploadDialogOpen(false)} disabled={isUploading}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleUploadCSV}
-            variant="contained"
-            disabled={!uploadFile || !uploadName || isUploading}
-            startIcon={isUploading ? <CircularProgress size={20} /> : <CloudUploadIcon />}
-          >
-            {isUploading ? 'Uploading...' : 'Upload Ground Truth'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <CSVUploadDialog
+        open={uploadDialogOpen}
+        onClose={() => setUploadDialogOpen(false)}
+        uploadName={uploadName}
+        uploadDescription={uploadDescription}
+        uploadFile={uploadFile}
+        uploadProgress={uploadProgress}
+        uploadError={uploadError}
+        isUploading={isUploading}
+        onNameChange={setUploadName}
+        onDescriptionChange={setUploadDescription}
+        onFileSelect={handleFileSelect}
+        onUpload={handleUploadCSV}
+      />
 
       {/* Ground Truth Details Dialog */}
       <Dialog
