@@ -31,6 +31,7 @@ import {
   Download as DownloadIcon,
   CompareArrows as CompareArrowsIcon,
   CheckCircle as CheckCircleIcon,
+  Assessment as AssessmentIcon,
 } from '@mui/icons-material';
 import { useSurveyRun, useSurvey, useGroundTruths, useCompareToGroundTruth } from '../services/hooks';
 import ResponseDataset from '../components/SurveyRunner/ResponseDataset';
@@ -168,6 +169,13 @@ const SurveyRunDetailPage: React.FC = () => {
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 1 }}>
+          <Button
+            startIcon={<AssessmentIcon />}
+            variant="contained"
+            onClick={() => navigate(`/analysis/${runId}`)}
+          >
+            View Analysis
+          </Button>
           <Button startIcon={<CompareArrowsIcon />} variant="outlined" onClick={() => setCompareDialogOpen(true)}>
             Compare to Ground Truth
           </Button>

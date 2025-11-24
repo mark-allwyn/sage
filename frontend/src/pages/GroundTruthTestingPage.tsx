@@ -303,7 +303,7 @@ const GroundTruthTestingPage: React.FC = () => {
 
       csvRows.push('');
       csvRows.push('# Raw Individual Distributions');
-      csvRows.push('Category,Question ID,Respondent ID,Rating,Probability,Mode,Expected Value,Entropy,Gender,Age Group,Persona Group,Occupation');
+      csvRows.push('Category,Question ID,Respondent ID,Rating,Probability,Mode,Expected Value,Entropy,Gender,Age Group,Persona Group,Persona Description,Occupation');
 
       // Add raw distributions data
       for (const [category, questions] of Object.entries(data.raw_distributions || {})) {
@@ -314,9 +314,23 @@ const GroundTruthTestingPage: React.FC = () => {
 
             probs.forEach((prob: number, idx: number) => {
               const rating = idx + 1;
-              csvRows.push(
-                `"${category}","${questionId}","${respondentId}",${rating},${prob},${dist.mode || ''},${dist.expected_value || ''},${dist.entropy || ''},"${dist.gender || ''}","${dist.age_group || ''}","${dist.persona_group || ''}","${dist.occupation || ''}"`
-              );
+              const personaDesc = (dist.persona_description || '').replace(/"/g, '""');
+              const row = [
+                `"${category}"`,
+                `"${questionId}"`,
+                `"${respondentId}"`,
+                rating,
+                prob,
+                dist.mode || '',
+                dist.expected_value || '',
+                dist.entropy || '',
+                `"${dist.gender || ''}"`,
+                `"${dist.age_group || ''}"`,
+                `"${dist.persona_group || ''}"`,
+                `"${personaDesc}"`,
+                `"${dist.occupation || ''}"`
+              ].join(',');
+              csvRows.push(row);
             });
           }
         }

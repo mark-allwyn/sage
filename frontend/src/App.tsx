@@ -24,6 +24,7 @@ import SurveyRunnerPage from './pages/SurveyRunnerPage';
 import SurveyUserViewPage from './pages/SurveyUserViewPage';
 import SurveyHistoryPage from './pages/SurveyHistoryPage';
 import SurveyRunDetailPage from './pages/SurveyRunDetailPage';
+import AnalysisDashboardPage from './pages/AnalysisDashboardPage';
 import GroundTruthTestingPage from './pages/GroundTruthTestingPage';
 import SystemOverviewPage from './pages/SystemOverviewPage';
 import DocumentationPage from './pages/DocumentationPage';
@@ -79,7 +80,10 @@ const App: React.FC = () => {
 
               {/* Survey History - view past runs */}
               <Route path="/history" element={<SurveyHistoryPage />} />
-              <Route path="/history/:runId" element={<SurveyRunDetailPage />} />
+              <Route path="/runs/:runId" element={<SurveyRunDetailPage />} />
+
+              {/* Analysis Dashboard - comprehensive survey analysis */}
+              <Route path="/analysis/:runId" element={<AnalysisDashboardPage />} />
 
               {/* Ground Truth Testing - experimentation */}
               <Route path="/ground-truth" element={<GroundTruthTestingPage />} />

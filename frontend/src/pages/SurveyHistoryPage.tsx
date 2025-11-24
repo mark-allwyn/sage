@@ -76,7 +76,7 @@ const SurveyHistoryPage: React.FC = () => {
   };
 
   const handleViewDetails = (runId: string) => {
-    navigate(`/history/${runId}`);
+    navigate(`/runs/${runId}`);
   };
 
   const handleExportCSV = () => {

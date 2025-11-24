@@ -49,6 +49,18 @@ from ground_truth_metrics import compare_survey_runs
 # Import constants
 from constants import DEFAULT_CATEGORY, DEFAULT_MAX_CONCURRENT
 
+# Import analysis modules
+from analysis import (
+    SurveyAnalysisDetector,
+    MetricsCalculator,
+    StatisticalTester,
+    DemographicAnalyzer,
+    CorrelationAnalyzer,
+    CategoryComparator,
+    InsightGenerator,
+    ExportFormatter
+)
+
 # Import services
 from services.survey_pipeline import SurveyPipeline, PipelineConfig, PipelineProgress
 from services.ground_truth_parser import parse_ground_truth_csv
@@ -706,6 +718,7 @@ async def apply_ssr(request: ApplySSRRequest):
                 "gender": profile.get('gender', 'Unknown'),
                 "age_group": profile.get('age_group', 'Unknown'),
                 "persona_group": profile.get('persona_group', 'General'),
+                "persona_description": profile.get('description', ''),
                 "occupation": profile.get('occupation', 'Unknown')
             }
 
@@ -903,6 +916,7 @@ async def run_survey(request: RunSurveyRequest):
                 "gender": profile.get('gender', 'Unknown'),
                 "age_group": profile.get('age_group', 'Unknown'),
                 "persona_group": profile.get('persona_group', 'General'),
+                "persona_description": profile.get('description', ''),
                 "occupation": profile.get('occupation', 'Unknown')
             }
 
@@ -1754,6 +1768,386 @@ async def compare_evaluations(evaluation_ids: List[str]):
         logger.error(f"Error comparing evaluations: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
+
+# ============================================================================
+# ANALYSIS ENDPOINTS
+# ============================================================================
+
+from analysis_endpoints import (
+    calculate_summary,
+    calculate_question_analysis,
+    calculate_category_comparison,
+    calculate_demographic_analysis,
+    get_insights_stub
+)
+
+
+@app.get("/api/analysis/{run_id}/summary")
+async def get_analysis_summary_endpoint(run_id: str):
+    """Get analysis summary for a survey run"""
+    try:
+        # Load run data
+        results_dir = get_results_dir()
+        run_path = results_dir / f"{run_id}.json"
+
+        if not run_path.exists():
+            raise HTTPException(status_code=404, detail=f"Run {run_id} not found")
+
+        with open(run_path, "r") as f:
+            run_data = json.load(f)
+
+        # Load survey
+        survey_id = run_data.get("survey_id")
+        survey = load_survey(survey_id)
+
+        # Calculate summary
+        summary = calculate_summary(run_data, survey)
+
+        return summary
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error generating analysis summary: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/analysis/{run_id}/insights")
+async def get_analysis_insights_endpoint(run_id: str):
+    """Get executive summary and insights"""
+    try:
+        results_dir = get_results_dir()
+        run_path = results_dir / f"{run_id}.json"
+
+        if not run_path.exists():
+            raise HTTPException(status_code=404, detail=f"Run {run_id} not found")
+
+        with open(run_path, "r") as f:
+            run_data = json.load(f)
+
+        survey_id = run_data.get("survey_id")
+        survey = load_survey(survey_id)
+
+        insights = get_insights_stub(run_data, survey)
+
+        return insights
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error generating insights: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/analysis/{run_id}/questions")
+async def get_question_analysis_endpoint(run_id: str):
+    """Get detailed question-by-question analysis"""
+    try:
+        results_dir = get_results_dir()
+        run_path = results_dir / f"{run_id}.json"
+
+        if not run_path.exists():
+            raise HTTPException(status_code=404, detail=f"Run {run_id} not found")
+
+        with open(run_path, "r") as f:
+            run_data = json.load(f)
+
+        survey_id = run_data.get("survey_id")
+        survey = load_survey(survey_id)
+
+        questions = calculate_question_analysis(run_data, survey)
+
+        return {"questions": questions}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error generating question analysis: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/analysis/{run_id}/categories")
+async def get_category_comparison_endpoint(run_id: str):
+    """Compare performance across all survey categories"""
+    try:
+        results_dir = get_results_dir()
+        run_path = results_dir / f"{run_id}.json"
+
+        if not run_path.exists():
+            raise HTTPException(status_code=404, detail=f"Run {run_id} not found")
+
+        with open(run_path, "r") as f:
+            run_data = json.load(f)
+
+        survey_id = run_data.get("survey_id")
+        survey = load_survey(survey_id)
+
+        comparison = calculate_category_comparison(run_data, survey)
+
+        return comparison
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error generating category comparison: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/analysis/{run_id}/demographics/{demographic_field}")
+async def get_demographic_analysis_endpoint(run_id: str, demographic_field: str):
+    """Get analysis broken down by demographic field (e.g., persona_group, gender, age_group)"""
+    try:
+        results_dir = get_results_dir()
+        run_path = results_dir / f"{run_id}.json"
+
+        if not run_path.exists():
+            raise HTTPException(status_code=404, detail=f"Run {run_id} not found")
+
+        with open(run_path, "r") as f:
+            run_data = json.load(f)
+
+        survey_id = run_data.get("survey_id")
+        survey = load_survey(survey_id)
+
+        analysis = calculate_demographic_analysis(run_data, survey, demographic_field)
+
+        return analysis
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error generating demographic analysis: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/analysis/{run_id}/export/csv")
+async def export_analysis_csv_endpoint(run_id: str):
+    """Export analysis to CSV format"""
+    try:
+        results_dir = get_results_dir()
+        run_path = results_dir / f"{run_id}.json"
+
+        if not run_path.exists():
+            raise HTTPException(status_code=404, detail=f"Run {run_id} not found")
+
+        with open(run_path, "r") as f:
+            run_data = json.load(f)
+
+        survey_id = run_data.get("survey_id")
+        survey = load_survey(survey_id)
+
+        # Generate CSV with question analysis
+        questions = calculate_question_analysis(run_data, survey)
+
+        # Create CSV content
+        import io
+        import csv
+
+        output = io.StringIO()
+        writer = csv.writer(output)
+
+        # Header
+        writer.writerow([
+            "Question ID",
+            "Question Text",
+            "Mean Score",
+            "Std Dev",
+            "Top Box %",
+            "Bottom Box %",
+            "Net Score",
+            "Sample Size"
+        ])
+
+        # Data rows
+        for q in questions:
+            writer.writerow([
+                q["question_id"],
+                q["question_text"],
+                f"{q['mean']:.2f}",
+                f"{q['std']:.2f}",
+                f"{q['top_box_pct']:.1f}",
+                f"{q['bottom_box_pct']:.1f}",
+                f"{q['net_score']:.1f}",
+                q["sample_size"]
+            ])
+
+        csv_data = output.getvalue()
+        output.close()
+
+        from fastapi.responses import Response
+        return Response(
+            content=csv_data,
+            media_type="text/csv",
+            headers={
+                "Content-Disposition": f"attachment; filename=analysis_{run_id}.csv"
+            }
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error exporting CSV: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/analysis/{run_id}/export/questions-csv")
+async def export_questions_csv_endpoint(run_id: str):
+    """Export detailed question-level data as CSV"""
+    # Same as above for now
+    return await export_analysis_csv_endpoint(run_id)
+
+
+@app.get("/api/analysis/{run_id}/export/responses-csv")
+async def export_responses_csv_endpoint(run_id: str):
+    """Export individual response-level data as CSV"""
+    try:
+        results_dir = get_results_dir()
+        run_path = results_dir / f"{run_id}.json"
+
+        if not run_path.exists():
+            raise HTTPException(status_code=404, detail=f"Run {run_id} not found")
+
+        with open(run_path, "r") as f:
+            run_data = json.load(f)
+
+        distributions = run_data.get("distributions", {})
+
+        # Create CSV content
+        import io
+        import csv
+
+        output = io.StringIO()
+        writer = csv.writer(output)
+
+        # Header
+        writer.writerow([
+            "Category",
+            "Question ID",
+            "Respondent ID",
+            "Expected Value",
+            "Mode",
+            "Entropy",
+            "Persona Group",
+            "Persona Description",
+            "Gender",
+            "Age Group",
+            "Occupation",
+            "Text Response"
+        ])
+
+        # Data rows
+        for category, cat_data in distributions.items():
+            for question_id, question_data in cat_data.items():
+                for respondent_id, dist_data in question_data.items():
+                    # Truncate text response to 200 chars for CSV readability
+                    text_response = dist_data.get('text_response', '')
+                    if len(text_response) > 200:
+                        text_response = text_response[:197] + '...'
+
+                    # Truncate persona description for CSV readability
+                    persona_desc = dist_data.get('persona_description', '')
+                    if len(persona_desc) > 200:
+                        persona_desc = persona_desc[:197] + '...'
+
+                    writer.writerow([
+                        category,
+                        question_id,
+                        respondent_id,
+                        f"{dist_data.get('expected_value', 0):.2f}",
+                        dist_data.get('mode', ''),
+                        f"{dist_data.get('entropy', 0):.2f}",
+                        dist_data.get('persona_group', ''),
+                        persona_desc,
+                        dist_data.get('gender', ''),
+                        dist_data.get('age_group', ''),
+                        dist_data.get('occupation', ''),
+                        text_response
+                    ])
+
+        csv_data = output.getvalue()
+        output.close()
+
+        from fastapi.responses import Response
+        return Response(
+            content=csv_data,
+            media_type="text/csv",
+            headers={
+                "Content-Disposition": f"attachment; filename=responses_{run_id}.csv"
+            }
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error exporting responses CSV: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/analysis/{run_id}/export/summary-report")
+async def export_summary_report_endpoint(run_id: str):
+    """Export formatted text summary report"""
+    try:
+        results_dir = get_results_dir()
+        run_path = results_dir / f"{run_id}.json"
+
+        if not run_path.exists():
+            raise HTTPException(status_code=404, detail=f"Run {run_id} not found")
+
+        with open(run_path, "r") as f:
+            run_data = json.load(f)
+
+        survey_id = run_data.get("survey_id")
+        survey = load_survey(survey_id)
+
+        summary = calculate_summary(run_data, survey)
+        insights = get_insights_stub(run_data, survey)
+
+        # Create text report
+        report_lines = []
+        report_lines.append("=" * 80)
+        report_lines.append(f"SURVEY ANALYSIS REPORT: {survey.name}")
+        report_lines.append("=" * 80)
+        report_lines.append("")
+        report_lines.append(f"Run ID: {run_id}")
+        report_lines.append(f"Survey ID: {survey_id}")
+        report_lines.append(f"Sample Size: {summary['executive_summary']['sample_size']}")
+        report_lines.append("")
+        report_lines.append("EXECUTIVE SUMMARY")
+        report_lines.append("-" * 80)
+        report_lines.append(f"Overall Score: {summary['executive_summary']['overall_mean']:.2f}/7.0")
+        report_lines.append(f"Grade: {summary['executive_summary']['overall_grade']}")
+        report_lines.append(f"Top Box %: {summary['executive_summary']['top_box_pct']:.1f}%")
+        report_lines.append(f"Net Score: {summary['executive_summary']['net_score']:.1f}")
+        report_lines.append("")
+        report_lines.append("KEY INSIGHTS")
+        report_lines.append("-" * 80)
+        for insight in insights["key_insights"]:
+            report_lines.append(f"- {insight}")
+        report_lines.append("")
+        report_lines.append("=" * 80)
+
+        report_text = "\n".join(report_lines)
+
+        from fastapi.responses import Response
+        return Response(
+            content=report_text,
+            media_type="text/plain",
+            headers={
+                "Content-Disposition": f"attachment; filename=summary_{run_id}.txt"
+            }
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error generating summary report: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
+# WEBSOCKET ENDPOINTS
+# ============================================================================
 
 # WebSocket endpoint for real-time progress (future enhancement)
 @app.websocket("/ws/run-survey")

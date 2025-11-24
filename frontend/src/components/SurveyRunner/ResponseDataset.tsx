@@ -21,9 +21,10 @@ import {
   AccordionDetails,
   Grid,
   TablePagination,
+  Tooltip,
 } from '@mui/material';
 import { ExpandMore as ExpandMoreIcon, Download as DownloadIcon } from '@mui/icons-material';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer } from 'recharts';
 import { RunSurveyResponse, Survey } from '../../services/types';
 
 interface ResponseDatasetProps {
@@ -64,7 +65,7 @@ const ResponseDataset: React.FC<ResponseDatasetProps> = ({ result, survey }) => 
 
   const handleExportCSV = () => {
     const csv = [
-      ['Category', 'Question ID', 'Respondent ID', 'Mode', 'Expected Value', 'Entropy', 'Text Response', 'Gender', 'Age Group', 'Persona Group', 'Occupation'],
+      ['Category', 'Question ID', 'Respondent ID', 'Mode', 'Expected Value', 'Entropy', 'Text Response', 'Gender', 'Age Group', 'Persona Group', 'Persona Description', 'Occupation'],
       ...rows.map((row) => [
         row.category,
         row.questionId,
@@ -76,6 +77,7 @@ const ResponseDataset: React.FC<ResponseDatasetProps> = ({ result, survey }) => 
         row.gender,
         row.age_group,
         row.persona_group,
+        `"${(row.persona_description || '').replace(/"/g, '""')}"`,
         row.occupation,
       ]),
     ]
@@ -191,6 +193,11 @@ const ResponseDataset: React.FC<ResponseDatasetProps> = ({ result, survey }) => 
                     <TableCell>{row.entropy.toFixed(3)}</TableCell>
                     <TableCell>
                       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                        {row.persona_group && (
+                          <Tooltip title={row.persona_description || 'No description'} arrow placement="top">
+                            <Chip label={row.persona_group} size="small" color="primary" />
+                          </Tooltip>
+                        )}
                         <Chip label={row.gender} size="small" />
                         <Chip label={row.age_group} size="small" />
                         <Chip label={row.occupation} size="small" />
@@ -285,7 +292,7 @@ const ResponseDataset: React.FC<ResponseDatasetProps> = ({ result, survey }) => 
                         label={{ value: 'Average Probability', angle: -90, position: 'insideLeft' }}
                         domain={[0, 1]}
                       />
-                      <Tooltip
+                      <RechartsTooltip
                         formatter={(value: number) => value.toFixed(3)}
                         labelFormatter={(label) => `${label}`}
                       />

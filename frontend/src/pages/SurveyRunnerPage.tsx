@@ -180,10 +180,10 @@ const SurveyRunnerPage: React.FC = () => {
                 // Navigate to results page
                 const runId = data.result?.run_id;
                 if (runId) {
-                  console.log('Navigating to:', `/history/${runId}?completed=true`);
+                  console.log('Navigating to:', `/runs/${runId}?completed=true`);
                   // Use a delay to let the success message show
                   setTimeout(() => {
-                    navigate(`/history/${runId}?completed=true`);
+                    navigate(`/runs/${runId}?completed=true`);
                   }, 3000);
                 } else {
                   console.error('No run_id in result:', data);
@@ -391,7 +391,7 @@ const SurveyRunnerPage: React.FC = () => {
                 <Button
                   variant="contained"
                   startIcon={<VisibilityIcon />}
-                  onClick={() => navigate(`/history/${runResult.run_id}`)}
+                  onClick={() => navigate(`/runs/${runResult.run_id}`)}
                 >
                   View Full Details
                 </Button>
