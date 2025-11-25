@@ -1,0 +1,82 @@
+[
+  {
+    "id": "comp_20251125_155828",
+    "run_id": "run_20251125_155827",
+    "ground_truth_id": "gt_20251125_155735",
+    "ground_truth_name": "GT_General_01",
+    "survey_id": "lottery_general_survey",
+    "created_at": "2025-11-25T15:58:28.022503",
+    "num_questions_compared": 8,
+    "mean_kl_divergence": 0.0014659743141746725
+  },
+  {
+    "id": "comp_20251125_154728",
+    "run_id": "run_20251125_111510",
+    "ground_truth_id": "gt_20251124_170937",
+    "ground_truth_name": "GT_Lucky_Luck_02",
+    "survey_id": "lucky_braynza_comparison",
+    "created_at": "2025-11-25T15:47:28.589209",
+    "num_questions_compared": 8,
+    "mean_kl_divergence": 0.0012692875112058394
+  },
+  {
+    "id": "comp_20251125_124322",
+    "run_id": "run_20251125_111510",
+    "ground_truth_id": "gt_20251124_105748",
+    "ground_truth_name": "GT_Lucky_Luck_01",
+    "survey_id": "lucky_braynza_comparison",
+    "created_at": "2025-11-25T12:43:22.931784",
+    "num_questions_compared": 8,
+    "mean_kl_divergence": 0.0028379350174159257
+  },
+  {
+    "id": "comp_20251125_123050",
+    "run_id": "run_20251125_111510",
+    "ground_truth_id": "gt_20251124_170937",
+    "ground_truth_name": "GT_Lucky_Luck_02",
+    "survey_id": "lucky_braynza_comparison",
+    "created_at": "2025-11-25T12:30:50.936142",
+    "num_questions_compared": 8,
+    "mean_kl_divergence": 0.0012692875112058394
+  },
+  {
+    "id": "comp_20251125_122743",
+    "run_id": "run_20251125_111510",
+    "ground_truth_id": "gt_20251124_170937",
+    "ground_truth_name": "GT_Lucky_Luck_02",
+    "survey_id": "lucky_braynza_comparison",
+    "created_at": "2025-11-25T12:27:43.188567",
+    "num_questions_compared": 8,
+    "mean_kl_divergence": 0.0012692875112058394
+  },
+  {
+    "id": "comp_20251124_170316",
+    "run_id": "run_20251124_155445",
+    "ground_truth_id": "gt_20251124_105748",
+    "ground_truth_name": "GT_Lucky_Luck_01",
+    "survey_id": "lucky_braynza_comparison",
+    "created_at": "2025-11-24T17:03:16.993827",
+    "num_questions_compared": 8,
+    "mean_kl_divergence": 0.00257082544241935
+  },
+  {
+    "id": "comp_20251124_154733",
+    "run_id": "run_20251124_105336",
+    "ground_truth_id": "gt_20251124_105748",
+    "ground_truth_name": "GT_Lucky_Luck_01",
+    "survey_id": "lucky_braynza_comparison",
+    "created_at": "2025-11-24T15:47:33.967515",
+    "num_questions_compared": 8,
+    "mean_kl_divergence": 0.005401095682568513
+  },
+  {
+    "id": "comp_20251124_154708",
+    "run_id": "run_20251124_105336",
+    "ground_truth_id": "gt_20251124_105748",
+    "ground_truth_name": "GT_Lucky_Luck_01",
+    "survey_id": "lucky_braynza_comparison",
+    "created_at": "2025-11-24T15:47:08.714895",
+    "num_questions_compared": 8,
+    "mean_kl_divergence": 0.005401095682568513
+  }
+]

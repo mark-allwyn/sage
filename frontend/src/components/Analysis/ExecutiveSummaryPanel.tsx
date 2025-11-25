@@ -11,22 +11,42 @@ import {
   Grid,
   Alert,
   Divider,
+  Chip,
 } from '@mui/material';
 import {
   Assessment as AssessmentIcon,
   TrendingUp as TrendingUpIcon,
+  People as PeopleIcon,
 } from '@mui/icons-material';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from 'recharts';
+import { useQuery, useQueries } from '@tanstack/react-query';
 import { ExecutiveSummary } from '../../services/types';
+import { getDemographicAnalysis } from '../../services/api';
 
 interface ExecutiveSummaryPanelProps {
   summary?: ExecutiveSummary;
   insights?: any;
+  runId: string;
+  demographicFields: string[];
+  hasDemographics: boolean;
 }
 
 const COLORS = ['#2196F3', '#4CAF50', '#FF9800', '#F44336', '#9C27B0', '#00BCD4', '#FFEB3B', '#795548'];
 
-const ExecutiveSummaryPanel: React.FC<ExecutiveSummaryPanelProps> = ({ summary }) => {
+const ExecutiveSummaryPanel: React.FC<ExecutiveSummaryPanelProps> = ({
+  summary,
+  runId,
+  demographicFields,
+  hasDemographics
+}) => {
+  // Fetch demographic data for each field using useQueries (allows dynamic number of queries)
+  const demographicQueries = useQueries({
+    queries: demographicFields.map(field => ({
+      queryKey: ['demographic-breakdown', runId, field],
+      queryFn: () => getDemographicAnalysis(runId, field),
+      enabled: hasDemographics && !!field,
+    })),
+  });
   if (!summary) {
     return (
       <Alert severity="info">
@@ -91,6 +111,86 @@ const ExecutiveSummaryPanel: React.FC<ExecutiveSummaryPanelProps> = ({ summary }
             </Box>
           </Grid>
         </Grid>
+
+        {/* Demographic Breakdown */}
+        {hasDemographics && demographicFields.length > 0 && (
+          <>
+            <Divider sx={{ my: 3 }} />
+            <Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                <PeopleIcon color="secondary" />
+                <Typography variant="h6">
+                  Demographic Breakdown
+                </Typography>
+              </Box>
+              <Grid container spacing={2}>
+                {demographicFields.map((field, index) => {
+                  const queryResult = demographicQueries[index];
+                  const demographicData = queryResult?.data;
+                  const isLoading = queryResult?.isLoading;
+
+                  if (isLoading) {
+                    return (
+                      <Grid item xs={12} sm={6} md={4} key={field}>
+                        <Box sx={{ p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
+                          <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
+                            {field.replace(/_/g, ' ').toUpperCase()}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Loading...
+                          </Typography>
+                        </Box>
+                      </Grid>
+                    );
+                  }
+
+                  if (!demographicData) return null;
+
+                  const segments = demographicData.segments || {};
+                  const totalSample: number = Object.values(segments).reduce(
+                    (sum: number, seg: any) => sum + (seg.sample_size || 0),
+                    0
+                  );
+
+                  return (
+                    <Grid item xs={12} sm={6} md={4} key={field}>
+                      <Box sx={{ p: 2, bgcolor: 'background.default', borderRadius: 1, height: '100%' }}>
+                        <Typography variant="subtitle2" fontWeight="bold" color="secondary.main" gutterBottom>
+                          {field.replace(/_/g, ' ').toUpperCase()}
+                        </Typography>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mt: 1 }}>
+                          {Object.entries(segments).map(([segmentName, segment]: [string, any]) => {
+                            const sampleSize = segment.sample_size || 0;
+                            const percentage = totalSample > 0 ? ((sampleSize / totalSample) * 100).toFixed(1) : '0.0';
+                            return (
+                              <Box key={segmentName} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <Typography variant="body2" sx={{ flex: 1 }}>
+                                  {segmentName}
+                                </Typography>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                  <Typography variant="body2" fontWeight="medium">
+                                    {sampleSize}
+                                  </Typography>
+                                  <Chip
+                                    label={`${percentage}%`}
+                                    size="small"
+                                    color="primary"
+                                    variant="outlined"
+                                    sx={{ minWidth: 60, fontSize: '0.75rem' }}
+                                  />
+                                </Box>
+                              </Box>
+                            );
+                          })}
+                        </Box>
+                      </Box>
+                    </Grid>
+                  );
+                })}
+              </Grid>
+            </Box>
+          </>
+        )}
       </Paper>
 
       {/* Key Insights */}

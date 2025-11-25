@@ -1,0 +1,117 @@
+survey:
+  name: "General Lottery Player Survey"
+  description: "A comprehensive survey to understand lottery player preferences, behaviors, and attitudes"
+  context: "We want to understand your views on lottery games and scratch cards. Your honest feedback will help improve lottery products and experiences."
+  demographics: ["age_group", "gender", "occupation"]
+  questions:
+    - id: play_frequency
+      text: "How often do you purchase lottery tickets or scratch cards?"
+      type: likert_5
+      scale:
+        1: "Never"
+        2: "Rarely (few times a year)"
+        3: "Occasionally (monthly)"
+        4: "Regularly (weekly)"
+        5: "Very frequently (multiple times per week)"
+    - id: spending_comfort
+      text: "How comfortable are you with the amount you spend on lottery products?"
+      type: likert_5
+      scale:
+        1: "Very uncomfortable"
+        2: "Uncomfortable"
+        3: "Neutral"
+        4: "Comfortable"
+        5: "Very comfortable"
+    - id: winning_expectation
+      text: "How often do you expect to win when you purchase a lottery product?"
+      type: likert_5
+      scale:
+        1: "Never expect to win"
+        2: "Rarely expect to win"
+        3: "Sometimes expect to win"
+        4: "Often expect to win"
+        5: "Always expect to win"
+    - id: entertainment_value
+      text: "How much do you agree that lottery products provide good entertainment value?"
+      type: likert_7
+      scale:
+        1: "Strongly disagree"
+        2: "Disagree"
+        3: "Somewhat disagree"
+        4: "Neutral"
+        5: "Somewhat agree"
+        6: "Agree"
+        7: "Strongly agree"
+    - id: trust_fairness
+      text: "Do you trust that lottery games are fair and legitimate?"
+      type: yes_no
+    - id: price_sensitivity
+      text: "How important is the price of a lottery ticket or scratch card in your purchase decision?"
+      type: likert_5
+      scale:
+        1: "Not important at all"
+        2: "Slightly important"
+        3: "Moderately important"
+        4: "Very important"
+        5: "Extremely important"
+    - id: visual_design_importance
+      text: "How important is the visual design and appearance of a scratch card to you?"
+      type: likert_5
+      scale:
+        1: "Not important at all"
+        2: "Slightly important"
+        3: "Moderately important"
+        4: "Very important"
+        5: "Extremely important"
+    - id: recommendation_likelihood
+      text: "How likely are you to recommend lottery products to friends and family?"
+      type: likert_7
+      scale:
+        1: "Extremely unlikely"
+        2: "Unlikely"
+        3: "Somewhat unlikely"
+        4: "Neutral"
+        5: "Somewhat likely"
+        6: "Likely"
+        7: "Extremely likely"
+  persona_groups:
+    - name: "Heavy Players"
+      description: "Players who buy lottery products multiple times per week"
+      weight: 0.20
+      personas:
+        - "Tom, 42, buys scratch cards daily on his lunch break"
+        - "Sarah, 38, never misses the weekly lottery draw"
+      target_demographics:
+        gender: ["Male", "Female"]
+        age_group: ["35-44", "45-54", "55-64"]
+        occupation: ["Professional", "Manager", "Technical", "Skilled Trade", "Service"]
+    - name: "Regular Players"
+      description: "Players who buy lottery products weekly or monthly"
+      weight: 0.35
+      personas:
+        - "Mike, 32, buys a few scratch cards every payday"
+        - "Lisa, 29, plays the lottery weekly with coworkers"
+      target_demographics:
+        gender: ["Male", "Female"]
+        age_group: ["25-34", "35-44", "45-54"]
+        occupation: ["Professional", "Manager", "Administrative", "Sales", "Service", "Technical"]
+    - name: "Occasional Players"
+      description: "Players who buy lottery products a few times a year"
+      weight: 0.30
+      personas:
+        - "Jenny, 26, buys scratch cards on special occasions"
+        - "David, 31, only plays when the jackpot is large"
+      target_demographics:
+        gender: ["Male", "Female"]
+        age_group: ["18-24", "25-34", "35-44"]
+        occupation: ["Student", "Professional", "Administrative", "Sales", "Service", "Other"]
+    - name: "Non-Players/Curious"
+      description: "People who rarely or never play but are curious about lottery products"
+      weight: 0.15
+      personas:
+        - "Alex, 24, has never bought a lottery ticket but is curious"
+        - "Emma, 28, thinks lotteries are a waste of money"
+      target_demographics:
+        gender: ["Male", "Female"]
+        age_group: ["18-24", "25-34"]
+        occupation: ["Student", "Professional", "Technical", "Administrative", "Other"]

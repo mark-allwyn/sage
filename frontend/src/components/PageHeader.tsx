@@ -103,6 +103,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                 opacity: 0.95,
                 lineHeight: 1.6,
                 maxWidth: 800,
+                ml: icon ? 8 : 0,
               }}
             >
               {subtitle}
@@ -163,6 +164,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
             fontSize: '1.0625rem',
             lineHeight: 1.6,
             maxWidth: 800,
+            ml: icon ? 8 : 0,
           }}
         >
           {subtitle}

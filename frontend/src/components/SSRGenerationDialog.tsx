@@ -32,8 +32,17 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
+  Card,
+  CardActionArea,
+  CardContent,
+  Chip,
 } from '@mui/material';
-import { ExpandMore as ExpandMoreIcon } from '@mui/icons-material';
+import {
+  ExpandMore as ExpandMoreIcon,
+  Speed as SpeedIcon,
+  Balance as BalanceIcon,
+  WorkspacePremium as PremiumIcon,
+} from '@mui/icons-material';
 import { CreateGroundTruthFromSSRRequest } from '../services/types';
 import { getDefaultModel } from '../utils/providerFilters';
 
@@ -89,6 +98,94 @@ const SSRGenerationDialog: React.FC<SSRGenerationDialogProps> = ({
             This will run the full SSR pipeline using your survey's persona groups to generate a
             high-quality ground truth baseline. Higher profile counts produce better results but take longer.
           </Alert>
+
+          {/* Preset Templates */}
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="subtitle2" gutterBottom fontWeight="medium">
+              Quick Start Presets
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={4}>
+                <Card variant="outlined">
+                  <CardActionArea
+                    onClick={() =>
+                      onConfigChange({
+                        ...ssrConfig,
+                        num_profiles: 50,
+                        llm_temperature: 0.7,
+                        ssr_temperature: 1.0,
+                      })
+                    }
+                  >
+                    <CardContent>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                        <SpeedIcon color="primary" />
+                        <Typography variant="h6">Quick Test</Typography>
+                        <Chip label="~2 min" size="small" />
+                      </Box>
+                      <Typography variant="body2" color="text.secondary">
+                        50 profiles - Fast baseline for testing and development
+                      </Typography>
+                    </CardContent>
+                  </CardActionArea>
+                </Card>
+              </Grid>
+
+              <Grid item xs={12} md={4}>
+                <Card variant="outlined">
+                  <CardActionArea
+                    onClick={() =>
+                      onConfigChange({
+                        ...ssrConfig,
+                        num_profiles: 200,
+                        llm_temperature: 0.7,
+                        ssr_temperature: 1.0,
+                      })
+                    }
+                  >
+                    <CardContent>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                        <BalanceIcon color="success" />
+                        <Typography variant="h6">Balanced</Typography>
+                        <Chip label="~5 min" size="small" color="success" />
+                      </Box>
+                      <Typography variant="body2" color="text.secondary">
+                        200 profiles - Good quality for research and validation
+                      </Typography>
+                    </CardContent>
+                  </CardActionArea>
+                </Card>
+              </Grid>
+
+              <Grid item xs={12} md={4}>
+                <Card variant="outlined">
+                  <CardActionArea
+                    onClick={() =>
+                      onConfigChange({
+                        ...ssrConfig,
+                        num_profiles: 500,
+                        llm_temperature: 0.7,
+                        ssr_temperature: 1.0,
+                      })
+                    }
+                  >
+                    <CardContent>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                        <PremiumIcon color="warning" />
+                        <Typography variant="h6">Production</Typography>
+                        <Chip label="~15 min" size="small" color="warning" />
+                      </Box>
+                      <Typography variant="body2" color="text.secondary">
+                        500 profiles - High quality for production use
+                      </Typography>
+                    </CardContent>
+                  </CardActionArea>
+                </Card>
+              </Grid>
+            </Grid>
+          </Box>
+
+          <Divider sx={{ mb: 3 }} />
 
           <Grid container spacing={2}>
             <Grid item xs={12}>

@@ -19,19 +19,38 @@ import {
   LinearProgress,
   Alert,
   Tooltip,
+  IconButton,
+  Collapse,
 } from '@mui/material';
+import { KeyboardArrowDown as KeyboardArrowDownIcon, KeyboardArrowUp as KeyboardArrowUpIcon } from '@mui/icons-material';
 import { QuestionAnalysis } from '../../services/types';
+import QuestionDemographicChart from './QuestionDemographicChart';
 
 interface QuestionAnalysisPanelProps {
   questions?: QuestionAnalysis[];
+  runId: string;
+  demographicFields?: string[];
 }
 
 type SortField = 'mean' | 'top_box_pct' | 'net_score' | 'std';
 type SortDirection = 'asc' | 'desc';
 
-const QuestionAnalysisPanel: React.FC<QuestionAnalysisPanelProps> = ({ questions }) => {
+const QuestionAnalysisPanel: React.FC<QuestionAnalysisPanelProps> = ({ questions, runId, demographicFields = [] }) => {
   const [sortField, setSortField] = useState<SortField>('mean');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+
+  const toggleRow = (questionId: string) => {
+    setExpandedRows((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(questionId)) {
+        newSet.delete(questionId);
+      } else {
+        newSet.add(questionId);
+      }
+      return newSet;
+    });
+  };
 
   if (!questions || questions.length === 0) {
     return (
@@ -92,6 +111,7 @@ const QuestionAnalysisPanel: React.FC<QuestionAnalysisPanelProps> = ({ questions
         <Table>
           <TableHead>
             <TableRow>
+              {demographicFields.length > 0 && <TableCell />}
               <TableCell>Question</TableCell>
               <TableCell>Category</TableCell>
               <TableCell align="center">
@@ -135,60 +155,90 @@ const QuestionAnalysisPanel: React.FC<QuestionAnalysisPanelProps> = ({ questions
             </TableRow>
           </TableHead>
           <TableBody>
-            {sortedQuestions.map((question, index) => (
-              <TableRow key={question.question_id || index} hover>
-                <TableCell sx={{ maxWidth: 300 }}>
-                  <Tooltip title={question.question_text}>
-                    <Typography variant="body2" noWrap>
-                      {question.question_text}
-                    </Typography>
-                  </Tooltip>
-                  <Typography variant="caption" color="text.secondary">
-                    {question.question_id}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  {question.category && (
-                    <Chip label={question.category} size="small" variant="outlined" />
-                  )}
-                </TableCell>
-                <TableCell align="center">
-                  <Box sx={{ minWidth: 100 }}>
-                    <Typography variant="body1" fontWeight="bold">
-                      {question.mean.toFixed(2)}
-                    </Typography>
-                    <LinearProgress
-                      variant="determinate"
-                      value={(question.mean / 5) * 100}
-                      color={getProgressColor(question.mean)}
-                      sx={{ mt: 0.5 }}
-                    />
-                    <Typography variant="caption" color="text.secondary">
-                      {question.ci_95_lower.toFixed(2)} - {question.ci_95_upper.toFixed(2)}
-                    </Typography>
-                  </Box>
-                </TableCell>
-                <TableCell align="center">
-                  <Chip
-                    label={question.grade}
-                    color={getGradeColor(question.grade)}
-                    size="small"
-                  />
-                </TableCell>
-                <TableCell align="center">
-                  <Typography variant="body2">{question.top_box_pct.toFixed(1)}%</Typography>
-                </TableCell>
-                <TableCell align="center">
-                  <Typography variant="body2">{question.net_score.toFixed(1)}</Typography>
-                </TableCell>
-                <TableCell align="center">
-                  <Typography variant="body2">{question.std.toFixed(2)}</Typography>
-                </TableCell>
-                <TableCell align="center">
-                  <Typography variant="body2">{question.sample_size}</Typography>
-                </TableCell>
-              </TableRow>
-            ))}
+            {sortedQuestions.map((question, index) => {
+              const isExpanded = expandedRows.has(question.question_id);
+              return (
+                <React.Fragment key={question.question_id || index}>
+                  <TableRow hover>
+                    {demographicFields.length > 0 && (
+                      <TableCell>
+                        <IconButton
+                          size="small"
+                          onClick={() => toggleRow(question.question_id)}
+                        >
+                          {isExpanded ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+                        </IconButton>
+                      </TableCell>
+                    )}
+                    <TableCell sx={{ maxWidth: 300 }}>
+                      <Tooltip title={question.question_text}>
+                        <Typography variant="body2" noWrap>
+                          {question.question_text}
+                        </Typography>
+                      </Tooltip>
+                      <Typography variant="caption" color="text.secondary">
+                        {question.question_id}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      {question.category && (
+                        <Chip label={question.category} size="small" variant="outlined" />
+                      )}
+                    </TableCell>
+                    <TableCell align="center">
+                      <Box sx={{ minWidth: 100 }}>
+                        <Typography variant="body1" fontWeight="bold">
+                          {question.mean.toFixed(2)}
+                        </Typography>
+                        <LinearProgress
+                          variant="determinate"
+                          value={(question.mean / 5) * 100}
+                          color={getProgressColor(question.mean)}
+                          sx={{ mt: 0.5 }}
+                        />
+                        <Typography variant="caption" color="text.secondary">
+                          {question.ci_95_lower.toFixed(2)} - {question.ci_95_upper.toFixed(2)}
+                        </Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell align="center">
+                      <Chip
+                        label={question.grade}
+                        color={getGradeColor(question.grade)}
+                        size="small"
+                      />
+                    </TableCell>
+                    <TableCell align="center">
+                      <Typography variant="body2">{question.top_box_pct.toFixed(1)}%</Typography>
+                    </TableCell>
+                    <TableCell align="center">
+                      <Typography variant="body2">{question.net_score.toFixed(1)}</Typography>
+                    </TableCell>
+                    <TableCell align="center">
+                      <Typography variant="body2">{question.std.toFixed(2)}</Typography>
+                    </TableCell>
+                    <TableCell align="center">
+                      <Typography variant="body2">{question.sample_size}</Typography>
+                    </TableCell>
+                  </TableRow>
+
+              {/* Collapsible row with demographic chart */}
+              {demographicFields.length > 0 && (
+                <TableRow>
+                  <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={9}>
+                    <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+                      <QuestionDemographicChart
+                        runId={runId}
+                        questionId={question.question_id}
+                        demographicFields={demographicFields}
+                      />
+                    </Collapse>
+                  </TableCell>
+                </TableRow>
+              )}
+            </React.Fragment>
+            );
+          })}
           </TableBody>
         </Table>
       </TableContainer>

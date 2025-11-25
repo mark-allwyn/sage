@@ -33,6 +33,16 @@ See detailed installation instructions below.
   - Searchable table with filters
   - Run metadata and configuration details
   - Direct access to detailed results
+- **📊 Analysis Dashboard**: Comprehensive statistical analysis and insights with:
+  - Executive summary with key findings and metrics
+  - Question-by-question analysis with response distributions
+  - Demographic breakdown and segmentation analysis
+  - Statistical metrics (mean, median, standard deviation, confidence intervals)
+  - Performance grading (A-D scale) for each question
+  - Top-box percentage and net scores
+  - Interactive visualizations (bar charts, demographic comparisons)
+  - Category-based comparisons (for multi-product surveys)
+  - Multiple export formats (CSV, summary reports)
 - **🔬 Ground Truth Experiments**: Advanced validation system with:
   - Ground truth creation from high-quality runs
   - Experiment tracking and comparison
@@ -260,6 +270,38 @@ The app will open at `http://localhost:3000`
    - Confusion matrices (if ground truth available)
 4. **Export to CSV** for further analysis
 
+### 4. Analyzing Results
+
+After running a survey, access the comprehensive Analysis Dashboard:
+
+1. **From Survey History**: Click "View Analysis" for any completed run
+2. **From Run Details**: Click "Analysis Dashboard" button
+
+**Executive Summary Panel**:
+- Total respondents and questions analyzed
+- Demographic breakdown with sample sizes and percentages
+- Key insights automatically generated from data
+- Results organized by category (if multi-product survey)
+
+**Question Analysis**:
+- Detailed table with sortable columns (mean, top-box %, net score, std dev)
+- Performance grades (A-D) for each question
+- Response distribution visualizations (bar charts)
+- Statistical metrics (sample size, confidence intervals)
+- Expandable demographic comparisons per question
+
+**Demographic Overview**:
+- Mean scores across demographic segments
+- Sample distribution visualization
+- Segment-specific insights
+- Cross-tabulation analysis
+
+**Export Options**:
+- Full analysis data (CSV)
+- Question-level data (CSV)
+- Response-level data (CSV)
+- Executive summary report (TXT)
+
 ### 4. Ground Truth Testing
 
 1. Navigate to **"Experiments"** (Ground Truth Testing)
@@ -353,6 +395,17 @@ sage/
 - `POST /api/run-survey` - Execute complete pipeline
 - `POST /api/run-survey-stream` - Execute with streaming progress
 - `DELETE /api/runs/{run_id}` - Delete survey run
+
+### Analysis
+- `GET /api/analysis/{run_id}/summary` - Get executive summary with key metrics
+- `GET /api/analysis/{run_id}/insights` - Get AI-generated insights
+- `GET /api/analysis/{run_id}/questions` - Get question-level analysis
+- `GET /api/analysis/{run_id}/categories` - Get category comparisons
+- `GET /api/analysis/{run_id}/demographics/{field}` - Get demographic breakdown for specific field
+- `GET /api/analysis/{run_id}/export/csv` - Export full analysis data as CSV
+- `GET /api/analysis/{run_id}/export/questions-csv` - Export question data as CSV
+- `GET /api/analysis/{run_id}/export/responses-csv` - Export response data as CSV
+- `GET /api/analysis/{run_id}/export/summary-report` - Export summary report as TXT
 
 ### Ground Truth
 - `GET /api/ground-truths` - List ground truth datasets

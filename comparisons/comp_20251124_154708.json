@@ -1,0 +1,1714 @@
+{
+  "id": "comp_20251124_154708",
+  "run_id": "run_20251124_105336",
+  "ground_truth_id": "gt_20251124_105748",
+  "survey_id": "lucky_braynza_comparison",
+  "created_at": "2025-11-24T15:47:08.714895",
+  "comparison": {
+    "overall_metrics": {
+      "mean_kl_divergence": 0.005401095682568513,
+      "std_kl_divergence": 0.00534946372444766,
+      "mean_js_divergence": 0.030289175898324614,
+      "std_js_divergence": 0.022359287901755464,
+      "mean_wasserstein": 0.05983009715118176,
+      "std_wasserstein": 0.05144789256943671,
+      "mean_mae": 0.01073658648749391,
+      "std_mae": 0.008863915662793749,
+      "num_questions_compared": 8
+    },
+    "by_category": {
+      "design_a": {
+        "mean_kl_divergence": 0.0039057676103828307,
+        "mean_js_divergence": 0.025575739425011956,
+        "mean_wasserstein": 0.04460349717806243,
+        "mean_mae": 0.008772588068057231,
+        "num_questions": 4
+      },
+      "design_b": {
+        "mean_kl_divergence": 0.0068964237547541945,
+        "mean_js_divergence": 0.03500261237163727,
+        "mean_wasserstein": 0.07505669712430109,
+        "mean_mae": 0.012700584906930589,
+        "num_questions": 4
+      }
+    },
+    "by_question": {
+      "design_a_appeal_a": {
+        "kl_divergence": 0.012151488581407792,
+        "js_divergence": 0.05784072707863837,
+        "wasserstein_distance": 0.09687237036826718,
+        "chi_squared": 0.4450979987848095,
+        "chi_squared_p_value": 0.9786208674983699,
+        "significant_difference": false,
+        "mean_absolute_error": 0.02233112381986216
+      },
+      "design_a_purchase_intent_a": {
+        "kl_divergence": 0.0017077940550228026,
+        "js_divergence": 0.02071254187419613,
+        "wasserstein_distance": 0.03938542692803959,
+        "chi_squared": 0.03496144848771786,
+        "chi_squared_p_value": 0.9998489810837349,
+        "significant_difference": false,
+        "mean_absolute_error": 0.009277592912001292
+      },
+      "design_a_trustworthy_a": {
+        "kl_divergence": 0.0,
+        "js_divergence": 0.0,
+        "wasserstein_distance": 0.0,
+        "chi_squared": null,
+        "chi_squared_p_value": null,
+        "significant_difference": false,
+        "mean_absolute_error": 0.0
+      },
+      "design_a_excitement_a": {
+        "kl_divergence": 0.0017637878051007284,
+        "js_divergence": 0.023749688747213327,
+        "wasserstein_distance": 0.042156191415942956,
+        "chi_squared": null,
+        "chi_squared_p_value": 0.0,
+        "significant_difference": true,
+        "mean_absolute_error": 0.0034816355403654692
+      },
+      "design_b_appeal_b": {
+        "kl_divergence": 0.013744000466896618,
+        "js_divergence": 0.05783675700534956,
+        "wasserstein_distance": 0.16660093269236378,
+        "chi_squared": 0.2576710601781278,
+        "chi_squared_p_value": 0.9923802456003621,
+        "significant_difference": false,
+        "mean_absolute_error": 0.02448887566352983
+      },
+      "design_b_purchase_intent_b": {
+        "kl_divergence": 0.003461888753577832,
+        "js_divergence": 0.029275404494832655,
+        "wasserstein_distance": 0.052394337712541414,
+        "chi_squared": 0.06681369340961062,
+        "chi_squared_p_value": 0.9994542645279109,
+        "significant_difference": false,
+        "mean_absolute_error": 0.015152664188915496
+      },
+      "design_b_trustworthy_b": {
+        "kl_divergence": 0.0,
+        "js_divergence": 0.0,
+        "wasserstein_distance": 0.0,
+        "chi_squared": null,
+        "chi_squared_p_value": null,
+        "significant_difference": false,
+        "mean_absolute_error": 0.0
+      },
+      "design_b_excitement_b": {
+        "kl_divergence": 0.010379805798542328,
+        "js_divergence": 0.052898287986366886,
+        "wasserstein_distance": 0.08123151809229917,
+        "chi_squared": 0.3110977342085731,
+        "chi_squared_p_value": 0.9994415522780392,
+        "significant_difference": false,
+        "mean_absolute_error": 0.01116079977527703
+      }
+    }
+  },
+  "test_run_distributions": {
+    "design_a": {
+      "appeal_a": {
+        "R001": {
+          "probabilities": [
+            0.0,
+            0.20574174488960023,
+            0.17031040346268117,
+            0.39405722123796,
+            0.2298906304097586
+          ],
+          "mode": 4,
+          "expected_value": 3.6480967371678767,
+          "entropy": 1.33172064721089,
+          "text_response": "I find the \"Lucky Luck\" scratch card design quite appealing. The warm brown horse adds a friendly and inviting touch, which I think is important for engaging players. The vibrant colors and playful elements, like the coins and the festive background, create an exciting atmosphere that can attract attention. The prominent prize amount of \u00a3100,000 is also eye-catching and likely to entice players. Overall, the design strikes a good balance between fun and clarity, making it a strong contender for a scratch card.",
+          "gender": "Female",
+          "age_group": "35-44",
+          "persona_group": "Regular Lottery Players",
+          "persona_description": "Regular player who buys scratch cards weekly",
+          "occupation": "Professional"
+        },
+        "R002": {
+          "probabilities": [
+            0.0,
+            0.20326657645442553,
+            0.2075427870378998,
+            0.3811403962704366,
+            0.20805024023723806
+          ],
+          "mode": 4,
+          "expected_value": 3.5939743002904874,
+          "entropy": 1.3444728623298527,
+          "text_response": "I find the \"Lucky Luck\" scratch card design quite appealing. The warm brown horse character adds a playful and engaging element, which can attract attention and create a fun atmosphere around the game. The vibrant colors and cheerful graphics, like the coins and confetti, enhance the overall excitement, making it feel festive and inviting. \n\nThe inclusion of clear win amounts and symbols, such as the cherry and dollar bills, is essential for quick recognition of potential prizes, which I appreciate as a regular player. Overall, this design strikes a good balance between fun and clarity, making it a strong contender for engaging players like myself who enjoy scratch cards.",
+          "gender": "Male",
+          "age_group": "25-34",
+          "persona_group": "Regular Lottery Players",
+          "persona_description": "Regular player who buys scratch cards weekly",
+          "occupation": "Administrative"
+        },
+        "R003": {
+          "probabilities": [
+            0.0,
+            0.06939551960286082,
+            0.11609634127281179,
+            0.5263807909670793,
+            0.28812734815724805
+          ],
+          "mode": 4,
+          "expected_value": 4.033239967678715,
+          "entropy": 1.1314634976941458,
+          "text_response": "I find Design A, featuring the warm brown horse, quite appealing. The design is vibrant and playful, which can attract attention and create a fun atmosphere for players. The horse character is charming and adds a sense of personality to the card, making it feel more engaging. The clear call to action with \"WIN \u00a3100,000!\" prominently displayed is enticing and likely to draw in potential players. Additionally, the use of bright colors and celebratory elements like confetti and coins enhances the excitement surrounding the game. Overall, I think this design effectively captures the joy of playing scratch cards while maintaining a lighthearted theme.",
+          "gender": "Female",
+          "age_group": "45-54",
+          "persona_group": "Regular Lottery Players",
+          "persona_description": "Regular player who buys scratch cards weekly",
+          "occupation": "Manager"
+        },
+        "R004": {
+          "probabilities": [
+            0.0,
+            0.13322676923608845,
+            0.23320404220831,
+            0.38958157502015933,
+            0.24398761353544224
+          ],
+          "mode": 4,
+          "expected_value": 3.744330032854956,
+          "entropy": 1.3194833552810454,
+          "text_response": "I find Design A, featuring the warm brown horse, quite appealing. The playful character of the horse, wearing a top hat and engaging with a coin, creates a fun and inviting atmosphere that draws me in. The bright colors and festive elements like confetti and coins evoke a sense of excitement, which is perfect for a scratch card. Additionally, the clear messaging about the potential winnings is prominent and easy to read, making it straightforward for players. Overall, this design feels lively and encourages a sense of luck and enjoyment, making it a strong contender for regular players like myself.",
+          "gender": "Female",
+          "age_group": "25-34",
+          "persona_group": "Regular Lottery Players",
+          "persona_description": "Regular player who buys scratch cards weekly",
+          "occupation": "Administrative"
+        },
+        "R005": {
+          "probabilities": [
+            0.0,
+            0.21944011685833406,
+            0.2349232351984758,
+            0.35559263312991646,
+            0.1900440148132737
+          ],
+          "mode": 4,
+          "expected_value": 3.5162405458981296,
+          "entropy": 1.3563449557262364,
+          "text_response": "I find Design A of the scratch card, \"Lucky Luck,\" quite appealing. The warm brown horse character is charming and adds a playful touch, which can attract attention and create a positive association with the game. The bright colors and celebratory elements, like the coins and confetti, enhance the excitement surrounding the potential of winning. \n\nAs an occasional player, I appreciate the straightforward layout that clearly communicates the prize and instructions. The theme is fun and engaging, which makes me feel more inclined to buy the card. Overall, this design effectively balances a playful aesthetic with clear messaging, making it a strong contender for attracting players like myself.",
+          "gender": "Female",
+          "age_group": "35-44",
+          "persona_group": "Occasional Players",
+          "persona_description": "Occasional player who buys scratch cards a few times per year",
+          "occupation": "Sales"
+        },
+        "R006": {
+          "probabilities": [
+            0.0,
+            0.2348842903312904,
+            0.2183166197526245,
+            0.35634423184324476,
+            0.19045485807284035
+          ],
+          "mode": 4,
+          "expected_value": 3.5023696576576353,
+          "entropy": 1.3560397767123022,
+          "text_response": "I find Design A of the \"Lucky Luck\" scratch card quite appealing. The warm brown horse adds a friendly and approachable vibe, which could attract players like me who enjoy a light-hearted experience. The overall color scheme is bright and engaging, making it visually striking. The playful elements, such as the horse wearing a top hat and holding a coin, add a fun touch that aligns well with the theme of luck and winning. Additionally, the clear messaging about the potential prize catches my attention and makes me excited about the possibility of playing. Overall, it feels inviting and encourages me to give it a try.",
+          "gender": "Male",
+          "age_group": "25-34",
+          "persona_group": "Occasional Players",
+          "persona_description": "Occasional player who buys scratch cards a few times per year",
+          "occupation": "Sales"
+        },
+        "R007": {
+          "probabilities": [
+            0.0,
+            0.2453908946264728,
+            0.23144767940190875,
+            0.3395555580467102,
+            0.18360586792490824
+          ],
+          "mode": 4,
+          "expected_value": 3.461376399270054,
+          "entropy": 1.361416509506805,
+          "text_response": "I find Design A of the 'Lucky Luck' scratch card quite appealing. The warm brown horse character adds a playful and friendly touch, which could attract occasional players like myself. The vibrant colors and festive elements, such as the coins and confetti, create an exciting atmosphere that enhances the idea of winning. Additionally, the clear call to action with \"SCRATCH & WIN!\" is straightforward and encourages engagement. Overall, the design strikes a nice balance between fun and clarity, making it an enjoyable experience for casual players.",
+          "gender": "Male",
+          "age_group": "35-44",
+          "persona_group": "Occasional Players",
+          "persona_description": "Occasional player who buys scratch cards a few times per year",
+          "occupation": "Professional"
+        },
+        "R008": {
+          "probabilities": [
+            0.19879957564773426,
+            0.3222072684125756,
+            0.29788230109555525,
+            0.18111085484413492,
+            0.0
+          ],
+          "mode": 2,
+          "expected_value": 2.461304435136091,
+          "entropy": 1.3562782628574968,
+          "text_response": "As someone who rarely or never plays lottery games, I find the design of this scratch card, \"Lucky Luck,\" to be quite engaging, though not particularly appealing to me personally. The warm brown horse wearing a top hat adds a whimsical touch that could attract attention. The bright colors and playful elements like coins and cherry symbols create a fun atmosphere, which is likely to appeal to casual players.\n\nHowever, as a non-player, I feel that the design might be more aimed at those who enjoy games of chance. The overall theme seems lighthearted and festive, which could draw in people looking for entertainment. Still, for someone like me who doesn\u2019t participate in these games, the excitement conveyed through the visuals doesn\u2019t resonate deeply. Overall, while I appreciate the creativity, it may not change my perspective on participating in lottery games.",
+          "gender": "Male",
+          "age_group": "25-34",
+          "persona_group": "Non-Players",
+          "persona_description": "Person who rarely or never plays lottery games",
+          "occupation": "Administrative"
+        },
+        "R009": {
+          "probabilities": [
+            0.0,
+            0.2826433621119579,
+            0.2896745403746496,
+            0.32036255725808377,
+            0.10731954025530868
+          ],
+          "mode": 4,
+          "expected_value": 3.2523582756567433,
+          "entropy": 1.320246039885393,
+          "text_response": "As someone who rarely or never plays lottery games, I find the \"Lucky Luck\" scratch card design quite engaging. The warm brown horse character is playful and has a cheerful expression, which could attract attention. The vibrant colors and festive elements, like coins and confetti, create a sense of excitement, which is appealing even to a non-player like myself.\n\nHowever, I also feel that the design might be a bit cartoonish for my taste. While it aims to convey fun, it may not resonate with everyone, particularly those who prefer a more sophisticated aesthetic. Overall, I appreciate the effort to make it eye-catching, but I would lean towards a design that feels a bit more elegant or refined.",
+          "gender": "Female",
+          "age_group": "45-54",
+          "persona_group": "Non-Players",
+          "persona_description": "Person who rarely or never plays lottery games",
+          "occupation": "Service"
+        },
+        "R010": {
+          "probabilities": [
+            0.0,
+            0.15666116614246708,
+            0.29913565347392856,
+            0.365464355722633,
+            0.17873882466097135
+          ],
+          "mode": 4,
+          "expected_value": 3.5662808389021086,
+          "entropy": 1.327041691693518,
+          "text_response": "I find Design A, featuring the warm brown horse, to be quite appealing. The vibrant colors and playful illustration create an inviting atmosphere, which could attract attention even from someone like me who rarely plays lottery games. The horse character adds a fun and whimsical touch, making it feel less intimidating and more approachable. The overall layout is clear and easy to understand, which is important for engaging potential players. However, while the design is charming, I might prefer something that feels even more sophisticated or modern, as that could resonate better with a younger audience like myself.",
+          "gender": "Female",
+          "age_group": "18-24",
+          "persona_group": "Non-Players",
+          "persona_description": "Person who rarely or never plays lottery games",
+          "occupation": "Other"
+        }
+      },
+      "purchase_intent_a": {
+        "R001": {
+          "probabilities": [
+            0.0,
+            0.1609472074661058,
+            0.21753518531609503,
+            0.394483368088397,
+            0.22703423912940218
+          ],
+          "mode": 4,
+          "expected_value": 3.687604638881096,
+          "entropy": 1.3293790664954814,
+          "text_response": "Regarding Design A, I find it visually appealing and engaging. The warm brown horse with a cheerful expression adds a friendly touch, making it inviting. The bright colors and festive elements, like confetti and coins, create an exciting atmosphere that aligns well with the thrill of scratch cards. \n\nAs a regular player, the promise of a \u00a3100,000 prize is enticing, and the playful theme could enhance the enjoyment of the experience. Overall, I would be likely to purchase this scratch card, as it feels fun and optimistic, which is exactly what I look for in a lottery game.",
+          "gender": "Female",
+          "age_group": "35-44",
+          "persona_group": "Regular Lottery Players",
+          "persona_description": "Regular player who buys scratch cards weekly",
+          "occupation": "Professional"
+        },
+        "R002": {
+          "probabilities": [
+            0.0,
+            0.2308762510377548,
+            0.2318707742838076,
+            0.36722733220776843,
+            0.1700256424706692
+          ],
+          "mode": 4,
+          "expected_value": 3.476402366111352,
+          "entropy": 1.3464632221874826,
+          "text_response": "Based on Design A - Warm Brown Horse, I find it visually appealing and engaging. The vibrant colors and playful imagery of the horse dressed in a top hat add a fun, whimsical touch that resonates with the entertaining aspect of scratch cards. The potential prize of \u00a3100,000 is prominently displayed, drawing attention and creating excitement. As a regular player, the overall theme and design make me more likely to purchase this scratch card, as it feels inviting and suggests a light-hearted experience while scratching for potential winnings. The humorous character adds to the enjoyment, making it stand out among other scratch card designs I typically encounter.",
+          "gender": "Male",
+          "age_group": "25-34",
+          "persona_group": "Regular Lottery Players",
+          "persona_description": "Regular player who buys scratch cards weekly",
+          "occupation": "Administrative"
+        },
+        "R003": {
+          "probabilities": [
+            0.0,
+            0.2029026351053695,
+            0.1586476903163851,
+            0.4056556221630553,
+            0.23279405241519016
+          ],
+          "mode": 4,
+          "expected_value": 3.668341091888067,
+          "entropy": 1.3210409303903268,
+          "text_response": "I find Design A, featuring the warm brown horse, quite appealing. The vibrant colors and playful character immediately grab attention, which is essential for a scratch card. The horse wearing a top hat adds a fun and whimsical touch that could resonate well with players looking for an enjoyable experience. The promise of a \u00a3100,000 prize is prominently displayed, which is a great motivator for purchase. \n\nAs a regular player, I appreciate designs that are visually engaging and convey excitement, and this card certainly does that. I would likely be inclined to purchase this scratch card, as it feels both inviting and fun, aligning well with my expectations for a lively lottery game. Overall, it's a design that stands out and makes me want to try my luck!",
+          "gender": "Female",
+          "age_group": "45-54",
+          "persona_group": "Regular Lottery Players",
+          "persona_description": "Regular player who buys scratch cards weekly",
+          "occupation": "Manager"
+        },
+        "R004": {
+          "probabilities": [
+            0.0,
+            0.1550116168013629,
+            0.2480685084388128,
+            0.3659540886532702,
+            0.23096578610655416
+          ],
+          "mode": 4,
+          "expected_value": 3.672874044065016,
+          "entropy": 1.341152649626328,
+          "text_response": "Based on Design A, I find the overall aesthetic quite engaging and fun. The warm brown horse wearing a top hat adds a playful and whimsical touch, which I think could appeal to many players. The bright colors and cheerful elements like coins and confetti create a festive vibe, making it feel exciting to participate in. \n\nThe text is clear and prominently displays the potential winnings, which is crucial for attracting players like me who are regular scratch card buyers. Overall, I would be likely to purchase this scratch card, as the design feels inviting and matches the thrill I seek when playing.",
+          "gender": "Female",
+          "age_group": "25-34",
+          "persona_group": "Regular Lottery Players",
+          "persona_description": "Regular player who buys scratch cards weekly",
+          "occupation": "Administrative"
+        },
+        "R005": {
+          "probabilities": [
+            0.0,
+            0.23798859486503318,
+            0.2002999895427589,
+            0.3989135466771767,
+            0.16279786891503117
+          ],
+          "mode": 4,
+          "expected_value": 3.4865206896422056,
+          "entropy": 1.3258344804270044,
+          "text_response": "Design A, featuring the warm brown horse, has a playful and engaging aesthetic that I find appealing. The vibrant colors and cheerful expression of the horse create a sense of excitement, which is important for a scratch card. I appreciate the inclusion of familiar symbols like money and lucky charms, as they add to the fun and anticipation of winning.\n\nAs an occasional player, the clear message about the potential \u00a3100,000 prize is enticing. However, I would need to feel that the card is not overly gimmicky, and this design strikes a nice balance between fun and a genuine chance to win. Overall, I would be likely to purchase this scratch card, especially if I were in the mood for a little thrill and fun.",
+          "gender": "Female",
+          "age_group": "35-44",
+          "persona_group": "Occasional Players",
+          "persona_description": "Occasional player who buys scratch cards a few times per year",
+          "occupation": "Sales"
+        },
+        "R006": {
+          "probabilities": [
+            0.0,
+            0.26717011900236504,
+            0.07181834587683232,
+            0.48952879585606707,
+            0.17148273926473556
+          ],
+          "mode": 4,
+          "expected_value": 3.5653241553831734,
+          "entropy": 1.1938187493640506,
+          "text_response": "I find Design A of the 'Lucky Luck' scratch card quite appealing. The warm brown horse adds a friendly and inviting touch that could attract players. The vibrant colors and lively imagery, such as the gold coins and the celebratory confetti, create an energetic vibe that entices potential buyers. The promise of winning \u00a3100,000 is prominently displayed, which is a strong motivator for purchase.\n\nAs an occasional player, I appreciate a design that is visually engaging without being overly complicated. This card strikes a nice balance, making it clear what the game is about while maintaining a fun theme. I would say I'm likely to purchase this scratch card based on its design, as it effectively captures the excitement and potential rewards involved.",
+          "gender": "Male",
+          "age_group": "25-34",
+          "persona_group": "Occasional Players",
+          "persona_description": "Occasional player who buys scratch cards a few times per year",
+          "occupation": "Sales"
+        },
+        "R007": {
+          "probabilities": [
+            0.14301042807591008,
+            0.24518799256197935,
+            0.0,
+            0.37977034569724694,
+            0.2320312336648637
+          ],
+          "mode": 4,
+          "expected_value": 3.3126239643131754,
+          "entropy": 1.3294600607839153,
+          "text_response": "I appreciate the vibrant and playful design of the 'Lucky Luck' scratch card, especially with the warm brown horse character. The imagery is engaging and likely to attract attention, particularly with the cheerful expression and top hat that convey a sense of fun and excitement. \n\nAs an occasional player, the promise of winning \u00a3100,000 is certainly appealing, and the bright colors and festive elements (like the confetti) add to the overall excitement. However, I would consider factors such as the price of the card and my budget before making a purchase. Overall, I would say I'm moderately likely to buy this scratch card, especially if I find myself in a playful mood or looking for a bit of lighthearted entertainment.",
+          "gender": "Male",
+          "age_group": "35-44",
+          "persona_group": "Occasional Players",
+          "persona_description": "Occasional player who buys scratch cards a few times per year",
+          "occupation": "Professional"
+        },
+        "R008": {
+          "probabilities": [
+            0.20875950349052425,
+            0.46479571801938147,
+            0.005447109862693127,
+            0.32099766862740103,
+            0.0
+          ],
+          "mode": 2,
+          "expected_value": 2.438682943626971,
+          "entropy": 1.0762940133027052,
+          "text_response": "As someone who rarely plays lottery games, my likelihood of purchasing the \"Lucky Luck\" scratch card in Design A is quite low. While the design is colorful and playful, featuring a cartoon horse and engaging elements like coins and symbols, it doesn't resonate with me personally. I find the theme a bit too whimsical, which might appeal more to a younger audience or those who actively participate in such games. Additionally, the visual elements don't convey a sense of sophistication or seriousness that would attract me as a non-player. Overall, while the design is appealing, it doesn't motivate me to consider buying the scratch card.",
+          "gender": "Male",
+          "age_group": "25-34",
+          "persona_group": "Non-Players",
+          "persona_description": "Person who rarely or never plays lottery games",
+          "occupation": "Administrative"
+        },
+        "R009": {
+          "probabilities": [
+            0.22690902805359617,
+            0.4304616439045485,
+            0.0338148095205481,
+            0.3088145185213073,
+            0.0
+          ],
+          "mode": 2,
+          "expected_value": 2.4245348185095668,
+          "entropy": 1.1767751317812363,
+          "text_response": "As someone who rarely plays lottery games, my likelihood of purchasing the 'Lucky Luck' scratch card, specifically Design A featuring the warm brown horse, is quite low. While the design is colorful and engaging, with a playful character that might appeal to some, I don't find myself drawn to lottery games in general. \n\nThe theme and imagery seem fun and lighthearted, which could attract casual players, but for me, it doesn't evoke enough interest to consider purchasing it. Scratch cards typically feel like a gamble, and since I don't often participate in such activities, I would likely pass on this one despite its appealing visuals.",
+          "gender": "Female",
+          "age_group": "45-54",
+          "persona_group": "Non-Players",
+          "persona_description": "Person who rarely or never plays lottery games",
+          "occupation": "Service"
+        },
+        "R010": {
+          "probabilities": [
+            0.23371675123642965,
+            0.42815892038751596,
+            0.0,
+            0.29675272412482,
+            0.041371604251234435
+          ],
+          "mode": 2,
+          "expected_value": 2.4839035097669138,
+          "entropy": 1.1952187655808355,
+          "text_response": "As someone who rarely plays lottery games, my likelihood of purchasing the \"Lucky Luck\" scratch card, Design A, is quite low. While the design is vibrant and playful, featuring a cheerful horse character, it doesn't particularly resonate with me. The elements like the \u00a3100,000 prize and the fun graphics are engaging, but I feel that scratch cards are generally not in line with my interests. The theme feels a bit juvenile, which might appeal more to younger audiences or those who enjoy games of chance. Overall, while I appreciate the creativity, I don't think I would be inclined to buy this card.",
+          "gender": "Female",
+          "age_group": "18-24",
+          "persona_group": "Non-Players",
+          "persona_description": "Person who rarely or never plays lottery games",
+          "occupation": "Other"
+        }
+      },
+      "trustworthy_a": {
+        "R001": {
+          "probabilities": [
+            0.0,
+            1.0
+          ],
+          "mode": 2,
+          "expected_value": 2.0,
+          "entropy": -0.0,
+          "text_response": "Design A, featuring the warm brown horse, presents a fun and engaging visual that can appeal to regular scratch card players. The bright colors and playful imagery give it a lively feel, which might attract attention. However, while the design is cheerful and eye-catching, it might not convey a strong sense of trustworthiness or legitimacy. The cartoonish style and whimsical character could lead some players to perceive it as less serious compared to more traditional designs. \n\nFor a regular player like myself, I would appreciate the entertainment aspect, but I might also look for elements that reinforce credibility, such as more straightforward visuals or a more sophisticated aesthetic. Overall, while it's an enjoyable design, I think it could benefit from incorporating features that enhance its trustworthiness.",
+          "gender": "Female",
+          "age_group": "35-44",
+          "persona_group": "Regular Lottery Players",
+          "persona_description": "Regular player who buys scratch cards weekly",
+          "occupation": "Professional"
+        },
+        "R002": {
+          "probabilities": [
+            0.0,
+            1.0
+          ],
+          "mode": 2,
+          "expected_value": 2.0,
+          "entropy": -0.0,
+          "text_response": "**Opinion on Design A - Warm Brown Horse**\n\nI find Design A to be visually engaging, with a playful and inviting aesthetic. The warm brown horse wearing a top hat gives it a whimsical touch, and the bright colors and celebratory elements contribute to a fun atmosphere. However, while the design is eye-catching, it may not convey a strong sense of trustworthiness and legitimacy. The cartoonish style could potentially make it feel less serious or credible compared to more traditional scratch card designs. \n\nFor regular players like me, it\u2019s important that a scratch card feels reliable and legitimate, particularly since we're investing our money. A more straightforward design that emphasizes the potential winnings without too much embellishment might communicate trust more effectively. Overall, while I appreciate the creativity, I would prefer a design that balances fun with a more serious tone to enhance the perceived legitimacy.",
+          "gender": "Male",
+          "age_group": "25-34",
+          "persona_group": "Regular Lottery Players",
+          "persona_description": "Regular player who buys scratch cards weekly",
+          "occupation": "Administrative"
+        },
+        "R003": {
+          "probabilities": [
+            0.0,
+            1.0
+          ],
+          "mode": 2,
+          "expected_value": 2.0,
+          "entropy": -0.0,
+          "text_response": "Design A, featuring the warm brown horse, presents a playful and inviting aesthetic that can foster a sense of trustworthiness. The cheerful expression of the horse, along with elements like the top hat and the shiny coin, adds a whimsical touch that might appeal to regular scratch card players. The bright colors and clear messaging about the potential prize (\u00a3100,000) contribute to its legitimacy, as they communicate excitement and clarity.\n\nHowever, while the design is engaging, some might question its seriousness due to its cartoonish style, which may not resonate with all players, particularly those who prefer a more traditional or sophisticated look. Overall, I find it to be a fun and visually appealing design that could foster trust, but its playful nature may not appeal to everyone in the target demographic.",
+          "gender": "Female",
+          "age_group": "45-54",
+          "persona_group": "Regular Lottery Players",
+          "persona_description": "Regular player who buys scratch cards weekly",
+          "occupation": "Manager"
+        },
+        "R004": {
+          "probabilities": [
+            0.0,
+            1.0
+          ],
+          "mode": 2,
+          "expected_value": 2.0,
+          "entropy": -0.0,
+          "text_response": "Design A, featuring the warm brown horse, does evoke a sense of playfulness and fun, which is appealing for a scratch card. The bright colors and cheerful imagery can attract attention and engage players. However, the cartoonish style may raise questions about its legitimacy. While it\u2019s entertaining, the whimsical horse and exaggerated features could make it seem less serious or trustworthy compared to a more straightforward design. \n\nAs a regular player, I appreciate elements that convey reliability. If the design includes clear information about the game and its legitimacy, it could enhance trust. Overall, while I find the design visually appealing, I am slightly concerned that it may not convey the seriousness or trustworthiness that players often look for in a lottery product.",
+          "gender": "Female",
+          "age_group": "25-34",
+          "persona_group": "Regular Lottery Players",
+          "persona_description": "Regular player who buys scratch cards weekly",
+          "occupation": "Administrative"
+        },
+        "R005": {
+          "probabilities": [
+            0.0,
+            1.0
+          ],
+          "mode": 2,
+          "expected_value": 2.0,
+          "entropy": -0.0,
+          "text_response": "Design A, featuring the warm brown horse, presents a playful and engaging aesthetic that could appeal to many players, including occasional ones like myself. The cheerful expression of the horse, coupled with bright colors and the promise of a significant prize, creates an inviting atmosphere. \n\nHowever, while the design is fun and attention-grabbing, it may not fully convey a sense of trustworthiness and legitimacy. The cartoonish style and whimsical elements, like the horse wearing a top hat, might make it feel less serious or credible compared to designs that feature more traditional or straightforward imagery. For me, a balance between excitement and trust is crucial when considering scratch cards. Overall, I appreciate the creativity, but I would like to see elements that reinforce legitimacy, such as clearer branding or realistic visuals.",
+          "gender": "Female",
+          "age_group": "35-44",
+          "persona_group": "Occasional Players",
+          "persona_description": "Occasional player who buys scratch cards a few times per year",
+          "occupation": "Sales"
+        },
+        "R006": {
+          "probabilities": [
+            0.0,
+            1.0
+          ],
+          "mode": 2,
+          "expected_value": 2.0,
+          "entropy": -0.0,
+          "text_response": "Design A, featuring the warm brown horse, gives off a friendly and inviting vibe, which can be perceived as trustworthy. The cartoonish style and bright colors contribute to a sense of fun, making it appealing for occasional players like myself. However, while the design is engaging, the whimsical nature might make it feel less legitimate compared to more traditional designs. The horse character dressed in a top hat adds a playful element, but it could also lead some to question the seriousness of the scratch card. Overall, it feels somewhat trustworthy but leans more towards entertainment than a serious lottery vibe.",
+          "gender": "Male",
+          "age_group": "25-34",
+          "persona_group": "Occasional Players",
+          "persona_description": "Occasional player who buys scratch cards a few times per year",
+          "occupation": "Sales"
+        },
+        "R007": {
+          "probabilities": [
+            0.0,
+            1.0
+          ],
+          "mode": 2,
+          "expected_value": 2.0,
+          "entropy": -0.0,
+          "text_response": "Design A, featuring the warm brown horse, gives off a friendly and playful vibe that can appeal to an occasional player like myself. The cheerful expression of the horse and the colorful elements make it visually engaging and fun. However, while the design is eye-catching, it might slightly detract from the sense of legitimacy I look for in a scratch card. The cartoonish style may come across as less serious or professional, which could make me question the card's trustworthiness. Overall, it feels enjoyable but might benefit from a more refined look to enhance its credibility.",
+          "gender": "Male",
+          "age_group": "35-44",
+          "persona_group": "Occasional Players",
+          "persona_description": "Occasional player who buys scratch cards a few times per year",
+          "occupation": "Professional"
+        },
+        "R008": {
+          "probabilities": [
+            0.0,
+            1.0
+          ],
+          "mode": 2,
+          "expected_value": 2.0,
+          "entropy": -0.0,
+          "text_response": "In reviewing Design A for the 'Lucky Luck' scratch card featuring the warm brown horse, I have mixed feelings about its trustworthiness and legitimacy. The bright colors and playful imagery, while visually appealing, may come off as overly cartoonish, which could diminish the perceived seriousness of the game. The horse wearing a top hat adds a whimsical touch, but it might not resonate well with someone who is not a regular player, like myself, as it could suggest that the game is more about entertainment than genuine winning opportunities.\n\nAdditionally, while the design clearly promotes the potential for a large prize, the overall presentation might not instill confidence in its legitimacy. A more straightforward and refined design could potentially convey a greater sense of trustworthiness. Overall, while it\u2019s engaging and fun, it may not effectively communicate a sense of legitimacy to someone like me who rarely participates in lottery games.",
+          "gender": "Male",
+          "age_group": "25-34",
+          "persona_group": "Non-Players",
+          "persona_description": "Person who rarely or never plays lottery games",
+          "occupation": "Administrative"
+        },
+        "R009": {
+          "probabilities": [
+            0.0,
+            1.0
+          ],
+          "mode": 2,
+          "expected_value": 2.0,
+          "entropy": -0.0,
+          "text_response": "In reviewing Design A, the imagery of the horse wearing a top hat gives a whimsical and playful vibe, which might appeal to some audiences. However, as someone who rarely or never plays lottery games, I find the overall design less trustworthy. The cartoonish style and exaggerated expressions can seem less serious and may contribute to a perception of it being a gimmick rather than a legitimate opportunity. Additionally, the bright colors and celebratory elements, while fun, might not evoke the sense of trustworthiness that more traditional or straightforward designs could convey. Overall, while it\u2019s visually engaging, I would have reservations about its legitimacy.",
+          "gender": "Female",
+          "age_group": "45-54",
+          "persona_group": "Non-Players",
+          "persona_description": "Person who rarely or never plays lottery games",
+          "occupation": "Service"
+        },
+        "R010": {
+          "probabilities": [
+            0.0,
+            1.0
+          ],
+          "mode": 2,
+          "expected_value": 2.0,
+          "entropy": -0.0,
+          "text_response": "In reviewing Design A, the warm brown horse character adds a playful and friendly touch to the scratch card, which could make it appealing. However, as someone who rarely plays lottery games, I might question its trustworthiness. The cartoonish style and exaggerated features of the horse could come off as less serious or legitimate, which might not instill confidence in potential players. Overall, while it\u2019s visually engaging, it may not convey the level of professionalism or reliability often associated with legitimate lottery games.",
+          "gender": "Female",
+          "age_group": "18-24",
+          "persona_group": "Non-Players",
+          "persona_description": "Person who rarely or never plays lottery games",
+          "occupation": "Other"
+        }
+      },
+      "excitement_a": {
+        "R001": {
+          "probabilities": [
+            0.2920791473965788,
+            0.0,
+            0.06359358894003525,
+            0.0473141015500112,
+            0.1662652878474095,
+            0.1095521972834616,
+            0.32119567698250373
+          ],
+          "mode": 7,
+          "expected_value": 4.409125682232073,
+          "entropy": 1.5843897450787594,
+          "text_response": "**Response:**\n\nDesign A, featuring the warm brown horse, generates a moderate level of excitement. The playful depiction of the horse wearing a top hat and holding a coin adds a whimsical touch that can appeal to a sense of fun. The vibrant colors and the festive confetti in the background contribute to an overall cheerful atmosphere, which is important for attracting players. However, while it has a charming aesthetic, it might lack a bit of the thrill associated with larger stakes or high-energy games. As a regular player, I appreciate the engaging visuals, but I would also like to see elements that convey a more intense sense of urgency or anticipation. Overall, it's a cute design that could potentially spark interest, but it might not fully capture the excitement I look for.",
+          "gender": "Female",
+          "age_group": "35-44",
+          "persona_group": "Regular Lottery Players",
+          "persona_description": "Regular player who buys scratch cards weekly",
+          "occupation": "Professional"
+        },
+        "R002": {
+          "probabilities": [
+            0.24892578311080277,
+            0.0,
+            0.0687817820180658,
+            0.04382036477783495,
+            0.21713144798102535,
+            0.1252996612948948,
+            0.2960409608173762
+          ],
+          "mode": 7,
+          "expected_value": 4.540294521672468,
+          "entropy": 1.6195534514159566,
+          "text_response": "Design A, featuring the warm brown horse, generates a fair amount of excitement. The playful character, dressed in a top hat and bow tie, conveys a fun and lighthearted vibe that can attract attention. The bright colors and celebratory elements, like coins and confetti, create an energetic atmosphere that feels inviting. Additionally, the prominent prize of \u00a3100,000 is a powerful motivator. However, the design could benefit from a clearer layout to ensure that the essential information stands out, making it easier for players to engage quickly. Overall, it's a charming and captivating design that resonates well with regular scratch card players.",
+          "gender": "Male",
+          "age_group": "25-34",
+          "persona_group": "Regular Lottery Players",
+          "persona_description": "Regular player who buys scratch cards weekly",
+          "occupation": "Administrative"
+        },
+        "R003": {
+          "probabilities": [
+            0.24659690825133818,
+            0.0,
+            0.0643338155001933,
+            0.028407237002431193,
+            0.19958260276707165,
+            0.1378385438258482,
+            0.32324089265311745
+          ],
+          "mode": 7,
+          "expected_value": 4.640857828123913,
+          "entropy": 1.582745905350604,
+          "text_response": "Design A, featuring the warm brown horse, generates a considerable amount of excitement. The vibrant colors and playful character create an inviting and cheerful atmosphere, which is appealing for a regular scratch card player like myself. The horse wearing a top hat and holding a coin adds a whimsical touch that can evoke feelings of fun and anticipation. Additionally, the bold prize announcement of \u00a3100,000 is prominently displayed, which naturally heightens the excitement. Overall, this design effectively captures attention and encourages participation, making it a strong contender for attracting players.",
+          "gender": "Female",
+          "age_group": "45-54",
+          "persona_group": "Regular Lottery Players",
+          "persona_description": "Regular player who buys scratch cards weekly",
+          "occupation": "Manager"
+        },
+        "R004": {
+          "probabilities": [
+            0.2286933344536607,
+            0.0,
+            0.04532444476061672,
+            0.028557341175943447,
+            0.2311293547848045,
+            0.14407134089747434,
+            0.32222418392750046
+          ],
+          "mode": 7,
+          "expected_value": 4.754540140240657,
+          "entropy": 1.5617881767556119,
+          "text_response": "Design A, featuring the warm brown horse, generates a fair amount of excitement. The playful depiction of the horse dressed in a top hat adds a whimsical touch that feels engaging and fun. The bright colors and celebratory elements, like coins and confetti, evoke a sense of winning and enjoyment. \n\nAs a regular player, I appreciate designs that not only catch my eye but also convey a sense of anticipation for potential rewards. The bold promise of winning \u00a3100,000 is prominently displayed, which certainly heightens interest. Overall, this design strikes a balance between being visually appealing and conveying the thrill of playing, making it a strong contender.",
+          "gender": "Female",
+          "age_group": "25-34",
+          "persona_group": "Regular Lottery Players",
+          "persona_description": "Regular player who buys scratch cards weekly",
+          "occupation": "Administrative"
+        },
+        "R005": {
+          "probabilities": [
+            0.29223798232444653,
+            0.0,
+            0.03412397600433711,
+            0.003264069659520152,
+            0.20456309834902886,
+            0.11739894447037091,
+            0.3484119291922964
+          ],
+          "mode": 7,
+          "expected_value": 4.573758851888983,
+          "entropy": 1.436917042401495,
+          "text_response": "Design A, featuring the warm brown horse, generates a fair amount of excitement for me. The vibrant colors and playful imagery create an inviting atmosphere that feels fun and engaging. The horse\u2019s cheerful expression and the festive elements, like confetti and coins, evoke a sense of celebration, which is appealing for a scratch card. Additionally, the promise of winning a significant prize, like \u00a3100,000, adds to the thrill. However, while it is visually striking, I would appreciate a bit more clarity on the game mechanics to enhance overall excitement and encourage participation.",
+          "gender": "Female",
+          "age_group": "35-44",
+          "persona_group": "Occasional Players",
+          "persona_description": "Occasional player who buys scratch cards a few times per year",
+          "occupation": "Sales"
+        },
+        "R006": {
+          "probabilities": [
+            0.24867019040695879,
+            0.0,
+            0.0680625407318533,
+            0.03863719623831832,
+            0.21180338297697693,
+            0.11818457186219253,
+            0.31464211778370016
+          ],
+          "mode": 7,
+          "expected_value": 4.578025768099733,
+          "entropy": 1.5996206206476036,
+          "text_response": "Design A, featuring the warm brown horse, generates a moderate level of excitement for me. The playful character, wearing a top hat and holding a coin, adds a fun and whimsical touch that aligns well with the idea of a scratch card. The bright colors and festive confetti create a celebratory atmosphere, which is appealing and can attract attention. However, while the design is engaging, it may not be as bold or eye-catching as I would expect for a game with a high potential prize like \u00a3100,000. Overall, it has a friendly and inviting vibe, which could resonate well with occasional players like myself.",
+          "gender": "Male",
+          "age_group": "25-34",
+          "persona_group": "Occasional Players",
+          "persona_description": "Occasional player who buys scratch cards a few times per year",
+          "occupation": "Sales"
+        },
+        "R007": {
+          "probabilities": [
+            0.24803604695226417,
+            0.0,
+            0.06700380449285236,
+            0.037436870247250245,
+            0.21246220420857076,
+            0.12602237111848796,
+            0.30903870298057445
+          ],
+          "mode": 7,
+          "expected_value": 4.580511110037625,
+          "entropy": 1.6029350681591648,
+          "text_response": "Design A, featuring the warm brown horse, generates a fair amount of excitement for me. The playful character and vibrant colors create an inviting and cheerful atmosphere, which is essential for a scratch card. The horse wearing a top hat adds a whimsical touch, making it feel fun and engaging. The promise of winning a substantial amount, displayed prominently, further enhances the thrill. Overall, this design successfully combines elements of humor and anticipation, appealing to occasional players like myself who enjoy a light-hearted experience when trying their luck.",
+          "gender": "Male",
+          "age_group": "35-44",
+          "persona_group": "Occasional Players",
+          "persona_description": "Occasional player who buys scratch cards a few times per year",
+          "occupation": "Professional"
+        },
+        "R008": {
+          "probabilities": [
+            0.37678346367234755,
+            0.012646967151285972,
+            0.055951084772291396,
+            0.0,
+            0.14256466933269749,
+            0.07423197277385382,
+            0.3378218422975239
+          ],
+          "mode": 1,
+          "expected_value": 4.092898731681071,
+          "entropy": 1.421738132691949,
+          "text_response": "Regarding Design A - Warm Brown Horse, I find it somewhat playful and colorful, which could attract attention. However, as someone who rarely plays lottery games, the excitement generated by this design feels limited. The cartoonish style of the horse in a top hat is whimsical, but it may not resonate deeply with me or spark a desire to engage. The emphasis on winning a large amount of money is appealing, yet the overall design feels more like a lighthearted game than a serious lottery ticket. Overall, while it has a fun vibe, it doesn\u2019t generate significant excitement for someone outside the lottery-playing community.",
+          "gender": "Male",
+          "age_group": "25-34",
+          "persona_group": "Non-Players",
+          "persona_description": "Person who rarely or never plays lottery games",
+          "occupation": "Administrative"
+        },
+        "R009": {
+          "probabilities": [
+            0.32141902198377986,
+            0.0,
+            0.054648107649629775,
+            0.02013078820941515,
+            0.19384931126139388,
+            0.08131439296744983,
+            0.32863837792833145
+          ],
+          "mode": 7,
+          "expected_value": 4.3234880573803185,
+          "entropy": 1.4900923366338092,
+          "text_response": "Design A, featuring the warm brown horse, generates a moderate level of excitement for me. The playful and cheerful imagery, especially with the horse wearing a top hat and interacting with coins, adds a fun element. The bright colors and celebratory confetti suggest a sense of joy and anticipation, which is appealing. However, as someone who rarely engages with lottery games, I find that while the design is visually engaging, it doesn\u2019t evoke a strong personal connection or desire to participate. Overall, it feels lighthearted and entertaining, but it may not be compelling enough to convert someone like me into a player.",
+          "gender": "Female",
+          "age_group": "45-54",
+          "persona_group": "Non-Players",
+          "persona_description": "Person who rarely or never plays lottery games",
+          "occupation": "Service"
+        },
+        "R010": {
+          "probabilities": [
+            0.2809429935130916,
+            0.0,
+            0.0815108735341735,
+            0.050475001182676664,
+            0.17576881842952555,
+            0.11012323889484274,
+            0.30117907444569014
+          ],
+          "mode": 7,
+          "expected_value": 4.3752126654828345,
+          "entropy": 1.6217359757272822,
+          "text_response": "Design A, featuring the warm brown horse, generates a moderate level of excitement for me. The playful and cartoonish style of the horse wearing a top hat adds a fun and whimsical element, which could appeal to a younger audience, including those in my age group. The bright colors and cheerful imagery of coins and winning symbols create an engaging visual that suggests a lighthearted experience. However, as someone who rarely plays lottery games, the overall theme may feel a bit gimmicky. While it's eye-catching, it might not evoke a strong desire to participate for someone who doesn't typically engage with such games.",
+          "gender": "Female",
+          "age_group": "18-24",
+          "persona_group": "Non-Players",
+          "persona_description": "Person who rarely or never plays lottery games",
+          "occupation": "Other"
+        }
+      }
+    },
+    "design_b": {
+      "appeal_b": {
+        "R001": {
+          "probabilities": [
+            0.0,
+            0.19523398091945704,
+            0.2039321854740878,
+            0.37995987256916874,
+            0.2208739610372864
+          ],
+          "mode": 4,
+          "expected_value": 3.6264738137242842,
+          "entropy": 1.3444102707282335,
+          "text_response": "I find the \"Cool Gray Donkey\" design for the 'Lucky Luck' scratch card to be quite appealing. The vibrant colors and playful illustration of the donkey create an engaging and inviting atmosphere, which is important for attracting players. The cheerful expression of the donkey and the festive elements like coins and confetti evoke a sense of fun and excitement, making it feel like a game rather than just a chance to win money.\n\nAdditionally, the clear call to action with \"SCRATCH & WIN!\" is effective in encouraging interaction. The combination of humor and the promise of a significant prize of \u00a3100,000 adds to the overall appeal, making it likely to catch the eye of regular players like myself. Overall, this design strikes a good balance between being playful and maintaining a sense of aspiration, which resonates well with my experience as a regular lottery player.",
+          "gender": "Female",
+          "age_group": "35-44",
+          "persona_group": "Regular Lottery Players",
+          "persona_description": "Regular player who buys scratch cards weekly",
+          "occupation": "Professional"
+        },
+        "R002": {
+          "probabilities": [
+            0.0,
+            0.07905634011479933,
+            0.22984792609620644,
+            0.4788054549605275,
+            0.21229027882846674
+          ],
+          "mode": 4,
+          "expected_value": 3.824329672502662,
+          "entropy": 1.2201960575749737,
+          "text_response": "I find the \"Cool Gray Donkey\" design for the scratch card quite appealing. The vibrant colors and playful imagery of the donkey create a fun and engaging atmosphere, which is important for attracting players. The cheerful expression on the donkey's face, along with the top hat, adds a touch of whimsy and excitement that aligns well with the theme of winning. \n\nAdditionally, the clear call to action with \"SCRATCH & WIN!\" makes it straightforward for players to understand the goal of the card. The overall layout is organized, making it easy to see the potential prizes, which is crucial for keeping players interested. As a regular player, I appreciate a design that not only looks good but also conveys the excitement of the game effectively.",
+          "gender": "Male",
+          "age_group": "25-34",
+          "persona_group": "Regular Lottery Players",
+          "persona_description": "Regular player who buys scratch cards weekly",
+          "occupation": "Administrative"
+        },
+        "R003": {
+          "probabilities": [
+            0.0,
+            0.20592040716416107,
+            0.136555306938747,
+            0.4338034103870679,
+            0.22372087551002404
+          ],
+          "mode": 4,
+          "expected_value": 3.675324754242955,
+          "entropy": 1.294580764135044,
+          "text_response": "I find the design of the \"Lucky Luck\" scratch card quite appealing. The use of a cheerful donkey character dressed in a top hat gives it a fun and whimsical vibe, which can attract players looking for a lighthearted gaming experience. The color scheme is bright and inviting, making it stand out on a shelf among other scratch cards. \n\nThe prominent \"WIN \u00a3100,000!\" message is effectively highlighted, which is likely to draw attention and excite potential players. Additionally, the playful name \"LUCKY BRAY-NZA!\" adds a touch of humor that may resonate well with a wide audience. Overall, I appreciate the blend of fun and excitement in this design, making it engaging for regular players like myself.",
+          "gender": "Female",
+          "age_group": "45-54",
+          "persona_group": "Regular Lottery Players",
+          "persona_description": "Regular player who buys scratch cards weekly",
+          "occupation": "Manager"
+        },
+        "R004": {
+          "probabilities": [
+            0.0,
+            0.09234780475108555,
+            0.2239118751900181,
+            0.4315459336539341,
+            0.2521943864049622
+          ],
+          "mode": 4,
+          "expected_value": 3.843586901712773,
+          "entropy": 1.2651498652123032,
+          "text_response": "I find the \"Cool Gray Donkey\" design appealing for several reasons. Firstly, the vibrant colors and playful illustration of the donkey immediately catch the eye, creating a sense of fun and excitement. The character wearing a top hat adds a whimsical touch that can resonate well with players looking for a lighthearted gaming experience.\n\nAdditionally, the clear messaging about winning \u00a3100,000 is prominently displayed, which is a strong motivator for potential players. The layout is organized, making it easy to understand how to play and what symbols to look for. Overall, this design strikes a good balance between being engaging and informative, which is important for someone like me who regularly participates in scratch card games.",
+          "gender": "Female",
+          "age_group": "25-34",
+          "persona_group": "Regular Lottery Players",
+          "persona_description": "Regular player who buys scratch cards weekly",
+          "occupation": "Administrative"
+        },
+        "R005": {
+          "probabilities": [
+            0.0,
+            0.15479751902345817,
+            0.2762646441770739,
+            0.3744560436947006,
+            0.19448179310476732
+          ],
+          "mode": 4,
+          "expected_value": 3.608622110880777,
+          "entropy": 1.3304505150285972,
+          "text_response": "I find the \"Cool Gray Donkey\" design appealing due to its playful and cheerful aesthetic. The cartoonish donkey wearing a top hat adds a fun and whimsical element that could attract players looking for a lighthearted experience. The bright colors and celebratory graphics, like the coins and confetti, create an inviting atmosphere that enhances the excitement of potentially winning. \n\nAs an occasional player, I appreciate that the design clearly communicates the game\u2019s purpose with the prominent \"WIN \u00a3100,000!\" text. Overall, this design strikes a nice balance between being eye-catching and conveying the thrill of the scratch card experience.",
+          "gender": "Female",
+          "age_group": "35-44",
+          "persona_group": "Occasional Players",
+          "persona_description": "Occasional player who buys scratch cards a few times per year",
+          "occupation": "Sales"
+        },
+        "R006": {
+          "probabilities": [
+            0.0,
+            0.19630094434123513,
+            0.19595362701960875,
+            0.3985861615132121,
+            0.20915926712594407
+          ],
+          "mode": 4,
+          "expected_value": 3.6206037514238654,
+          "entropy": 1.332874304475497,
+          "text_response": "I find the \"Cool Gray Donkey\" design for the 'Lucky Luck' scratch card quite appealing. The cartoonish donkey wearing a top hat adds a playful and light-hearted vibe, which is engaging and could attract occasional players like myself. The vibrant colors and festive elements, such as the coins and confetti, create an exciting atmosphere that makes me feel like winning is within reach.\n\nAdditionally, the clear call to action with \"WIN \u00a3100,000!\" prominently displayed grabs attention right away. The overall design maintains a balance between fun and clarity, making it easy to understand how to play. As someone who only buys scratch cards a few times a year, this design stands out and would likely encourage me to give it a try.",
+          "gender": "Male",
+          "age_group": "25-34",
+          "persona_group": "Occasional Players",
+          "persona_description": "Occasional player who buys scratch cards a few times per year",
+          "occupation": "Sales"
+        },
+        "R007": {
+          "probabilities": [
+            0.0,
+            0.24471637982049033,
+            0.27654994292362983,
+            0.3657986834408022,
+            0.11293499381507766
+          ],
+          "mode": 4,
+          "expected_value": 3.3469522912504672,
+          "entropy": 1.314121944522071,
+          "text_response": "I find the \"Lucky Luck\" scratch card design appealing overall. The colorful and playful illustration of the donkey adds a fun and lighthearted touch, which is engaging for occasional players like myself. The bright colors and the prominent prize amount of \u00a3100,000 catch the eye and create excitement. \n\nHowever, while the design is cheerful, I wonder if the cartoonish style might appeal more to a younger audience. As someone who plays a few times a year, I appreciate a design that balances fun with a sense of maturity. Overall, I think this design could attract attention and spark interest, making it a solid option for a scratch card.",
+          "gender": "Male",
+          "age_group": "35-44",
+          "persona_group": "Occasional Players",
+          "persona_description": "Occasional player who buys scratch cards a few times per year",
+          "occupation": "Professional"
+        },
+        "R008": {
+          "probabilities": [
+            0.09514749539642403,
+            0.3087046481676091,
+            0.3334106109468942,
+            0.2627372454890726,
+            0.0
+          ],
+          "mode": 3,
+          "expected_value": 2.7637376065286157,
+          "entropy": 1.3040468187989243,
+          "text_response": "As someone who rarely plays lottery games, I find the \"Lucky Luck\" scratch card design appealing in some aspects. The vibrant colors and playful character of the donkey create a cheerful and inviting atmosphere. However, I feel that the overall theme may not resonate with me personally, as it leans heavily into a whimsical style that may appeal more to younger or more frequent players. The imagery and text are clear, which is beneficial, but I would prefer a design that feels a bit more sophisticated or understated. Overall, while it's a fun design, it might not capture my interest enough to encourage me to play.",
+          "gender": "Male",
+          "age_group": "25-34",
+          "persona_group": "Non-Players",
+          "persona_description": "Person who rarely or never plays lottery games",
+          "occupation": "Administrative"
+        },
+        "R009": {
+          "probabilities": [
+            0.11098491565222258,
+            0.23749347861924874,
+            0.43343060198770905,
+            0.21809100374081963,
+            0.0
+          ],
+          "mode": 3,
+          "expected_value": 2.758627693817126,
+          "entropy": 1.2798856543154704,
+          "text_response": "I find the \"Cool Gray Donkey\" scratch card design to be quite playful and engaging. The cartoonish style of the donkey, especially with its top hat and cheerful expression, adds a fun and lighthearted touch that could attract attention. The bright colors and vibrant graphics, including the coins and symbols, create an exciting atmosphere that suggests potential rewards. \n\nHowever, since I rarely play lottery games, the overall appeal might not resonate deeply with me. While the design is visually appealing, I may not feel compelled to participate in the game itself. The theme is enjoyable, but it may be more effective for someone who actively engages with lottery games.",
+          "gender": "Female",
+          "age_group": "45-54",
+          "persona_group": "Non-Players",
+          "persona_description": "Person who rarely or never plays lottery games",
+          "occupation": "Service"
+        },
+        "R010": {
+          "probabilities": [
+            0.0,
+            0.31119909669723506,
+            0.19295775383412836,
+            0.34040538489115657,
+            0.15543776457748001
+          ],
+          "mode": 4,
+          "expected_value": 3.3400818173488815,
+          "entropy": 1.3369159015258916,
+          "text_response": "As someone who rarely plays lottery games, I find the \"Lucky Luck\" scratch card design appealing in a playful way. The cartoonish donkey character wearing a top hat adds a fun and whimsical element that could attract attention, even from non-players like myself. The bright colors and the promise of a significant prize (\u00a3100,000) are eye-catching, which might make it more enticing to someone who might not typically engage with lottery games. However, I do wonder if the design feels a bit too cartoonish for my taste, as I might prefer something that seems a bit more sophisticated or mature. Overall, it's a lively design that could spark curiosity!",
+          "gender": "Female",
+          "age_group": "18-24",
+          "persona_group": "Non-Players",
+          "persona_description": "Person who rarely or never plays lottery games",
+          "occupation": "Other"
+        }
+      },
+      "purchase_intent_b": {
+        "R001": {
+          "probabilities": [
+            0.0,
+            0.3184605300641622,
+            0.04637142017472136,
+            0.4524917722237176,
+            0.1826762775373987
+          ],
+          "mode": 4,
+          "expected_value": 3.4993837972343522,
+          "entropy": 1.176186997119292,
+          "text_response": "As a regular player who buys scratch cards weekly, I find the \"Lucky Luck\" design appealing, particularly the \"Cool Gray Donkey\" theme. The playful character and vibrant colors immediately draw attention, creating an inviting and fun atmosphere. The use of a donkey in a top hat adds a whimsical touch, which can make the experience more enjoyable. \n\nThe clear prize display, emphasizing the \u00a3100,000 win, is a strong motivator for purchase. Overall, I would be quite likely to buy this scratch card, as it combines engaging visuals with an exciting prize, making it both fun and enticing for regular players like myself.",
+          "gender": "Female",
+          "age_group": "35-44",
+          "persona_group": "Regular Lottery Players",
+          "persona_description": "Regular player who buys scratch cards weekly",
+          "occupation": "Professional"
+        },
+        "R002": {
+          "probabilities": [
+            0.0,
+            0.24445460845253705,
+            0.21186448858715765,
+            0.36183341884278436,
+            0.18184748411752083
+          ],
+          "mode": 4,
+          "expected_value": 3.481073778625288,
+          "entropy": 1.3509469012545503,
+          "text_response": "As a regular scratch card player, I find the \"Cool Gray Donkey\" design appealing. The playful character of the donkey adds a fun, engaging element, which can make the experience more enjoyable. The bright colors and lively graphics draw attention and create a sense of excitement, especially with the large potential prize of \u00a3100,000 prominently displayed.\n\nThe design is clear and easy to understand, which is essential for quickly grasping how to play. Overall, I would be quite likely to purchase this scratch card, as it combines a charming aesthetic with the thrill of potentially winning a big prize.",
+          "gender": "Male",
+          "age_group": "25-34",
+          "persona_group": "Regular Lottery Players",
+          "persona_description": "Regular player who buys scratch cards weekly",
+          "occupation": "Administrative"
+        },
+        "R003": {
+          "probabilities": [
+            0.0,
+            0.23466296317674515,
+            0.2382078626875202,
+            0.34021059483125615,
+            0.18691857930447836
+          ],
+          "mode": 4,
+          "expected_value": 3.4793847902634676,
+          "entropy": 1.362194001152837,
+          "text_response": "As a regular player who buys scratch cards weekly, I find Design B - Cool Gray Donkey to be quite appealing. The cheerful and cartoonish donkey character adds a fun and playful element that can attract attention. The bright colors and bold text make it easy to read and understand the game mechanics at a glance, which I appreciate.\n\nThe promise of a \u00a3100,000 win is prominently displayed, which is a significant draw for players like me. Overall, I feel motivated to purchase this scratch card because it conveys excitement and a sense of enjoyment, which is exactly what I look for in a scratch card experience.",
+          "gender": "Female",
+          "age_group": "45-54",
+          "persona_group": "Regular Lottery Players",
+          "persona_description": "Regular player who buys scratch cards weekly",
+          "occupation": "Manager"
+        },
+        "R004": {
+          "probabilities": [
+            0.0,
+            0.25048948857027437,
+            0.19932152161847205,
+            0.3605374479277902,
+            0.18965154188346342
+          ],
+          "mode": 4,
+          "expected_value": 3.4893510431244428,
+          "entropy": 1.3513491949338707,
+          "text_response": "As a regular player of scratch cards, I find Design B - Cool Gray Donkey appealing. The vibrant colors and playful imagery of the donkey create a fun and engaging atmosphere that can make the experience of playing more enjoyable. The prominent display of the potential prize (\u00a3100,000) is a strong motivator, and the whimsical character adds a lighthearted touch that might attract a wider audience.\n\nI appreciate the clear call to action with \u201cSCRATCH & WIN!\u201d which is direct and encourages participation. Overall, I would be quite likely to purchase this scratch card, as it combines a playful design with the excitement of winning, making it an appealing option for my weekly purchases.",
+          "gender": "Female",
+          "age_group": "25-34",
+          "persona_group": "Regular Lottery Players",
+          "persona_description": "Regular player who buys scratch cards weekly",
+          "occupation": "Administrative"
+        },
+        "R005": {
+          "probabilities": [
+            0.0,
+            0.2204718130007954,
+            0.04880212326924283,
+            0.4648755422369512,
+            0.2658505214930105
+          ],
+          "mode": 4,
+          "expected_value": 3.776104772222177,
+          "entropy": 1.1890240021393899,
+          "text_response": "Based on my review of Design B - Cool Gray Donkey, I find it quite appealing. The playful and cheerful design, featuring a cartoon donkey in a top hat, gives a fun and lighthearted vibe that could attract occasional players like myself. The bright colors and festive elements, such as the coins and confetti, create an engaging atmosphere that makes the scratch card feel exciting.\n\nAs an occasional player, I appreciate the clear messaging about the potential winnings, which is prominently displayed. This could motivate me to purchase the card, especially since the prize amount is quite enticing at \u00a3100,000. Overall, I would say I am fairly likely to purchase this scratch card due to its appealing design and fun theme.",
+          "gender": "Female",
+          "age_group": "35-44",
+          "persona_group": "Occasional Players",
+          "persona_description": "Occasional player who buys scratch cards a few times per year",
+          "occupation": "Sales"
+        },
+        "R006": {
+          "probabilities": [
+            0.15386379971217617,
+            0.2910293145442209,
+            0.0,
+            0.34627961528786094,
+            0.20882727045574206
+          ],
+          "mode": 4,
+          "expected_value": 3.1651772422307722,
+          "entropy": 1.3415193353679724,
+          "text_response": "Based on the design of \"Lucky Luck,\" I would say I am moderately likely to purchase this scratch card. The imagery of the cheerful donkey wearing a top hat adds a fun and playful element, which could attract occasional players like myself. The bright colors and the promise of a \u00a3100,000 prize catch the eye, making it feel exciting and worthwhile.\n\nHowever, I would also consider the overall aesthetic and theme. While I appreciate the humor and whimsy of the donkey, I might prefer something a bit more sophisticated or sleek, depending on my mood. That said, the unique design definitely stands out among typical scratch cards, which could make me more inclined to give it a try during a casual purchase. Overall, it's a solid design that appeals to my occasional playing habits.",
+          "gender": "Male",
+          "age_group": "25-34",
+          "persona_group": "Occasional Players",
+          "persona_description": "Occasional player who buys scratch cards a few times per year",
+          "occupation": "Sales"
+        },
+        "R007": {
+          "probabilities": [
+            0.09574794642729108,
+            0.29591203276419625,
+            0.0,
+            0.42800550291270983,
+            0.18033451789580274
+          ],
+          "mode": 4,
+          "expected_value": 3.3012666130855366,
+          "entropy": 1.2570743839521752,
+          "text_response": "Based on the design of \"Lucky Luck\" featuring the Cool Gray Donkey, I find it appealing due to its cheerful and engaging visuals. The vibrant colors and playful character create a sense of fun, which is important for attracting occasional players like myself. The promise of winning \u00a3100,000 is enticing and would likely encourage a purchase.\n\nHowever, as an occasional player, I also consider factors like the perceived value of the card and the overall theme. The design seems friendly and lighthearted, which may resonate well during casual purchases. I would rate my likelihood of purchasing this scratch card as moderately high, particularly if the price point is reasonable and aligns with my occasional gaming habits. Overall, it's a well-executed design that captures attention effectively.",
+          "gender": "Male",
+          "age_group": "35-44",
+          "persona_group": "Occasional Players",
+          "persona_description": "Occasional player who buys scratch cards a few times per year",
+          "occupation": "Professional"
+        },
+        "R008": {
+          "probabilities": [
+            0.25406562645148245,
+            0.46023704504046936,
+            0.0,
+            0.2693497531672458,
+            0.016347575340802344
+          ],
+          "mode": 2,
+          "expected_value": 2.3336766059054157,
+          "entropy": 1.1258281403596122,
+          "text_response": "As someone who rarely plays lottery games, my likelihood of purchasing the \"Lucky Luck\" scratch card featuring the cool gray donkey is quite low. While the design is playful and colorful, with a fun character and the promise of a substantial prize, it doesn't resonate with my interests. The whimsical style feels more geared towards casual players or children, which might not appeal to someone like me who is not engaged in lottery games. Additionally, the concept of scratch cards doesn\u2019t align with my usual recreational activities, so I would likely pass on this option.",
+          "gender": "Male",
+          "age_group": "25-34",
+          "persona_group": "Non-Players",
+          "persona_description": "Person who rarely or never plays lottery games",
+          "occupation": "Administrative"
+        },
+        "R009": {
+          "probabilities": [
+            0.19144880154579566,
+            0.46220115650518434,
+            0.06818423688342223,
+            0.2781658050655978,
+            0.0
+          ],
+          "mode": 2,
+          "expected_value": 2.433067045468822,
+          "entropy": 1.212232097275504,
+          "text_response": "As someone who rarely plays lottery games, my likelihood of purchasing the 'Lucky Luck' scratch card, particularly Design B, is quite low. While the design features a playful and engaging donkey character, which might attract some players, it doesn't resonate with me personally. The visual elements feel a bit cartoonish, and since I\u2019m not a regular participant in lottery games, I find it hard to connect with the concept of scratch cards in general. \n\nMoreover, the bright colors and cheerful theme might appeal to others, but for me, they lack the sophistication or excitement that would entice me to consider making a purchase. Overall, I appreciate the creativity, but it doesn\u2019t motivate me to buy it.",
+          "gender": "Female",
+          "age_group": "45-54",
+          "persona_group": "Non-Players",
+          "persona_description": "Person who rarely or never plays lottery games",
+          "occupation": "Service"
+        },
+        "R010": {
+          "probabilities": [
+            0.2527570130145475,
+            0.4302882502490648,
+            0.08592042510482073,
+            0.23103431163156699,
+            0.0
+          ],
+          "mode": 2,
+          "expected_value": 2.2952320353534073,
+          "entropy": 1.2598718573229648,
+          "text_response": "As someone who rarely or never plays lottery games, my likelihood of purchasing the \"Lucky Luck\" scratch card, specifically Design B, is quite low. While the design is colorful and playful, featuring a cartoon donkey that adds a whimsical touch, it doesn\u2019t resonate with me personally. I find it somewhat juvenile and not particularly appealing for an adult audience. \n\nAdditionally, the concept of scratch cards doesn't intrigue me, and the imagery doesn\u2019t evoke any excitement or desire to participate in a lottery. Instead, it feels more like a novelty than a serious gaming option. Overall, while the design has its charm, it doesn't motivate me to purchase it.",
+          "gender": "Female",
+          "age_group": "18-24",
+          "persona_group": "Non-Players",
+          "persona_description": "Person who rarely or never plays lottery games",
+          "occupation": "Other"
+        }
+      },
+      "trustworthy_b": {
+        "R001": {
+          "probabilities": [
+            0.0,
+            1.0
+          ],
+          "mode": 2,
+          "expected_value": 2.0,
+          "entropy": -0.0,
+          "text_response": "Design B, featuring the Cool Gray Donkey, presents a playful and engaging aesthetic that can appeal to a wide audience. The bright colors and cartoonish style create an inviting vibe, which can encourage participation. However, while it looks fun, the whimsical nature of the donkey and the overall design might detract from a sense of trustworthiness and legitimacy that some players, especially regular lottery players, may seek. \n\nFor a scratch card, it's important to strike a balance between being visually appealing and conveying a sense of seriousness and credibility. The playful character could be seen as less serious, which might not resonate with everyone. Overall, while I appreciate the creativity, I would prefer a design that offers a more traditional look to enhance feelings of trust and legitimacy in the product.",
+          "gender": "Female",
+          "age_group": "35-44",
+          "persona_group": "Regular Lottery Players",
+          "persona_description": "Regular player who buys scratch cards weekly",
+          "occupation": "Professional"
+        },
+        "R002": {
+          "probabilities": [
+            0.0,
+            1.0
+          ],
+          "mode": 2,
+          "expected_value": 2.0,
+          "entropy": -0.0,
+          "text_response": "Design B, featuring the Cool Gray Donkey, evokes a playful and light-hearted vibe, which can be appealing. The cartoon style and the cheerful expression of the donkey make it engaging, but it may also detract from the perceived seriousness of a lottery scratch card. \n\nIn terms of trustworthiness, the bright colors and festive elements can attract attention, but they might also make it feel less legitimate compared to more traditional designs. As a regular player, I appreciate designs that balance fun with a sense of reliability. While the playful design is enjoyable, I might prefer something that conveys a more serious tone to enhance the perception of legitimacy in a financial product. Overall, it's entertaining, but I would need to see how it compares to other designs in terms of trustworthiness.",
+          "gender": "Male",
+          "age_group": "25-34",
+          "persona_group": "Regular Lottery Players",
+          "persona_description": "Regular player who buys scratch cards weekly",
+          "occupation": "Administrative"
+        },
+        "R003": {
+          "probabilities": [
+            0.0,
+            1.0
+          ],
+          "mode": 2,
+          "expected_value": 2.0,
+          "entropy": -0.0,
+          "text_response": "Design B, featuring the \"Cool Gray Donkey,\" presents a playful and engaging aesthetic that can attract attention. The bright colors and cheerful imagery contribute to a fun atmosphere, which is appealing for a scratch card. However, while the design is visually appealing, it may not fully convey a sense of seriousness or trustworthiness that some players might expect from a lottery product. \n\nThe cartoonish style of the donkey and the use of whimsical elements like coins and confetti can make it feel more like a game than a legitimate lottery ticket. For a regular player like myself, I appreciate creativity, but I also look for designs that inspire confidence in the legitimacy of the game. Overall, while the design is enjoyable, I would prefer a more balanced approach that combines fun with a sense of trustworthiness.",
+          "gender": "Female",
+          "age_group": "45-54",
+          "persona_group": "Regular Lottery Players",
+          "persona_description": "Regular player who buys scratch cards weekly",
+          "occupation": "Manager"
+        },
+        "R004": {
+          "probabilities": [
+            0.0,
+            1.0
+          ],
+          "mode": 2,
+          "expected_value": 2.0,
+          "entropy": -0.0,
+          "text_response": "I find the \"Cool Gray Donkey\" design to be quite appealing and trustworthy. The playful illustration of the donkey wearing a top hat adds a fun and friendly vibe, which can attract players' attention. The bright colors and festive elements, like coins and confetti, evoke a sense of excitement and celebration, making it feel like a legitimate and enjoyable experience.\n\nMoreover, the clear messaging about the potential winnings and the straightforward \"Scratch & Win!\" call-to-action enhances the card's legitimacy. Overall, I believe this design strikes a good balance between being playful and professional, which can instill confidence in players about the scratch card's authenticity.",
+          "gender": "Female",
+          "age_group": "25-34",
+          "persona_group": "Regular Lottery Players",
+          "persona_description": "Regular player who buys scratch cards weekly",
+          "occupation": "Administrative"
+        },
+        "R005": {
+          "probabilities": [
+            0.0,
+            1.0
+          ],
+          "mode": 2,
+          "expected_value": 2.0,
+          "entropy": -0.0,
+          "text_response": "Design B, featuring the Cool Gray Donkey, has a playful and engaging aesthetic that can appeal to occasional players like myself. The cartoonish style of the donkey, along with the vibrant colors and celebratory elements, creates an inviting atmosphere. However, while the design is fun, it may not convey a strong sense of trustworthiness. The whimsical nature of the character might make it feel less serious compared to more traditional designs, which could lead some players to question its legitimacy. Overall, I appreciate the creativity, but I think it could benefit from elements that enhance its credibility.",
+          "gender": "Female",
+          "age_group": "35-44",
+          "persona_group": "Occasional Players",
+          "persona_description": "Occasional player who buys scratch cards a few times per year",
+          "occupation": "Sales"
+        },
+        "R006": {
+          "probabilities": [
+            0.0,
+            1.0
+          ],
+          "mode": 2,
+          "expected_value": 2.0,
+          "entropy": -0.0,
+          "text_response": "Regarding Design B - Cool Gray Donkey, I find it to be visually appealing and engaging. The playful character of the donkey, dressed in a top hat and bowtie, adds a fun and light-hearted touch, which could attract occasional players like myself. The bright colors and playful graphics create an inviting atmosphere, which may contribute to a sense of trustworthiness.\n\nHowever, the whimsical nature of the design might lead some to question its legitimacy. While the playful theme is entertaining, it's essential for scratch cards to convey a sense of seriousness and credibility. Overall, I think the design is enjoyable and could promote interest, but it might benefit from subtle elements that emphasize its legitimacy, such as a more refined layout or additional branding that signals trust.",
+          "gender": "Male",
+          "age_group": "25-34",
+          "persona_group": "Occasional Players",
+          "persona_description": "Occasional player who buys scratch cards a few times per year",
+          "occupation": "Sales"
+        },
+        "R007": {
+          "probabilities": [
+            0.0,
+            1.0
+          ],
+          "mode": 2,
+          "expected_value": 2.0,
+          "entropy": -0.0,
+          "text_response": "In reviewing Design B, the \"Cool Gray Donkey,\" I find it to have a playful and engaging aesthetic that could appeal to occasional players like myself. The friendly character of the donkey, dressed in a top hat and bow tie, adds a whimsical touch that makes the card feel fun rather than overly serious. \n\nHowever, while the design is visually appealing, I do have some concerns regarding its trustworthiness. The cartoonish style and vibrant colors may give it a less serious tone, which might raise questions about its legitimacy compared to more traditional designs that often convey reliability and professionalism. The bold claim of winning \u00a3100,000 is enticing, but paired with the playful visuals, it could feel slightly less credible. \n\nUltimately, while I appreciate the creativity, I would prefer a design that balances fun with a sense of authenticity to ensure it feels legitimate to players like me.",
+          "gender": "Male",
+          "age_group": "35-44",
+          "persona_group": "Occasional Players",
+          "persona_description": "Occasional player who buys scratch cards a few times per year",
+          "occupation": "Professional"
+        },
+        "R008": {
+          "probabilities": [
+            0.0,
+            1.0
+          ],
+          "mode": 2,
+          "expected_value": 2.0,
+          "entropy": -0.0,
+          "text_response": "In reviewing Design B, the \"Cool Gray Donkey,\" I find that it has a playful and whimsical vibe, which could be appealing to some audiences. However, as someone who rarely plays lottery games, I perceive the design as somewhat cartoonish and less serious. This might lead to a perception that the game lacks legitimacy or trustworthiness, especially for those who are not regular players. The use of a donkey as a central character might not resonate with the serious nature often associated with lottery games, potentially making it feel more like a novelty item rather than a genuine opportunity to win. Overall, while the design is visually engaging, it may not convey the level of trust I would expect from a legitimate lottery scratch card.",
+          "gender": "Male",
+          "age_group": "25-34",
+          "persona_group": "Non-Players",
+          "persona_description": "Person who rarely or never plays lottery games",
+          "occupation": "Administrative"
+        },
+        "R009": {
+          "probabilities": [
+            0.0,
+            1.0
+          ],
+          "mode": 2,
+          "expected_value": 2.0,
+          "entropy": -0.0,
+          "text_response": "In reviewing Design B, I find it to have a playful and whimsical appeal due to the cartoonish donkey character dressed in a top hat. However, while the design is colorful and engaging, it may not convey a strong sense of trustworthiness or legitimacy for someone like me who rarely plays lottery games. The cartoonish elements can sometimes give off a less serious impression, which could make me question the authenticity of the scratch card. Overall, while the design is fun, it might benefit from a more refined or straightforward approach to enhance its credibility.",
+          "gender": "Female",
+          "age_group": "45-54",
+          "persona_group": "Non-Players",
+          "persona_description": "Person who rarely or never plays lottery games",
+          "occupation": "Service"
+        },
+        "R010": {
+          "probabilities": [
+            0.0,
+            1.0
+          ],
+          "mode": 2,
+          "expected_value": 2.0,
+          "entropy": -0.0,
+          "text_response": "In my opinion, Design B, featuring the cool gray donkey, has a playful and engaging aesthetic that might attract attention. However, it doesn't exude a strong sense of trustworthiness or legitimacy. The cartoonish style and the character's exaggerated features could make it feel more like a novelty item rather than a serious lottery game. For someone who rarely plays lottery games, this design may not convey the reliability expected from a legitimate gambling product. A more sophisticated or understated design could enhance its credibility.",
+          "gender": "Female",
+          "age_group": "18-24",
+          "persona_group": "Non-Players",
+          "persona_description": "Person who rarely or never plays lottery games",
+          "occupation": "Other"
+        }
+      },
+      "excitement_b": {
+        "R001": {
+          "probabilities": [
+            0.2806235574510197,
+            0.0,
+            0.0704110048424218,
+            0.07503732911597782,
+            0.19371951344680297,
+            0.0965918648636357,
+            0.28361673028014217
+          ],
+          "mode": 7,
+          "expected_value": 4.32547175681902,
+          "entropy": 1.6388733637023805,
+          "text_response": "Design B, featuring the Cool Gray Donkey, generates a moderate level of excitement for me. The playful and cheerful illustration of the donkey wearing a top hat adds a fun and whimsical touch, which could appeal to a wide audience. The bright colors and dynamic elements, like the coins and confetti, create a festive atmosphere that makes me feel like there's a celebration happening, which is a positive aspect for a scratch card.\n\nHowever, while the design is engaging, it may not convey a sense of seriousness or sophistication that some players, especially regular lottery players like myself, might prefer. The cartoonish style could feel a bit juvenile compared to other designs. Overall, it\u2019s a fun design that sparks interest, but I think it could be enhanced with a more balanced approach that combines excitement with a touch of elegance.",
+          "gender": "Female",
+          "age_group": "35-44",
+          "persona_group": "Regular Lottery Players",
+          "persona_description": "Regular player who buys scratch cards weekly",
+          "occupation": "Professional"
+        },
+        "R002": {
+          "probabilities": [
+            0.2703547681054781,
+            0.010359063730413188,
+            0.08547570304326378,
+            0.0,
+            0.22671992292990706,
+            0.10259817427068867,
+            0.3044923679202493
+          ],
+          "mode": 7,
+          "expected_value": 4.428135240411509,
+          "entropy": 1.543344270326732,
+          "text_response": "Design B, featuring the Cool Gray Donkey, generates a fair amount of excitement. The playful character, dressed in a top hat and bow tie, gives a whimsical and lighthearted feel, which could attract players looking for fun and entertainment. The vibrant colors and visuals, such as the coins and symbols of luck, create an engaging atmosphere that encourages interaction. The promise of a significant prize (\u00a3100,000) adds to the thrill, making it appealing to regular players like myself who enjoy the anticipation of winning. Overall, this design successfully combines a cheerful aesthetic with the excitement of a lottery scratch card.",
+          "gender": "Male",
+          "age_group": "25-34",
+          "persona_group": "Regular Lottery Players",
+          "persona_description": "Regular player who buys scratch cards weekly",
+          "occupation": "Administrative"
+        },
+        "R003": {
+          "probabilities": [
+            0.2715429144849038,
+            0.0,
+            0.07121204195064004,
+            0.03541681762954992,
+            0.19980398642455907,
+            0.10139193874771094,
+            0.3206323007626364
+          ],
+          "mode": 7,
+          "expected_value": 4.47864398080254,
+          "entropy": 1.5789905627776113,
+          "text_response": "Design B, featuring the Cool Gray Donkey, generates a moderate level of excitement. The playful and animated character, along with the bright colors and festive elements like confetti and coins, creates a cheerful atmosphere that is inviting. The promise of winning \u00a3100,000 is definitely eye-catching and adds to the thrill. However, while the design is fun and engaging, it might feel a bit cartoonish for some players in my age group. Overall, it strikes a balance between whimsy and attraction, making it a solid choice for regular players like myself.",
+          "gender": "Female",
+          "age_group": "45-54",
+          "persona_group": "Regular Lottery Players",
+          "persona_description": "Regular player who buys scratch cards weekly",
+          "occupation": "Manager"
+        },
+        "R004": {
+          "probabilities": [
+            0.25531188467820853,
+            0.008526972214380663,
+            0.1046538378563728,
+            0.0,
+            0.24265405823986413,
+            0.10095091450778505,
+            0.28790233250338876
+          ],
+          "mode": 7,
+          "expected_value": 4.420619448445841,
+          "entropy": 1.559006844453906,
+          "text_response": "Design B, featuring the \"Cool Gray Donkey,\" generates a considerable amount of excitement. The vibrant colors and playful character design create a fun and engaging atmosphere, which is essential for attracting regular players like myself. The lively expression of the donkey, paired with elements like coins and winning symbols, conveys a sense of joy and anticipation around winning. Additionally, the catchy title \"LUCKY BRAY-NZA!\" adds a humorous touch that can appeal to a wide audience. Overall, this design feels inviting and evokes a sense of playful competition that makes the scratch card experience more enjoyable.",
+          "gender": "Female",
+          "age_group": "25-34",
+          "persona_group": "Regular Lottery Players",
+          "persona_description": "Regular player who buys scratch cards weekly",
+          "occupation": "Administrative"
+        },
+        "R005": {
+          "probabilities": [
+            0.23085254683480147,
+            0.05457594919360373,
+            0.11536894282859857,
+            0.0,
+            0.23866930321226926,
+            0.100857601953269,
+            0.2596756559774579
+          ],
+          "mode": 7,
+          "expected_value": 4.30233299333097,
+          "entropy": 1.6697272866214747,
+          "text_response": "In reviewing Design B - Cool Gray Donkey for the 'Lucky Luck' scratch card, I find it to be quite engaging. The cheerful expression of the donkey, coupled with the bright colors and playful elements, really draws attention. The design effectively conveys a sense of fun and excitement, which is essential for a product aimed at occasional players like myself.\n\nThe use of elements like coins and symbols of luck (cherries, horseshoes) adds to the overall appeal and reinforces the theme of winning. The tagline \"WIN \u00a3100,000!\" is prominently displayed, generating excitement about the potential rewards. Overall, this design strikes a nice balance between being visually appealing and conveying a sense of playfulness, making it likely to attract interest from players looking for a little fun and excitement in their purchasing experience.",
+          "gender": "Female",
+          "age_group": "35-44",
+          "persona_group": "Occasional Players",
+          "persona_description": "Occasional player who buys scratch cards a few times per year",
+          "occupation": "Sales"
+        },
+        "R006": {
+          "probabilities": [
+            0.3079844074061346,
+            0.008988456905017785,
+            0.08814445061989218,
+            0.0,
+            0.2018247092744553,
+            0.06205038136110245,
+            0.33100759443339767
+          ],
+          "mode": 7,
+          "expected_value": 4.288873668648522,
+          "entropy": 1.4805965244953614,
+          "text_response": "Design B generates a moderate level of excitement for me. The playful theme featuring the donkey with a top hat and dollar coin adds a fun and whimsical touch, which can be appealing to occasional players. The bright colors and festive elements like confetti create an inviting atmosphere that suggests a chance for enjoyment and potential winnings.\n\nHowever, while the design is visually engaging, it may not resonate deeply with all players. As an occasional buyer, I appreciate the lightheartedness, but I also value clarity in the messaging. The playful name \"LUCKY BRAY-NZA\" is catchy, but it might come off as a bit too quirky for some. Overall, while I find it enjoyable, I think a balance between fun and straightforwardness could enhance the excitement even further.",
+          "gender": "Male",
+          "age_group": "25-34",
+          "persona_group": "Occasional Players",
+          "persona_description": "Occasional player who buys scratch cards a few times per year",
+          "occupation": "Sales"
+        },
+        "R007": {
+          "probabilities": [
+            0.2792144426324172,
+            0.0,
+            0.06467643288991434,
+            0.06488835724285918,
+            0.19797643754807018,
+            0.08482671878725581,
+            0.30841761089948333
+          ],
+          "mode": 7,
+          "expected_value": 4.390562947033866,
+          "entropy": 1.6035130816452627,
+          "text_response": "Design B, featuring the \"Cool Gray Donkey,\" generates a moderate level of excitement for me as an occasional player. The vibrant colors and cheerful character create a fun and inviting atmosphere, making it appealing for someone who might not play regularly. The playful elements, such as the donkey wearing a top hat and holding a coin, add a sense of whimsy that can attract attention.\n\nHowever, while the design is lively, I wonder if it might come off as a bit cartoonish, which could detract from the excitement level for players seeking a more serious or sophisticated game. Overall, I appreciate the fun aspect, but I would prefer a design that balances playfulness with a touch of elegance to enhance the overall excitement.",
+          "gender": "Male",
+          "age_group": "35-44",
+          "persona_group": "Occasional Players",
+          "persona_description": "Occasional player who buys scratch cards a few times per year",
+          "occupation": "Professional"
+        },
+        "R008": {
+          "probabilities": [
+            0.3396225148263978,
+            0.03854821476572987,
+            0.06973545094953931,
+            0.0,
+            0.1842186145718436,
+            0.05246096761547982,
+            0.3154142372710097
+          ],
+          "mode": 1,
+          "expected_value": 4.06968383665564,
+          "entropy": 1.5081962201481387,
+          "text_response": "In reviewing Design B, \"Cool Gray Donkey,\" I find it to be quite engaging. The playful cartoon style of the donkey adds a whimsical touch, which could attract attention even from someone like me who rarely plays lottery games. The vibrant colors and the enthusiastic expression of the donkey create a sense of excitement and fun. The concept of winning a large sum of money, highlighted prominently, also contributes to a feeling of potential thrill.\n\nHowever, as a non-player, I feel that while the design is visually appealing, it may not resonate deeply with someone who doesn\u2019t typically engage in lottery activities. The overall excitement generated is moderate; it\u2019s cute and entertaining, but I personally might not feel compelled to participate solely based on the design.",
+          "gender": "Male",
+          "age_group": "25-34",
+          "persona_group": "Non-Players",
+          "persona_description": "Person who rarely or never plays lottery games",
+          "occupation": "Administrative"
+        },
+        "R009": {
+          "probabilities": [
+            0.29319879698179047,
+            0.08583996049958552,
+            0.11546814907958919,
+            0.0,
+            0.14359246216447913,
+            0.0971798209604299,
+            0.264720810314126
+          ],
+          "mode": 1,
+          "expected_value": 3.965370074003586,
+          "entropy": 1.6768159951917365,
+          "text_response": "The \"Cool Gray Donkey\" design for the 'Lucky Luck' scratch card generates a moderate level of excitement for me. The colorful and playful illustration of the donkey, especially with its top hat and cheerful expression, creates a sense of fun and whimsy. The prominent prize amount of \u00a3100,000 stands out, which is likely to attract attention.\n\nHowever, as someone who rarely plays lottery games, I find that while the design is engaging, it may not resonate deeply with me. The playful theme might appeal to occasional players, but as a non-player, I feel a stronger connection might be established with a more sophisticated or elegant design. Overall, while the excitement level is present, it doesn't compel my interest in participating.",
+          "gender": "Female",
+          "age_group": "45-54",
+          "persona_group": "Non-Players",
+          "persona_description": "Person who rarely or never plays lottery games",
+          "occupation": "Service"
+        },
+        "R010": {
+          "probabilities": [
+            0.32620544010875757,
+            0.019931799308375527,
+            0.08900597361465216,
+            0.0,
+            0.17986092520422375,
+            0.08249643202920783,
+            0.30249942973478317
+          ],
+          "mode": 1,
+          "expected_value": 4.144866185909313,
+          "entropy": 1.534860384681398,
+          "text_response": "Design B, featuring the Cool Gray Donkey, generates a moderate level of excitement for me. The playful and cartoonish style of the donkey, especially with its top hat and cheerful expression, adds a whimsical touch that feels inviting. The vibrant colors and the promise of a substantial prize (\u00a3100,000) make the design eye-catching and engaging. However, as someone who rarely plays lottery games, I find that while the design is fun, it doesn\u2019t evoke a strong desire to participate. The overall theme feels light-hearted, which might appeal to a broader audience, but for someone like me, it still lacks the emotional pull needed to spark genuine interest in playing.",
+          "gender": "Female",
+          "age_group": "18-24",
+          "persona_group": "Non-Players",
+          "persona_description": "Person who rarely or never plays lottery games",
+          "occupation": "Other"
+        }
+      }
+    }
+  },
+  "ground_truth_distributions": {
+    "design_a": {
+      "appeal_a": {
+        "mean_probabilities": [
+          0.005834154658777744,
+          0.17816973467610106,
+          0.24601644151177043,
+          0.4006237457998053,
+          0.16935592335354546
+        ],
+        "std_probabilities": [
+          0.012936580388637516,
+          0.08066435765542682,
+          0.09781724644090987,
+          0.07972505633094909,
+          0.09702816616606895
+        ],
+        "sample_size": 10,
+        "mean_mode": 3,
+        "mean_expected_value": 3.54949754851324,
+        "mean_entropy": 1.2507040430841818
+      },
+      "purchase_intent_a": {
+        "mean_probabilities": [
+          0.0704319055474922,
+          0.27581219630012666,
+          0.12871200135907962,
+          0.38404202329836784,
+          0.14100187349493365
+        ],
+        "std_probabilities": [
+          0.0832485496324943,
+          0.11141990385413707,
+          0.10078342592313688,
+          0.0690546003729015,
+          0.09927081247844707
+        ],
+        "sample_size": 10,
+        "mean_mode": 3,
+        "mean_expected_value": 3.2493697628931244,
+        "mean_entropy": 1.2626801544438218
+      },
+      "trustworthy_a": {
+        "mean_probabilities": [
+          0.0,
+          1.0
+        ],
+        "std_probabilities": [
+          0.0,
+          0.0
+        ],
+        "sample_size": 10,
+        "mean_mode": 2,
+        "mean_expected_value": 2.0,
+        "mean_entropy": 0.0
+      },
+      "excitement_a": {
+        "mean_probabilities": [
+          0.2736848004639316,
+          0.0,
+          0.05459733129837864,
+          0.02937302661281106,
+          0.2022083800724944,
+          0.11793850493956355,
+          0.32219795661282075
+        ],
+        "std_probabilities": [
+          0.038202049541820854,
+          0.0,
+          0.01094700182303591,
+          0.01604314018910472,
+          0.02431830151876955,
+          0.021076498750582026,
+          0.012608134916082049
+        ],
+        "sample_size": 10,
+        "mean_mode": 6,
+        "mean_expected_value": 4.529027527099911,
+        "mean_entropy": 1.5447693153403697
+      }
+    },
+    "design_b": {
+      "appeal_b": {
+        "mean_probabilities": [
+          0.03642955937361335,
+          0.23944097805248793,
+          0.2588234002582762,
+          0.34407891918065353,
+          0.12122714313496892
+        ],
+        "std_probabilities": [
+          0.06590470658583585,
+          0.0725339406477761,
+          0.05940002121264542,
+          0.07671936677862538,
+          0.0870725189811292
+        ],
+        "sample_size": 10,
+        "mean_mode": 3,
+        "mean_expected_value": 3.2742331086508765,
+        "mean_entropy": 1.3114357901711693
+      },
+      "purchase_intent_b": {
+        "mean_probabilities": [
+          0.10464844947286629,
+          0.296932337001906,
+          0.0966391216895313,
+          0.33928509917531835,
+          0.1624949926603781
+        ],
+        "std_probabilities": [
+          0.09167321755827075,
+          0.10168709227902079,
+          0.12458688372610283,
+          0.07948533527729977,
+          0.09844317784988922
+        ],
+        "sample_size": 10,
+        "mean_mode": 3,
+        "mean_expected_value": 3.158045848548436,
+        "mean_entropy": 1.2755580461954983
+      },
+      "trustworthy_b": {
+        "mean_probabilities": [
+          0.0,
+          1.0
+        ],
+        "std_probabilities": [
+          0.0,
+          0.0
+        ],
+        "sample_size": 10,
+        "mean_mode": 2,
+        "mean_expected_value": 2.0,
+        "mean_entropy": 0.0
+      },
+      "excitement_b": {
+        "mean_probabilities": [
+          0.3052451828557786,
+          0.009327087767249793,
+          0.06376864750730397,
+          0.02303978176949651,
+          0.2003501308707442,
+          0.08662804988173539,
+          0.3116411193476915
+        ],
+        "std_probabilities": [
+          0.02811283007735458,
+          0.021243922197843705,
+          0.015733959053108516,
+          0.020476501366009914,
+          0.016849103975688853,
+          0.022235693179768784,
+          0.018711468201139447
+        ],
+        "sample_size": 10,
+        "mean_mode": 4,
+        "mean_expected_value": 4.31037121706815,
+        "mean_entropy": 1.5316434948707454
+      }
+    }
+  }
+}

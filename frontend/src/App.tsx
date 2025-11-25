@@ -19,6 +19,7 @@ import Layout from './components/Layout/Layout';
 // Page components
 import HomePage from './pages/HomePage';
 import SurveyBuilderPage from './pages/SurveyBuilderPage';
+import SurveyQuickCreatePage from './pages/SurveyQuickCreatePage';
 import SurveyPreviewPage from './pages/SurveyPreviewPage';
 import SurveyRunnerPage from './pages/SurveyRunnerPage';
 import SurveyUserViewPage from './pages/SurveyUserViewPage';
@@ -65,6 +66,7 @@ const App: React.FC = () => {
 
               {/* Survey Builder - create/edit surveys */}
               <Route path="/builder" element={<SurveyBuilderPage />} />
+              <Route path="/builder/quick" element={<SurveyQuickCreatePage />} />
 
               {/* Survey Preview - view survey structure */}
               <Route path="/preview" element={<SurveyPreviewPage />} />
@@ -85,7 +87,7 @@ const App: React.FC = () => {
               {/* Analysis Dashboard - comprehensive survey analysis */}
               <Route path="/analysis/:runId" element={<AnalysisDashboardPage />} />
 
-              {/* Ground Truth Testing - experimentation */}
+              {/* Ground Truth Testing - create and manage ground truths */}
               <Route path="/ground-truth" element={<GroundTruthTestingPage />} />
 
               {/* Admin - administrative dashboard */}

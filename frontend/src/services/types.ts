@@ -224,6 +224,7 @@ export const OPENAI_MODELS = [
   { value: 'gpt-4o', label: 'GPT-4o', supportsVision: true },
   { value: 'gpt-4o-mini', label: 'GPT-4o Mini (Fast & Cost-Effective)', supportsVision: true },
   { value: 'gpt-4-turbo', label: 'GPT-4 Turbo', supportsVision: true },
+  { value: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo (Cheapest, Text-Only)', supportsVision: false },
 ];
 
 export const ANTHROPIC_MODELS = [
@@ -392,9 +393,11 @@ export interface OverallMetrics {
 }
 
 export interface ComparisonResults {
+  id?: string; // Optional for backwards compatibility
   run_id: string;
   ground_truth_id: string;
   survey_id: string;
+  created_at?: string; // ISO timestamp
   comparison: {
     overall_metrics: OverallMetrics;
     by_category: { [category: string]: CategoryMetrics };
@@ -407,6 +410,18 @@ export interface ComparisonResults {
       [question_id: string]: AggregatedDistribution;
     };
   };
+}
+
+// Comparison History Item (summary for listing)
+export interface ComparisonHistoryItem {
+  id: string;
+  run_id: string;
+  ground_truth_id: string;
+  ground_truth_name: string;
+  survey_id: string;
+  created_at: string; // ISO timestamp
+  num_questions_compared: number;
+  mean_kl_divergence: number | null;
 }
 
 // Media Upload Types
@@ -634,9 +649,38 @@ export interface QuestionAnalysis {
   distribution: number[];
 }
 
-export interface DemographicSegmentMetrics {
-  mean: number;
-  median: number;
+export interface QuestionDistribution {
+  question_id: string;
+  question_text: string;
+  question_type: string;
+  scale_labels: {
+    scale_type?: string;
+    labels?: { [key: string]: string };
+  };
+  probabilities: number[];
+  sample_size: number;
+}
+
+export interface DemographicSegment {
+  sample_size: number;
+  questions: QuestionDistribution[];
+}
+
+export interface DemographicAnalysis {
+  demographic_field: string;
+  segments: { [segment: string]: DemographicSegment };
+  statistical_tests: {
+    [question_id: string]: {
+      chi2: number;
+      p_value: number;
+      significant: boolean;
+    };
+  };
+}
+
+export interface LegacyDemographicSegmentMetrics {
+  mean_pct: number;
+  median_pct: number;
   std: number;
   top_box_pct: number;
   sample_size: number;
@@ -644,17 +688,17 @@ export interface DemographicSegmentMetrics {
   ci_95_upper: number;
 }
 
-export interface DemographicAnalysis {
+export interface LegacyDemographicAnalysis {
   demographic_field: string;
-  segment_metrics: { [segment: string]: DemographicSegmentMetrics };
+  segment_metrics: { [segment: string]: LegacyDemographicSegmentMetrics };
   top_segment: {
     segment: string;
-    mean_score: number;
+    mean_pct: number;
     sample_size: number;
   };
   bottom_segment: {
     segment: string;
-    mean_score: number;
+    mean_pct: number;
     sample_size: number;
   };
   statistical_significance: boolean;

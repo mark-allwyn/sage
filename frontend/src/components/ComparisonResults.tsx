@@ -32,6 +32,7 @@ import {
 } from '@mui/material';
 import DistributionCharts from './DistributionCharts';
 import DifferenceHeatmap from './DifferenceHeatmap';
+import MetricInterpretation from './MetricInterpretation';
 
 interface OverallMetrics {
   mean_kl_divergence: number;
@@ -140,70 +141,74 @@ const ComparisonResults: React.FC<ComparisonResultsProps> = ({
         </Typography>
         <Divider sx={{ mb: 2 }} />
         <Grid container spacing={2}>
-          <Grid item xs={12} md={3}>
-            <Card variant="outlined">
+          <Grid item xs={12} md={6} lg={3}>
+            <Card variant="outlined" sx={{ height: '100%' }}>
               <CardContent>
-                <Typography variant="caption" color="text.secondary" gutterBottom>
-                  Mean KL Divergence
+                <Typography variant="caption" color="text.secondary" gutterBottom display="block" sx={{ mb: 1 }}>
+                  KL Divergence
                 </Typography>
-                <Typography variant="h5">
-                  {formatMetric(comparisonResults.comparison.overall_metrics.mean_kl_divergence)}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  ± {formatMetric(comparisonResults.comparison.overall_metrics.std_kl_divergence)}
-                </Typography>
+                <MetricInterpretation
+                  metricType="kl_divergence"
+                  value={comparisonResults.comparison.overall_metrics.mean_kl_divergence}
+                  std={comparisonResults.comparison.overall_metrics.std_kl_divergence}
+                  showProgressBar={true}
+                  compact={false}
+                />
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={12} md={3}>
-            <Card variant="outlined">
+          <Grid item xs={12} md={6} lg={3}>
+            <Card variant="outlined" sx={{ height: '100%' }}>
               <CardContent>
-                <Typography variant="caption" color="text.secondary" gutterBottom>
-                  Mean JS Divergence
+                <Typography variant="caption" color="text.secondary" gutterBottom display="block" sx={{ mb: 1 }}>
+                  JS Divergence
                 </Typography>
-                <Typography variant="h5">
-                  {formatMetric(comparisonResults.comparison.overall_metrics.mean_js_divergence)}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  ± {formatMetric(comparisonResults.comparison.overall_metrics.std_js_divergence)}
-                </Typography>
+                <MetricInterpretation
+                  metricType="js_divergence"
+                  value={comparisonResults.comparison.overall_metrics.mean_js_divergence}
+                  std={comparisonResults.comparison.overall_metrics.std_js_divergence}
+                  showProgressBar={true}
+                  compact={false}
+                />
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={12} md={3}>
-            <Card variant="outlined">
+          <Grid item xs={12} md={6} lg={3}>
+            <Card variant="outlined" sx={{ height: '100%' }}>
               <CardContent>
-                <Typography variant="caption" color="text.secondary" gutterBottom>
-                  Mean Wasserstein
+                <Typography variant="caption" color="text.secondary" gutterBottom display="block" sx={{ mb: 1 }}>
+                  Wasserstein Distance
                 </Typography>
-                <Typography variant="h5">
-                  {formatMetric(comparisonResults.comparison.overall_metrics.mean_wasserstein)}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  ± {formatMetric(comparisonResults.comparison.overall_metrics.std_wasserstein)}
-                </Typography>
+                <MetricInterpretation
+                  metricType="wasserstein"
+                  value={comparisonResults.comparison.overall_metrics.mean_wasserstein}
+                  std={comparisonResults.comparison.overall_metrics.std_wasserstein}
+                  showProgressBar={true}
+                  compact={false}
+                />
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={12} md={3}>
-            <Card variant="outlined">
+          <Grid item xs={12} md={6} lg={3}>
+            <Card variant="outlined" sx={{ height: '100%' }}>
               <CardContent>
-                <Typography variant="caption" color="text.secondary" gutterBottom>
+                <Typography variant="caption" color="text.secondary" gutterBottom display="block" sx={{ mb: 1 }}>
                   Mean Absolute Error
                 </Typography>
-                <Typography variant="h5">
-                  {formatMetric(comparisonResults.comparison.overall_metrics.mean_mae)}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  ± {formatMetric(comparisonResults.comparison.overall_metrics.std_mae)}
-                </Typography>
+                <MetricInterpretation
+                  metricType="mae"
+                  value={comparisonResults.comparison.overall_metrics.mean_mae}
+                  std={comparisonResults.comparison.overall_metrics.std_mae}
+                  showProgressBar={true}
+                  compact={false}
+                />
               </CardContent>
             </Card>
           </Grid>
           <Grid item xs={12}>
             <Alert severity="info">
-              Compared {comparisonResults.comparison.overall_metrics.num_questions_compared} questions.
-              Lower values indicate better similarity to ground truth.
+              Compared {comparisonResults.comparison.overall_metrics.num_questions_compared} questions across all categories.
+              Quality indicators help interpret whether results match ground truth expectations.
             </Alert>
           </Grid>
         </Grid>
@@ -287,10 +292,12 @@ const ComparisonResults: React.FC<ComparisonResultsProps> = ({
                     <TableCell align="right">{formatMetric(metrics.chi_squared_p_value)}</TableCell>
                     <TableCell align="right">{formatMetric(metrics.mean_absolute_error)}</TableCell>
                     <TableCell align="center">
-                      <Chip
-                        label={metrics.significant_difference ? 'Yes' : 'No'}
-                        color={metrics.significant_difference ? 'warning' : 'success'}
-                        size="small"
+                      <MetricInterpretation
+                        metricType="p_value"
+                        value={metrics.chi_squared_p_value}
+                        showProgressBar={false}
+                        showTooltip={true}
+                        compact={true}
                       />
                     </TableCell>
                   </TableRow>

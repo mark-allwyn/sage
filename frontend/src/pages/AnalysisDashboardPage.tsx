@@ -39,6 +39,8 @@ import { useSurveyRun, useSurvey } from '../services/hooks';
 
 // Sub-components
 import ExecutiveSummaryPanel from '../components/Analysis/ExecutiveSummaryPanel';
+import DemographicOverview from '../components/Analysis/DemographicOverview';
+import QuestionAnalysisPanel from '../components/Analysis/QuestionAnalysisPanel';
 
 const AnalysisDashboardPage: React.FC = () => {
   const { runId } = useParams<{ runId: string }>();
@@ -238,10 +240,35 @@ const AnalysisDashboardPage: React.FC = () => {
         </Box>
       </Box>
 
-      {/* Survey Report */}
-      <Paper sx={{ p: 3 }}>
-        <ExecutiveSummaryPanel summary={summary.executive_summary} insights={insights} />
+      {/* Executive Summary */}
+      <Paper sx={{ p: 3, mb: 3 }}>
+        <ExecutiveSummaryPanel
+          summary={summary.executive_summary}
+          insights={insights}
+          runId={runId!}
+          demographicFields={summary.context?.demographic_fields || []}
+          hasDemographics={summary.context?.has_demographics || false}
+        />
       </Paper>
+
+      {/* Demographic Overview - moved after Executive Summary */}
+      {summary.context?.has_demographics && summary.context?.demographic_fields?.length > 0 && (
+        <DemographicOverview
+          runId={runId!}
+          demographicFields={summary.context.demographic_fields}
+        />
+      )}
+
+      {/* Question Analysis - with expandable demographic charts */}
+      {summary.question_analysis && summary.question_analysis.length > 0 && (
+        <Paper sx={{ p: 3, mb: 3 }}>
+          <QuestionAnalysisPanel
+            questions={summary.question_analysis}
+            runId={runId!}
+            demographicFields={summary.context?.demographic_fields || []}
+          />
+        </Paper>
+      )}
     </Box>
   );
 };

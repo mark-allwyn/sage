@@ -14,13 +14,15 @@ import {
   ListItemText,
   Chip,
   Grid,
-  Divider
+  Divider,
+  Button
 } from '@mui/material';
 import {
   PersonOutline as ProfileIcon,
   ChatBubbleOutline as ResponseIcon,
   QueryStats as SSRIcon,
-  CheckCircleOutline as CheckIcon
+  CheckCircleOutline as CheckIcon,
+  Cancel as CancelIcon
 } from '@mui/icons-material';
 
 interface RunProgressProps {
@@ -32,9 +34,10 @@ interface RunProgressProps {
     num_batches?: number;
     concurrent_limit?: number;
   } | null;
+  onCancel?: () => void;
 }
 
-const RunProgress: React.FC<RunProgressProps> = ({ progress, messages, currentStep, details }) => {
+const RunProgress: React.FC<RunProgressProps> = ({ progress, messages, currentStep, details, onCancel }) => {
   const getStepIcon = (step: string) => {
     switch (step) {
       case 'profiles':
@@ -63,9 +66,22 @@ const RunProgress: React.FC<RunProgressProps> = ({ progress, messages, currentSt
 
   return (
     <Paper sx={{ p: 3 }} role="status" aria-live="polite" aria-atomic="true">
-      <Typography variant="h5" gutterBottom>
-        Running Survey...
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Typography variant="h5">
+          Running Survey...
+        </Typography>
+        {onCancel && (
+          <Button
+            variant="outlined"
+            color="error"
+            startIcon={<CancelIcon />}
+            onClick={onCancel}
+            aria-label="Cancel survey run"
+          >
+            Cancel
+          </Button>
+        )}
+      </Box>
 
       {/* Current Step Indicator */}
       {currentStep && (

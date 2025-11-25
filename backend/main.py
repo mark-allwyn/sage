@@ -291,6 +291,12 @@ def get_experiments_dir() -> Path:
     exp_dir.mkdir(exist_ok=True)
     return exp_dir
 
+def get_comparisons_dir() -> Path:
+    """Get path to comparisons directory"""
+    comp_dir = Path(__file__).parent.parent / "comparisons"
+    comp_dir.mkdir(exist_ok=True)
+    return comp_dir
+
 def get_survey_path(survey_id: str) -> Path:
     """Get path to survey YAML file"""
     config_dir = get_config_dir()
@@ -1320,7 +1326,7 @@ async def delete_ground_truth(gt_id: str):
 
 @app.post("/api/ground-truths/compare")
 async def compare_run_to_ground_truth(run_id: str, ground_truth_id: str):
-    """Compare a survey run against ground truth"""
+    """Compare a survey run against ground truth and save the comparison"""
     # Load ground truth
     gt_dir = get_ground_truths_dir()
     gt_path = gt_dir / f"{ground_truth_id}.json"
@@ -1346,23 +1352,112 @@ async def compare_run_to_ground_truth(run_id: str, ground_truth_id: str):
         # Perform comparison
         comparison_results = compare_survey_runs(ground_truth, test_run)
 
+        # Generate comparison ID with timestamp
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        comparison_id = f"comp_{timestamp}"
+
         response_data = {
+            "id": comparison_id,
             "run_id": run_id,
             "ground_truth_id": ground_truth_id,
             "survey_id": test_run["survey_id"],
+            "created_at": datetime.now().isoformat(),
             "comparison": comparison_results,
             # Include distributions for visualization
             "test_run_distributions": test_run.get("distributions", {}),
             "ground_truth_distributions": ground_truth.get("aggregated_distributions", {})
         }
 
-        # Convert numpy types to Python native types for JSON serialization
-        return convert_numpy_types(response_data)
+        # Convert numpy types before saving
+        response_data_converted = convert_numpy_types(response_data)
+
+        # Save comparison to disk
+        comparisons_dir = get_comparisons_dir()
+        comparison_path = comparisons_dir / f"{comparison_id}.json"
+        comparison_path.write_text(json.dumps(response_data_converted, indent=2))
+
+        # Update comparisons index
+        index_path = comparisons_dir / "comparisons_index.json"
+        if index_path.exists():
+            index = json.loads(index_path.read_text())
+        else:
+            index = []
+
+        # Add comparison metadata to index
+        index.append({
+            "id": comparison_id,
+            "run_id": run_id,
+            "ground_truth_id": ground_truth_id,
+            "ground_truth_name": ground_truth.get("name", "Unknown"),
+            "survey_id": test_run["survey_id"],
+            "created_at": response_data["created_at"],
+            "num_questions_compared": comparison_results.get("overall_metrics", {}).get("num_questions_compared", 0),
+            "mean_kl_divergence": comparison_results.get("overall_metrics", {}).get("mean_kl_divergence"),
+        })
+
+        # Sort index by created_at descending (newest first)
+        index.sort(key=lambda x: x.get("created_at", ""), reverse=True)
+        index_path.write_text(json.dumps(index, indent=2))
+
+        logger.info(f"Saved comparison {comparison_id} for run {run_id} vs ground truth {ground_truth_id}")
+
+        return response_data_converted
     except Exception as e:
         import traceback
         logger.error(f"Error comparing: {str(e)}")
         logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Error comparing: {str(e)}")
+
+@app.get("/api/comparisons/by-run/{run_id}")
+async def get_comparisons_by_run(run_id: str):
+    """Get all comparison history for a specific run"""
+    comparisons_dir = get_comparisons_dir()
+    index_path = comparisons_dir / "comparisons_index.json"
+
+    if not index_path.exists():
+        return []
+
+    index = json.loads(index_path.read_text())
+
+    # Filter by run_id
+    comparisons = [comp for comp in index if comp["run_id"] == run_id]
+
+    # Sort by created_at descending (newest first)
+    comparisons.sort(key=lambda x: x.get("created_at", ""), reverse=True)
+
+    return comparisons
+
+@app.get("/api/comparisons/{comparison_id}")
+async def get_comparison(comparison_id: str):
+    """Get specific comparison details"""
+    comparisons_dir = get_comparisons_dir()
+    comparison_path = comparisons_dir / f"{comparison_id}.json"
+
+    if not comparison_path.exists():
+        raise HTTPException(status_code=404, detail=f"Comparison '{comparison_id}' not found")
+
+    return json.loads(comparison_path.read_text())
+
+@app.delete("/api/comparisons/{comparison_id}")
+async def delete_comparison(comparison_id: str):
+    """Delete a comparison"""
+    comparisons_dir = get_comparisons_dir()
+    comparison_path = comparisons_dir / f"{comparison_id}.json"
+
+    if not comparison_path.exists():
+        raise HTTPException(status_code=404, detail=f"Comparison '{comparison_id}' not found")
+
+    # Delete the comparison file
+    comparison_path.unlink()
+
+    # Remove from index
+    index_path = comparisons_dir / "comparisons_index.json"
+    if index_path.exists():
+        index = json.loads(index_path.read_text())
+        index = [comp for comp in index if comp["id"] != comparison_id]
+        index_path.write_text(json.dumps(index, indent=2))
+
+    return {"id": comparison_id, "status": "deleted"}
 
 # ===================
 # File Upload Endpoints

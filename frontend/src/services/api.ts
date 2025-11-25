@@ -23,6 +23,7 @@ import {
   CreateGroundTruthFromSSRRequest,
   UploadGroundTruthRequest,
   ComparisonResults,
+  ComparisonHistoryItem,
   SystemSettings,
   UpdateSettingsRequest,
   EvaluateResponsesRequest,
@@ -298,6 +299,30 @@ export const compareToGroundTruth = async (
   const response = await api.post<ComparisonResults>(
     `/api/ground-truths/compare?run_id=${runId}&ground_truth_id=${groundTruthId}`
   );
+  return response.data;
+};
+
+/**
+ * Get comparison history for a specific run
+ */
+export const getComparisonHistory = async (runId: string): Promise<ComparisonHistoryItem[]> => {
+  const response = await api.get<ComparisonHistoryItem[]>(`/api/comparisons/by-run/${runId}`);
+  return response.data;
+};
+
+/**
+ * Get specific comparison details by ID
+ */
+export const getComparison = async (comparisonId: string): Promise<ComparisonResults> => {
+  const response = await api.get<ComparisonResults>(`/api/comparisons/${comparisonId}`);
+  return response.data;
+};
+
+/**
+ * Delete a comparison
+ */
+export const deleteComparison = async (comparisonId: string): Promise<{ id: string; status: string }> => {
+  const response = await api.delete(`/api/comparisons/${comparisonId}`);
   return response.data;
 };
 

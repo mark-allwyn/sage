@@ -502,47 +502,129 @@ def calculate_category_comparison(run_data: Dict, survey: Any) -> Dict:
 
 
 def calculate_demographic_analysis(run_data: Dict, survey: Any, demographic_field: str) -> Dict:
-    """Calculate analysis broken down by a demographic field"""
+    """Calculate distribution analysis broken down by a demographic field"""
+    from scipy import stats as scipy_stats
+    from collections import Counter
+
     distributions = run_data.get("distributions", {})
 
-    # Group scores by demographic value
-    demographic_groups = {}
+    # Build question info map (type and scale labels)
+    question_info = {}
+    for question in survey.questions:
+        scale_labels = {}
+        if hasattr(question, 'scale') and question.scale:
+            scale_labels = question.scale
+        question_info[question.id] = {
+            "type": question.type,
+            "text": question.text,
+            "scale": scale_labels
+        }
+
+    # Group raw response distributions by demographic value
+    demographic_distributions = {}
 
     for category, cat_data in distributions.items():
         for question_id, question_data in cat_data.items():
+            q_info = question_info.get(question_id, {})
+
             for respondent_id, dist_data in question_data.items():
                 demo_value = dist_data.get(demographic_field, 'Unknown')
-                if demo_value not in demographic_groups:
-                    demographic_groups[demo_value] = []
+                if demo_value not in demographic_distributions:
+                    demographic_distributions[demo_value] = {}
 
-                if "expected_value" in dist_data:
-                    demographic_groups[demo_value].append(dist_data["expected_value"])
+                if question_id not in demographic_distributions[demo_value]:
+                    demographic_distributions[demo_value][question_id] = {
+                        "question_text": q_info.get("text", question_id),
+                        "question_type": q_info.get("type", "likert_7"),
+                        "scale_labels": q_info.get("scale", {}),
+                        "responses": []
+                    }
 
-    # Calculate metrics for each demographic group
-    results = []
-    for demo_value, scores in demographic_groups.items():
-        if scores:
-            mean_score = float(np.mean(scores))
-            std_score = float(np.std(scores))
-            top_box = (len([s for s in scores if s >= 6]) / len(scores) * 100) if scores else 0
-            bottom_box = (len([s for s in scores if s <= 2]) / len(scores) * 100) if scores else 0
+                # Store the probability distribution
+                if "probabilities" in dist_data:
+                    demographic_distributions[demo_value][question_id]["responses"].append({
+                        "probabilities": dist_data["probabilities"],
+                        "expected_value": dist_data.get("expected_value")
+                    })
 
-            results.append({
-                "demographic_value": demo_value,
-                "mean": mean_score,
-                "std": std_score,
-                "top_box_pct": top_box,
-                "bottom_box_pct": bottom_box,
-                "net_score": top_box - bottom_box,
-                "sample_size": len(scores)
-            })
+    # Calculate aggregate distributions for each demographic segment
+    segment_data = {}
 
-    # Sort by mean score
-    results.sort(key=lambda x: x["mean"], reverse=True)
+    for demo_value, questions in demographic_distributions.items():
+        segment_data[demo_value] = {
+            "sample_size": 0,
+            "questions": []
+        }
+
+        for question_id, q_data in questions.items():
+            responses = q_data["responses"]
+            sample_size = len(responses)
+            segment_data[demo_value]["sample_size"] = max(segment_data[demo_value]["sample_size"], sample_size)
+
+            # Aggregate distributions across all responses for this question
+            if responses:
+                # Average the probability distributions
+                aggregated_probs = []
+                for response in responses:
+                    probs = response["probabilities"]
+                    if not aggregated_probs:
+                        aggregated_probs = [0.0] * len(probs)
+                    for i, prob in enumerate(probs):
+                        aggregated_probs[i] += prob
+
+                # Normalize to average
+                aggregated_probs = [p / len(responses) for p in aggregated_probs]
+
+                segment_data[demo_value]["questions"].append({
+                    "question_id": question_id,
+                    "question_text": q_data["question_text"],
+                    "question_type": q_data["question_type"],
+                    "scale_labels": q_data["scale_labels"],
+                    "probabilities": aggregated_probs,
+                    "sample_size": sample_size
+                })
+
+    # Perform statistical tests if we have 2+ segments
+    statistical_tests = {}
+    if len(segment_data) >= 2:
+        from scipy.stats import chi2_contingency
+
+        # For each question, test if distributions differ across segments
+        all_question_ids = set()
+        for demo_value, data in segment_data.items():
+            for q in data["questions"]:
+                all_question_ids.add(q["question_id"])
+
+        for question_id in all_question_ids:
+            # Build contingency table
+            segments_list = []
+            observed = []
+
+            for demo_value, data in segment_data.items():
+                q_data = next((q for q in data["questions"] if q["question_id"] == question_id), None)
+                if q_data:
+                    segments_list.append(demo_value)
+                    # Convert probabilities to counts
+                    probs = q_data["probabilities"]
+                    sample_size = q_data["sample_size"]
+                    counts = [prob * sample_size for prob in probs]
+                    observed.append(counts)
+
+            if len(observed) >= 2:
+                try:
+                    chi2, p_value, dof, expected = chi2_contingency(observed)
+                    statistical_tests[question_id] = {
+                        "chi2": float(chi2),
+                        "p_value": float(p_value),
+                        "significant": bool(p_value < 0.05)
+                    }
+                except:
+                    pass
 
     return {
         "demographic_field": demographic_field,
-        "groups": results
+        "segments": segment_data,
+        "statistical_tests": statistical_tests
     }
 
 
