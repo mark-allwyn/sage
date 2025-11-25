@@ -56,14 +56,14 @@ interface NavItem {
 
 // Ultra-streamlined navigation: core workflow items
 // Removed: Overview (accessible from Home page)
-// Focus: Home → Create → Run → Results → Advanced → Admin
+// Removed: Experiments (integrated into Results section)
+// Focus: Home → Create → Run → Results → Settings → Admin
 // Admin section requires authentication (will be added later)
 const navItems: NavItem[] = [
   { label: 'Home', path: '/', icon: <HomeIcon />, description: 'Start here' },
   { label: 'Create', path: '/builder', icon: <CreateIcon />, description: 'Build surveys' },
   { label: 'Run', path: '/runner', icon: <PlayArrowIcon />, description: 'Execute surveys' },
   { label: 'Results', path: '/history', icon: <HistoryIcon />, description: 'View data' },
-  { label: 'Experiments', path: '/ground-truth', icon: <ScienceIcon />, badge: 'beta', description: 'Ground truth testing' },
   { label: 'Settings', path: '/settings', icon: <SettingsIcon />, description: 'System configuration' },
   { label: 'Admin', path: '/admin', icon: <AdminPanelSettingsIcon />, description: 'Administrator tools' },
 ];
@@ -353,15 +353,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 >
                   Anthropic
                 </Button>
-                <Button
-                  sx={{ justifyContent: 'flex-start', color: 'text.secondary', textTransform: 'none', px: 0, minWidth: 0 }}
-                  component="a"
-                  href="https://ollama.ai"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Ollama
-                </Button>
               </Box>
             </Box>
 
@@ -444,7 +435,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   href="https://github.com"
                   target="_blank"
                   rel="noopener noreferrer"
-                  aria-label="GitHub"
+                  aria-label="Visit S.A.G.E on GitHub"
                 >
                   <GitHubIcon />
                 </IconButton>
@@ -455,7 +446,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   href="https://linkedin.com"
                   target="_blank"
                   rel="noopener noreferrer"
-                  aria-label="LinkedIn"
+                  aria-label="Connect with S.A.G.E on LinkedIn"
                 >
                   <LinkedInIcon />
                 </IconButton>
@@ -466,7 +457,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   href="https://twitter.com"
                   target="_blank"
                   rel="noopener noreferrer"
-                  aria-label="Twitter"
+                  aria-label="Follow S.A.G.E on Twitter"
                 >
                   <TwitterIcon />
                 </IconButton>
@@ -475,7 +466,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   sx={{ color: 'text.secondary', '&:hover': { color: 'primary.main' } }}
                   component="a"
                   href="mailto:contact@example.com"
-                  aria-label="Email"
+                  aria-label="Email S.A.G.E support"
                 >
                   <EmailIcon />
                 </IconButton>

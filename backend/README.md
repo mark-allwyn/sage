@@ -90,6 +90,17 @@ The API will be available at:
 - `GET /api/survey-runs/{run_id}` - Get detailed survey run results
 - `DELETE /api/survey-runs/{run_id}` - Delete a survey run
 
+### Analysis & Insights
+- `GET /api/analysis/{run_id}/summary` - Get executive summary with key metrics and findings
+- `GET /api/analysis/{run_id}/insights` - Get AI-generated insights from survey data
+- `GET /api/analysis/{run_id}/questions` - Get question-level analysis with statistics
+- `GET /api/analysis/{run_id}/categories` - Get category-based comparisons (multi-product surveys)
+- `GET /api/analysis/{run_id}/demographics/{field}` - Get demographic breakdown for a specific field
+- `GET /api/analysis/{run_id}/export/csv` - Export full analysis data as CSV
+- `GET /api/analysis/{run_id}/export/questions-csv` - Export question-level data as CSV
+- `GET /api/analysis/{run_id}/export/responses-csv` - Export response-level data as CSV
+- `GET /api/analysis/{run_id}/export/summary-report` - Export executive summary as TXT report
+
 ### Ground Truth & Validation
 - `POST /api/ground-truth/from-ssr` - Generate ground truth via SSR pipeline
 - `POST /api/ground-truth/from-csv` - Upload ground truth from real survey data
@@ -140,11 +151,15 @@ backend/
 
 - **Multi-LLM Support**: Generate synthetic responses using OpenAI (GPT) or Anthropic (Claude) models
 - **Semantic Similarity Rating (SSR)**: Convert text responses to probability distributions using embedding-based similarity
+- **Comprehensive Analysis**: Automatic statistical analysis with executive summaries, demographic breakdowns, and insights
+- **Demographic Segmentation**: Analyze survey results across demographic groups with automatic segment comparison
+- **Question-Level Metrics**: Calculate mean, median, standard deviation, confidence intervals, top-box %, and net scores
+- **Performance Grading**: Automatic A-D grading for questions based on statistical thresholds
 - **Ground Truth Management**: Create reference datasets from high-fidelity runs or real survey data
 - **Statistical Validation**: Compare test runs against ground truth using multiple metrics (Pearson, Spearman, MAE, KL divergence, etc.)
 - **LLM Evaluation**: Assess response quality, bias, and hallucination using DeepEval
 - **Flexible Configuration**: Control LLM temperature, SSR parameters, sample sizes, and random seeds
-- **Data Export**: Export results to CSV for analysis in Excel, R, or Python
+- **Multiple Export Formats**: Export results to CSV, TXT reports, or structured JSON for analysis in Excel, R, or Python
 
 ## Core Technologies
 

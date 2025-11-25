@@ -269,6 +269,7 @@ class SurveyPipeline:
                 "gender": profile.get('gender', 'Unknown'),
                 "age_group": profile.get('age_group', 'Unknown'),
                 "persona_group": profile.get('persona_group', 'General'),
+                "persona_description": profile.get('description', ''),
                 "occupation": profile.get('occupation', 'Unknown')
             }
 

@@ -23,6 +23,7 @@ import {
   CreateGroundTruthFromSSRRequest,
   UploadGroundTruthRequest,
   ComparisonResults,
+  ComparisonHistoryItem,
   SystemSettings,
   UpdateSettingsRequest,
   EvaluateResponsesRequest,
@@ -301,6 +302,30 @@ export const compareToGroundTruth = async (
   return response.data;
 };
 
+/**
+ * Get comparison history for a specific run
+ */
+export const getComparisonHistory = async (runId: string): Promise<ComparisonHistoryItem[]> => {
+  const response = await api.get<ComparisonHistoryItem[]>(`/api/comparisons/by-run/${runId}`);
+  return response.data;
+};
+
+/**
+ * Get specific comparison details by ID
+ */
+export const getComparison = async (comparisonId: string): Promise<ComparisonResults> => {
+  const response = await api.get<ComparisonResults>(`/api/comparisons/${comparisonId}`);
+  return response.data;
+};
+
+/**
+ * Delete a comparison
+ */
+export const deleteComparison = async (comparisonId: string): Promise<{ id: string; status: string }> => {
+  const response = await api.delete(`/api/comparisons/${comparisonId}`);
+  return response.data;
+};
+
 // ===================
 // Error Handler
 // ===================
@@ -402,6 +427,108 @@ export const deleteEvaluation = async (evaluationId: string): Promise<{ evaluati
  */
 export const compareEvaluations = async (evaluationIds: string[]): Promise<EvaluationComparison> => {
   const response = await api.post('/api/evaluations/compare', evaluationIds);
+  return response.data;
+};
+
+// ===================
+// Analysis API
+// ===================
+
+/**
+ * Get analysis summary for a survey run
+ */
+export const getAnalysisSummary = async (runId: string): Promise<any> => {
+  const response = await api.get(`/api/analysis/${runId}/summary`);
+  return response.data;
+};
+
+/**
+ * Get executive summary and insights
+ */
+export const getAnalysisInsights = async (runId: string): Promise<any> => {
+  const response = await api.get(`/api/analysis/${runId}/insights`);
+  return response.data;
+};
+
+/**
+ * Get detailed insights
+ */
+export const getDetailedInsights = async (runId: string): Promise<any> => {
+  const response = await api.get(`/api/analysis/${runId}/insights/detailed`);
+  return response.data;
+};
+
+/**
+ * Get question-level analysis
+ */
+export const getQuestionAnalysis = async (runId: string): Promise<any> => {
+  const response = await api.get(`/api/analysis/${runId}/questions`);
+  return response.data;
+};
+
+/**
+ * Get demographic analysis for a specific field
+ */
+export const getDemographicAnalysis = async (runId: string, demographicField: string): Promise<any> => {
+  const response = await api.get(`/api/analysis/${runId}/demographics/${demographicField}`);
+  return response.data;
+};
+
+/**
+ * Get correlation analysis
+ */
+export const getCorrelationAnalysis = async (runId: string): Promise<any> => {
+  const response = await api.get(`/api/analysis/${runId}/correlations`);
+  return response.data;
+};
+
+/**
+ * Get category comparison
+ */
+export const getCategoryComparison = async (runId: string): Promise<any> => {
+  const response = await api.get(`/api/analysis/${runId}/categories`);
+  return response.data;
+};
+
+/**
+ * Export analysis to CSV
+ */
+export const exportAnalysisCSV = async (runId: string, sections?: string[]): Promise<Blob> => {
+  const params = sections ? { sections: sections.join(',') } : {};
+  const response = await api.get(`/api/analysis/${runId}/export/csv`, {
+    params,
+    responseType: 'blob',
+  });
+  return response.data;
+};
+
+/**
+ * Export question data to CSV
+ */
+export const exportQuestionDataCSV = async (runId: string): Promise<Blob> => {
+  const response = await api.get(`/api/analysis/${runId}/export/questions-csv`, {
+    responseType: 'blob',
+  });
+  return response.data;
+};
+
+/**
+ * Export response-level data to CSV
+ */
+export const exportResponseDataCSV = async (runId: string): Promise<Blob> => {
+  const response = await api.get(`/api/analysis/${runId}/export/responses-csv`, {
+    responseType: 'blob',
+  });
+  return response.data;
+};
+
+/**
+ * Get summary report
+ */
+export const getSummaryReport = async (runId: string): Promise<string> => {
+  const response = await api.get(`/api/analysis/${runId}/export/summary-report`, {
+    responseType: 'text',
+  });
   return response.data;
 };
 

@@ -26,12 +26,6 @@ import {
   DialogContent,
   DialogContentText,
   DialogActions,
-  Stepper,
-  Step,
-  StepLabel,
-  StepButton,
-  Switch,
-  FormControlLabel,
 } from '@mui/material';
 import {
   Save as SaveIcon,
@@ -39,11 +33,9 @@ import {
   Delete as DeleteIcon,
   Add as AddIcon,
   Visibility as VisibilityIcon,
-  PlayArrow as PlayArrowIcon,
   Create as CreateIcon,
   ContentCopy as CopyIcon,
-  ArrowBack as ArrowBackIcon,
-  ArrowForward as ArrowForwardIcon,
+  PlayArrow as PlayArrowIcon,
 } from '@mui/icons-material';
 import SurveyForm from '../components/SurveyBuilder/SurveyForm';
 import YAMLPreview from '../components/SurveyBuilder/YAMLPreview';
@@ -56,6 +48,7 @@ import { SurveyBuilderState } from '../services/types';
 import { SurveyBuilderSkeleton } from '../components/LoadingSkeleton';
 import PageHeader from '../components/PageHeader';
 import { useUnsavedChanges } from '../hooks/useUnsavedChanges';
+import { useFormValidation, validationRules } from '../hooks/useFormValidation';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -92,20 +85,19 @@ const SurveyBuilderPage: React.FC = () => {
   const loadedSurveyIdRef = useRef<string>('');
   const [autoSaveMessage, setAutoSaveMessage] = useState<string>('');
 
-  // Wizard mode state
-  const [wizardMode, setWizardMode] = useState(false);
-  const [activeStep, setActiveStep] = useState(0);
-
   const AUTO_SAVE_KEY = 'sage_survey_builder_autosave';
 
-  // Wizard steps
-  const wizardSteps = [
-    { label: 'Basic Information', optional: false },
-    { label: 'Categories', optional: true },
-    { label: 'Questions', optional: false },
-    { label: 'Persona Groups', optional: false },
-    { label: 'Review & Save', optional: false },
-  ];
+  // Form validation
+  const filenameValidation = useFormValidation([
+    {
+      ...validationRules.required('Filename is required'),
+      field: 'filename'
+    },
+    {
+      ...validationRules.pattern(/^[a-zA-Z0-9_-]+\.yaml$/, 'Filename must end with .yaml and contain only letters, numbers, hyphens, and underscores'),
+      field: 'filename'
+    }
+  ]);
 
   // Track unsaved changes and warn on navigation
   useUnsavedChanges({
@@ -341,34 +333,6 @@ const SurveyBuilderPage: React.FC = () => {
     setSnackbar({ ...snackbar, open: false });
   };
 
-  // Wizard navigation
-  const handleNext = () => {
-    setActiveStep((prevStep) => Math.min(prevStep + 1, wizardSteps.length - 1));
-  };
-
-  const handleBack = () => {
-    setActiveStep((prevStep) => Math.max(prevStep - 1, 0));
-  };
-
-  const handleStepClick = (step: number) => {
-    setActiveStep(step);
-  };
-
-  const canProceedToNextStep = () => {
-    switch (activeStep) {
-      case 0: // Basic Information
-        return surveyData.name.trim().length > 0;
-      case 1: // Categories (optional)
-        return true;
-      case 2: // Questions
-        return surveyData.questions.length > 0;
-      case 3: // Persona Groups
-        return surveyData.persona_groups.length > 0;
-      default:
-        return true;
-    }
-  };
-
   const isLoading = createSurveyMutation.isPending || updateSurveyMutation.isPending || deleteSurveyMutation.isPending;
 
   return (
@@ -518,9 +482,26 @@ const SurveyBuilderPage: React.FC = () => {
                 fullWidth
                 label="Filename"
                 value={filename}
-                onChange={(e) => setFilename(e.target.value)}
+                onChange={(e) => {
+                  setFilename(e.target.value);
+                  if (mode === 'create') {
+                    filenameValidation.touchField('filename');
+                    const error = filenameValidation.validateField('filename', e.target.value);
+                    filenameValidation.setFieldError('filename', error);
+                  }
+                }}
+                onBlur={() => {
+                  if (mode === 'create') {
+                    filenameValidation.touchField('filename');
+                  }
+                }}
                 placeholder="my_survey.yaml"
-                helperText={mode === 'edit' ? 'Filename cannot be changed in edit mode' : 'Enter a descriptive filename (e.g., customer_satisfaction.yaml)'}
+                error={mode === 'create' && !!filenameValidation.getFieldError('filename')}
+                helperText={
+                  mode === 'edit'
+                    ? 'Filename cannot be changed in edit mode'
+                    : filenameValidation.getFieldError('filename') || 'Enter a descriptive filename (e.g., customer_satisfaction.yaml)'
+                }
                 disabled={mode === 'edit'}
               />
             </Grid>
@@ -560,6 +541,18 @@ const SurveyBuilderPage: React.FC = () => {
                     Preview Survey
                   </Button>
                 )}
+                {mode === 'edit' && selectedSurveyId && (
+                  <Button
+                    variant="outlined"
+                    size="large"
+                    color="success"
+                    startIcon={<PlayArrowIcon />}
+                    onClick={() => navigate(`/user-view/${selectedSurveyId}`)}
+                    disabled={isLoading}
+                  >
+                    Test as Respondent
+                  </Button>
+                )}
                 <Button
                   variant="contained"
                   size="large"
@@ -580,225 +573,8 @@ const SurveyBuilderPage: React.FC = () => {
         </Paper>
       )}
 
-      {/* Wizard Mode Toggle */}
+      {/* Tabs View */}
       {(mode === 'create' || (mode === 'edit' && selectedSurveyId)) && (
-        <Paper sx={{ p: 2, mb: 3 }}>
-          <FormControlLabel
-            control={
-              <Switch
-                checked={wizardMode}
-                onChange={(e) => {
-                  setWizardMode(e.target.checked);
-                  if (e.target.checked) {
-                    setActiveStep(0); // Reset to first step when enabling wizard
-                  }
-                }}
-              />
-            }
-            label="Wizard Mode"
-          />
-          <Typography variant="caption" color="text.secondary" sx={{ ml: 2 }}>
-            {wizardMode ? 'Step-by-step guided mode' : 'Free-form editing mode'}
-          </Typography>
-        </Paper>
-      )}
-
-      {/* Wizard Mode View */}
-      {wizardMode && (mode === 'create' || (mode === 'edit' && selectedSurveyId)) && (
-        <>
-          <Paper sx={{ mb: 3, p: 3 }}>
-            <Stepper activeStep={activeStep} alternativeLabel>
-              {wizardSteps.map((step, index) => (
-                <Step key={step.label}>
-                  <StepButton onClick={() => handleStepClick(index)}>
-                    <StepLabel optional={step.optional ? <Typography variant="caption">Optional</Typography> : undefined}>
-                      {step.label}
-                    </StepLabel>
-                  </StepButton>
-                </Step>
-              ))}
-            </Stepper>
-          </Paper>
-
-          {/* Step Content */}
-          <Box>
-            {/* Step 0: Basic Information */}
-            {activeStep === 0 && (
-              <Paper sx={{ p: 4, mb: 3 }}>
-                <Typography variant="h5" gutterBottom>
-                  Basic Information
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                  Enter the core details about your survey
-                </Typography>
-                <Grid container spacing={3}>
-                  <Grid item xs={12}>
-                    <TextField
-                      fullWidth
-                      label="Survey Name"
-                      value={surveyData.name}
-                      onChange={(e) => setSurveyData({ ...surveyData, name: e.target.value })}
-                      required
-                      helperText="A descriptive name for your survey"
-                    />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <TextField
-                      fullWidth
-                      label="Description"
-                      value={surveyData.description}
-                      onChange={(e) => setSurveyData({ ...surveyData, description: e.target.value })}
-                      multiline
-                      rows={3}
-                      helperText="A brief description of the survey's purpose"
-                    />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <TextField
-                      fullWidth
-                      label="Context"
-                      value={surveyData.context}
-                      onChange={(e) => setSurveyData({ ...surveyData, context: e.target.value })}
-                      multiline
-                      rows={3}
-                      helperText="Additional context or instructions for the survey"
-                    />
-                  </Grid>
-                </Grid>
-              </Paper>
-            )}
-
-            {/* Step 1: Categories */}
-            {activeStep === 1 && (
-              <CategoryEditor
-                categories={surveyData.categories}
-                setCategories={(categories) => setSurveyData({ ...surveyData, categories })}
-              />
-            )}
-
-            {/* Step 2: Questions */}
-            {activeStep === 2 && (
-              <QuestionEditor
-                questions={surveyData.questions}
-                setQuestions={(questions) => setSurveyData({ ...surveyData, questions })}
-                categories={surveyData.categories}
-              />
-            )}
-
-            {/* Step 3: Persona Groups */}
-            {activeStep === 3 && (
-              <PersonaGroupEditor
-                personaGroups={surveyData.persona_groups}
-                setPersonaGroups={(persona_groups) => setSurveyData({ ...surveyData, persona_groups })}
-              />
-            )}
-
-            {/* Step 4: Review & Save */}
-            {activeStep === 4 && (
-              <Paper sx={{ p: 4, mb: 3 }}>
-                <Typography variant="h5" gutterBottom>
-                  Review & Save
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                  Review your survey configuration before saving
-                </Typography>
-
-                <Grid container spacing={3}>
-                  <Grid item xs={12}>
-                    <Box sx={{ p: 2, backgroundColor: 'background.default', borderRadius: 1 }}>
-                      <Typography variant="subtitle2" gutterBottom>
-                        Survey Name
-                      </Typography>
-                      <Typography variant="body1">{surveyData.name || '(Not set)'}</Typography>
-                    </Box>
-                  </Grid>
-
-                  <Grid item xs={12} md={4}>
-                    <Box sx={{ p: 2, backgroundColor: 'background.default', borderRadius: 1 }}>
-                      <Typography variant="subtitle2" gutterBottom>
-                        Categories
-                      </Typography>
-                      <Typography variant="h4">{surveyData.categories.length}</Typography>
-                    </Box>
-                  </Grid>
-
-                  <Grid item xs={12} md={4}>
-                    <Box sx={{ p: 2, backgroundColor: 'background.default', borderRadius: 1 }}>
-                      <Typography variant="subtitle2" gutterBottom>
-                        Questions
-                      </Typography>
-                      <Typography variant="h4">{surveyData.questions.length}</Typography>
-                    </Box>
-                  </Grid>
-
-                  <Grid item xs={12} md={4}>
-                    <Box sx={{ p: 2, backgroundColor: 'background.default', borderRadius: 1 }}>
-                      <Typography variant="subtitle2" gutterBottom>
-                        Persona Groups
-                      </Typography>
-                      <Typography variant="h4">{surveyData.persona_groups.length}</Typography>
-                    </Box>
-                  </Grid>
-
-                  <Grid item xs={12}>
-                    <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', mt: 2 }}>
-                      <Button
-                        variant="contained"
-                        size="large"
-                        color="success"
-                        startIcon={isLoading ? <CircularProgress size={20} /> : <SaveIcon />}
-                        disabled={isLoading || !filename.trim()}
-                        onClick={() => {
-                          // Generate YAML from current survey data
-                          const yaml = generateYAML(surveyData);
-                          handleSave(yaml);
-                        }}
-                        sx={{ minWidth: 200 }}
-                      >
-                        {isLoading ? 'Saving...' : mode === 'edit' ? 'Update Survey' : 'Save Survey'}
-                      </Button>
-                    </Box>
-                  </Grid>
-                </Grid>
-              </Paper>
-            )}
-
-            {/* Navigation Buttons */}
-            <Paper sx={{ p: 3, mb: 3 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                <Button
-                  startIcon={<ArrowBackIcon />}
-                  onClick={handleBack}
-                  disabled={activeStep === 0}
-                  variant="outlined"
-                >
-                  Previous
-                </Button>
-
-                <Typography variant="body2" color="text.secondary" sx={{ alignSelf: 'center' }}>
-                  Step {activeStep + 1} of {wizardSteps.length}
-                </Typography>
-
-                {activeStep < wizardSteps.length - 1 ? (
-                  <Button
-                    endIcon={<ArrowForwardIcon />}
-                    onClick={handleNext}
-                    disabled={!canProceedToNextStep()}
-                    variant="contained"
-                  >
-                    Next
-                  </Button>
-                ) : (
-                  <Box sx={{ width: 100 }} />
-                )}
-              </Box>
-            </Paper>
-          </Box>
-        </>
-      )}
-
-      {/* Traditional Tabs View - Only show when NOT in wizard mode */}
-      {!wizardMode && (mode === 'create' || (mode === 'edit' && selectedSurveyId)) && (
         <>
           <Paper sx={{ mb: 3 }}>
             <Tabs value={tabValue} onChange={handleTabChange}>

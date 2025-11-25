@@ -88,6 +88,7 @@ export interface RatingDistribution {
   gender: string;
   age_group: string;
   persona_group: string;
+  persona_description: string;
   occupation: string;
 }
 
@@ -223,6 +224,7 @@ export const OPENAI_MODELS = [
   { value: 'gpt-4o', label: 'GPT-4o', supportsVision: true },
   { value: 'gpt-4o-mini', label: 'GPT-4o Mini (Fast & Cost-Effective)', supportsVision: true },
   { value: 'gpt-4-turbo', label: 'GPT-4 Turbo', supportsVision: true },
+  { value: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo (Cheapest, Text-Only)', supportsVision: false },
 ];
 
 export const ANTHROPIC_MODELS = [
@@ -391,9 +393,11 @@ export interface OverallMetrics {
 }
 
 export interface ComparisonResults {
+  id?: string; // Optional for backwards compatibility
   run_id: string;
   ground_truth_id: string;
   survey_id: string;
+  created_at?: string; // ISO timestamp
   comparison: {
     overall_metrics: OverallMetrics;
     by_category: { [category: string]: CategoryMetrics };
@@ -406,6 +410,18 @@ export interface ComparisonResults {
       [question_id: string]: AggregatedDistribution;
     };
   };
+}
+
+// Comparison History Item (summary for listing)
+export interface ComparisonHistoryItem {
+  id: string;
+  run_id: string;
+  ground_truth_id: string;
+  ground_truth_name: string;
+  survey_id: string;
+  created_at: string; // ISO timestamp
+  num_questions_compared: number;
+  mean_kl_divergence: number | null;
 }
 
 // Media Upload Types
@@ -604,4 +620,168 @@ export interface UploadGroundTruthCSVResponse {
   preview?: CSVUploadPreview;
   message?: string;
   errors?: CSVValidationError[];
+}
+
+// Analysis Types
+export interface AnalysisContext {
+  survey_type: 'single_category' | 'multi_category' | 'comparative';
+  has_demographics: boolean;
+  demographic_fields: string[];
+  num_questions: number;
+  num_categories: number;
+  num_respondents: number;
+}
+
+export interface QuestionAnalysis {
+  question_id: string;
+  question_text: string;
+  category?: string;
+  mean: number;
+  median: number;
+  std: number;
+  top_box_pct: number;
+  bottom_box_pct: number;
+  net_score: number;
+  grade: string;
+  sample_size: number;
+  ci_95_lower: number;
+  ci_95_upper: number;
+  distribution: number[];
+}
+
+export interface QuestionDistribution {
+  question_id: string;
+  question_text: string;
+  question_type: string;
+  scale_labels: {
+    scale_type?: string;
+    labels?: { [key: string]: string };
+  };
+  probabilities: number[];
+  sample_size: number;
+}
+
+export interface DemographicSegment {
+  sample_size: number;
+  questions: QuestionDistribution[];
+}
+
+export interface DemographicAnalysis {
+  demographic_field: string;
+  segments: { [segment: string]: DemographicSegment };
+  statistical_tests: {
+    [question_id: string]: {
+      chi2: number;
+      p_value: number;
+      significant: boolean;
+    };
+  };
+}
+
+export interface LegacyDemographicSegmentMetrics {
+  mean_pct: number;
+  median_pct: number;
+  std: number;
+  top_box_pct: number;
+  sample_size: number;
+  ci_95_lower: number;
+  ci_95_upper: number;
+}
+
+export interface LegacyDemographicAnalysis {
+  demographic_field: string;
+  segment_metrics: { [segment: string]: LegacyDemographicSegmentMetrics };
+  top_segment: {
+    segment: string;
+    mean_pct: number;
+    sample_size: number;
+  };
+  bottom_segment: {
+    segment: string;
+    mean_pct: number;
+    sample_size: number;
+  };
+  statistical_significance: boolean;
+  p_value: number;
+  effect_size: number;
+}
+
+export interface CorrelationItem {
+  question_a: string;
+  question_b: string;
+  correlation: number;
+  p_value: number;
+  strength: string;
+  direction: string;
+}
+
+export interface CorrelationAnalysis {
+  strong_correlations: CorrelationItem[];
+  correlation_matrix: { [key: string]: { [key: string]: number } };
+}
+
+export interface CategoryComparison {
+  category_name: string;
+  mean: number;
+  grade: string;
+  rank: number;
+  questions_won: number;
+  sample_size: number;
+  top_questions: Array<{ question_text: string; mean: number }>;
+  bottom_questions: Array<{ question_text: string; mean: number }>;
+}
+
+export interface CategoryComparisonResult {
+  ranked_categories: CategoryComparison[];
+  winner: {
+    category_name: string;
+    mean: number;
+    margin: number;
+  };
+  statistical_significance: boolean;
+  p_value: number;
+}
+
+export interface Recommendation {
+  priority: 'high' | 'medium' | 'low';
+  recommendation: string;
+  rationale: string;
+}
+
+export interface QuestionFinding {
+  question: string;
+  question_id: string;
+  category: string;
+  type: string;
+  mean: number;
+  median: number;
+  finding: string;
+  n: number;
+  distribution?: { [key: string]: number };
+}
+
+export interface ExecutiveSummary {
+  total_questions: number;
+  total_respondents: number;
+  key_insights: string[];
+  question_findings: QuestionFinding[];
+}
+
+export interface DetailedInsight {
+  title: string;
+  insight: string;
+  severity: 'info' | 'warning' | 'critical';
+  recommendations: string[];
+}
+
+export interface InsightReport {
+  executive_summary: ExecutiveSummary;
+  insights: DetailedInsight[];
+}
+
+export interface AnalysisSummary {
+  context: AnalysisContext;
+  executive_summary: ExecutiveSummary;
+  has_demographics: boolean;
+  has_categories: boolean;
 }

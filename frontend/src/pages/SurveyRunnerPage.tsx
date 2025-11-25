@@ -45,7 +45,7 @@ const SurveyRunnerPage: React.FC = () => {
     seed: 100,
   });
   const [runResult, setRunResult] = useState<RunSurveyResponse | null>(null);
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' | 'info' });
 
   const { data: surveys, isLoading: surveysLoading, error: surveysError } = useSurveys();
   const {
@@ -66,6 +66,14 @@ const SurveyRunnerPage: React.FC = () => {
   const [currentStep, setCurrentStep] = useState<string>('');
   const [progressDetails, setProgressDetails] = useState<any>(null);
   const [isStreaming, setIsStreaming] = useState(false);
+  const [abortController, setAbortController] = useState<AbortController | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
+
+  const handleCancelRun = () => {
+    if (abortController) {
+      abortController.abort();
+    }
+  };
 
   const handleRunSurvey = async () => {
     console.log('=== STARTING SURVEY RUN ===');
@@ -102,13 +110,16 @@ const SurveyRunnerPage: React.FC = () => {
     }
 
     if (validationErrors.length > 0) {
-      setSnackbar({
-        open: true,
-        message: `Configuration errors: ${validationErrors.join('; ')}`,
-        severity: 'error',
-      });
+      setValidationError(`Configuration errors: ${validationErrors.join('; ')}`);
       return;
     }
+
+    // Clear any previous validation errors
+    setValidationError(null);
+
+    // Create abort controller for cancellation
+    const controller = new AbortController();
+    setAbortController(controller);
 
     setIsStreaming(true);
     setProgressMessages([]);
@@ -124,6 +135,7 @@ const SurveyRunnerPage: React.FC = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ ...runConfig, survey_id: selectedSurveyId }),
+        signal: controller.signal,
       });
 
       if (!response.ok) {
@@ -180,10 +192,10 @@ const SurveyRunnerPage: React.FC = () => {
                 // Navigate to results page
                 const runId = data.result?.run_id;
                 if (runId) {
-                  console.log('Navigating to:', `/history/${runId}?completed=true`);
+                  console.log('Navigating to:', `/runs/${runId}?completed=true`);
                   // Use a delay to let the success message show
                   setTimeout(() => {
-                    navigate(`/history/${runId}?completed=true`);
+                    navigate(`/runs/${runId}?completed=true`);
                   }, 3000);
                 } else {
                   console.error('No run_id in result:', data);
@@ -199,13 +211,24 @@ const SurveyRunnerPage: React.FC = () => {
       }
     } catch (error: any) {
       console.error('Survey run error:', error);
-      setSnackbar({
-        open: true,
-        message: `Error: ${error.message || 'Failed to run survey'}`,
-        severity: 'error',
-      });
+
+      // Handle abort error separately
+      if (error.name === 'AbortError') {
+        setSnackbar({
+          open: true,
+          message: 'Survey run cancelled',
+          severity: 'info',
+        });
+      } else {
+        setSnackbar({
+          open: true,
+          message: `Error: ${error.message || 'Failed to run survey'}`,
+          severity: 'error',
+        });
+      }
     } finally {
       setIsStreaming(false);
+      setAbortController(null);
     }
   };
 
@@ -225,6 +248,12 @@ const SurveyRunnerPage: React.FC = () => {
             icon={<CreateIcon />}
             title="No surveys available"
             description="You need to create a survey first before you can run it. Head to the Survey Builder to get started."
+            hints={[
+              'Define your survey questions and response options',
+              'Configure persona groups to target specific demographics',
+              'Save your survey configuration as a YAML file',
+              'Preview your survey before running it'
+            ]}
             actions={[
               { label: "Create Survey", primary: true, href: "/builder" },
               { label: "View Examples", href: "/overview" }
@@ -343,6 +372,15 @@ const SurveyRunnerPage: React.FC = () => {
             setConfig={setRunConfig}
             disabled={isStreaming}
           />
+          {validationError && (
+            <Alert
+              severity="error"
+              sx={{ mt: 3 }}
+              onClose={() => setValidationError(null)}
+            >
+              {validationError}
+            </Alert>
+          )}
           <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
             <Button
               variant="contained"
@@ -374,6 +412,7 @@ const SurveyRunnerPage: React.FC = () => {
               messages={progressMessages}
               currentStep={currentStep}
               details={progressDetails}
+              onCancel={handleCancelRun}
             />
           </Grid>
         </Grid>
@@ -391,7 +430,7 @@ const SurveyRunnerPage: React.FC = () => {
                 <Button
                   variant="contained"
                   startIcon={<VisibilityIcon />}
-                  onClick={() => navigate(`/history/${runResult.run_id}`)}
+                  onClick={() => navigate(`/runs/${runResult.run_id}`)}
                 >
                   View Full Details
                 </Button>

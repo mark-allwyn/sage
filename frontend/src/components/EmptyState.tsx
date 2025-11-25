@@ -4,7 +4,8 @@
  */
 
 import React from 'react';
-import { Box, Typography, Button, Stack } from '@mui/material';
+import { Box, Typography, Button, Stack, List, ListItem, ListItemIcon, ListItemText } from '@mui/material';
+import { CheckCircleOutline as CheckIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
 interface EmptyStateAction {
@@ -20,6 +21,7 @@ interface EmptyStateProps {
   description: string;
   actions?: EmptyStateAction[];
   compact?: boolean;
+  hints?: string[];
 }
 
 export const EmptyState: React.FC<EmptyStateProps> = ({
@@ -28,6 +30,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   description,
   actions = [],
   compact = false,
+  hints = [],
 }) => {
   const navigate = useNavigate();
 
@@ -75,10 +78,33 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
       <Typography
         variant="body1"
         color="text.secondary"
-        sx={{ maxWidth: 480, mb: actions.length > 0 ? 4 : 0, lineHeight: 1.6 }}
+        sx={{ maxWidth: 480, mb: hints.length > 0 ? 3 : (actions.length > 0 ? 4 : 0), lineHeight: 1.6 }}
       >
         {description}
       </Typography>
+      {hints.length > 0 && (
+        <Box sx={{ maxWidth: 520, mb: actions.length > 0 ? 4 : 0, textAlign: 'left' }}>
+          <Typography variant="body2" fontWeight={600} sx={{ mb: 1.5, textAlign: 'center' }}>
+            Quick Tips:
+          </Typography>
+          <List dense sx={{ bgcolor: 'background.default', borderRadius: 1, py: 1 }}>
+            {hints.map((hint, index) => (
+              <ListItem key={index}>
+                <ListItemIcon sx={{ minWidth: 36 }}>
+                  <CheckIcon fontSize="small" color="primary" />
+                </ListItemIcon>
+                <ListItemText
+                  primary={hint}
+                  primaryTypographyProps={{
+                    variant: 'body2',
+                    color: 'text.secondary'
+                  }}
+                />
+              </ListItem>
+            ))}
+          </List>
+        </Box>
+      )}
       {actions.length > 0 && (
         <Stack direction="row" spacing={2} flexWrap="wrap" justifyContent="center">
           {actions.map((action, index) => (

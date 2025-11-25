@@ -39,6 +39,8 @@ import {
   History as HistoryIcon,
   PlayArrow as PlayArrowIcon,
   Download as DownloadIcon,
+  Security as SecurityIcon,
+  BarChart as BarChartIcon,
 } from '@mui/icons-material';
 import { useSurveyRuns, useDeleteSurveyRun, useSurveys } from '../services/hooks';
 import { SurveyRunMetadata } from '../services/types';
@@ -76,7 +78,7 @@ const SurveyHistoryPage: React.FC = () => {
   };
 
   const handleViewDetails = (runId: string) => {
-    navigate(`/history/${runId}`);
+    navigate(`/runs/${runId}`);
   };
 
   const handleExportCSV = () => {
@@ -177,6 +179,12 @@ const SurveyHistoryPage: React.FC = () => {
             description={searchQuery || selectedSurveyFilter
               ? 'Try adjusting your filters to see more results'
               : 'Run a survey to see it appear here. Survey runs will be saved automatically.'}
+            hints={!searchQuery && !selectedSurveyFilter ? [
+              'Create a survey in the Survey Builder first',
+              'Configure your LLM provider and model settings',
+              'Each run stores complete response data and metadata',
+              'Export results to CSV for further analysis'
+            ] : undefined}
             actions={[
               { label: "Run Survey", primary: true, href: "/runner" },
               ...(searchQuery || selectedSurveyFilter ? [{
@@ -271,8 +279,34 @@ const SurveyHistoryPage: React.FC = () => {
                         e.stopPropagation();
                         handleViewDetails(run.run_id);
                       }}
+                      title="View Details - See run configuration and metadata"
+                      aria-label={`View details for run ${run.run_id}`}
                     >
                       <VisibilityIcon />
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      color="info"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/runs/${run.run_id}?tab=1`);
+                      }}
+                      title="View Analysis - Jump to distribution charts and insights"
+                      aria-label={`View analysis for run ${run.run_id}`}
+                    >
+                      <BarChartIcon />
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      color="secondary"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/runs/${run.run_id}?tab=2`);
+                      }}
+                      title="Validate Results - Compare against ground truth baselines"
+                      aria-label={`Validate results for run ${run.run_id}`}
+                    >
+                      <SecurityIcon />
                     </IconButton>
                     <IconButton
                       size="small"
@@ -281,6 +315,8 @@ const SurveyHistoryPage: React.FC = () => {
                         e.stopPropagation();
                         handleDeleteClick(run.run_id);
                       }}
+                      title="Delete Run"
+                      aria-label={`Delete run ${run.run_id}`}
                     >
                       <DeleteIcon />
                     </IconButton>

@@ -100,27 +100,57 @@ def chi_squared_test(p: np.ndarray, q: np.ndarray, sample_size: int = 100) -> Di
         sample_size: Sample size for test distribution
 
     Returns:
-        Dictionary with chi_squared statistic and p_value
+        Dictionary with chi_squared statistic and p_value.
+        Returns None values if test cannot be performed.
     """
-    p = np.asarray(p)
-    q = np.asarray(q)
+    try:
+        p = np.asarray(p)
+        q = np.asarray(q)
 
-    # Normalize
-    p = p / p.sum()
-    q = q / q.sum()
+        # Normalize
+        p = p / p.sum()
+        q = q / q.sum()
 
-    # Convert to expected vs observed counts
-    expected = p * sample_size
-    observed = q * sample_size
+        # Convert to expected vs observed counts
+        expected = p * sample_size
+        observed = q * sample_size
 
-    # Perform chi-squared test
-    chi2_stat, p_value = stats.chisquare(observed, expected)
+        # Validate chi-squared test assumptions
+        # Chi-squared requires all expected frequencies > 0, ideally > 5
+        min_expected = np.min(expected)
+        if min_expected < 1.0:
+            # Too many cells with low expected counts - test is invalid
+            return {
+                "chi_squared": None,
+                "p_value": None,
+                "significant": False
+            }
 
-    return {
-        "chi_squared": float(chi2_stat),
-        "p_value": float(p_value),
-        "significant": p_value < 0.05  # Reject null hypothesis if p < 0.05
-    }
+        # Perform chi-squared test
+        chi2_stat, p_value = stats.chisquare(observed, expected)
+
+        # Check for invalid results (NaN, inf)
+        if not np.isfinite(chi2_stat) or not np.isfinite(p_value):
+            return {
+                "chi_squared": None,
+                "p_value": None,
+                "significant": False
+            }
+
+        return {
+            "chi_squared": float(chi2_stat),
+            "p_value": float(p_value),
+            "significant": p_value < 0.05  # Reject null hypothesis if p < 0.05
+        }
+
+    except (ValueError, RuntimeWarning, Exception) as e:
+        # Chi-squared test failed - return None values
+        # This can happen with edge cases like all zeros or invalid distributions
+        return {
+            "chi_squared": None,
+            "p_value": None,
+            "significant": False
+        }
 
 
 def mean_absolute_error(p: np.ndarray, q: np.ndarray) -> float:
