@@ -239,6 +239,8 @@ The app will open at `http://localhost:3000`
 7. **Preview YAML** to verify configuration
 8. **Enter filename** and click **"Save Survey"**
 
+**Quick Create Option**: For faster setup, use the Quick Create wizard at `/builder/quick` to generate surveys from templates.
+
 ### 2. Running a Survey
 
 1. Navigate to **"Run Survey"** page
@@ -318,10 +320,15 @@ After running a survey, access the comprehensive Analysis Dashboard:
    - Run test survey
 
    **Step 3: Compare Results**
-   - View comprehensive metrics
-   - Analyze confusion matrices
-   - Check distribution correlations
-   - Assess Jensen-Shannon divergence
+   - View comprehensive metrics:
+     - **KL Divergence**: Information loss measure (lower = better match)
+     - **JS Divergence**: Symmetric similarity score 0-1 (0 = identical)
+     - **Wasserstein Distance**: Earth Mover's Distance (lower = better)
+     - **Chi-Squared Test**: Statistical significance test (p ≥ 0.05 = good match)
+     - **MAE**: Mean Absolute Error between distributions
+   - Analyze distribution charts
+   - Check difference heatmaps
+   - Note: Chi-squared may show N/A for questions with insufficient expected frequencies
 
 3. **Export comparisons** for documentation
 
