@@ -142,7 +142,7 @@ const CSVUploadDialog: React.FC<CSVUploadDialogProps> = ({
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} disabled={isUploading}>
+        <Button onClick={onClose} disabled={isUploading} variant="outlined">
           Cancel
         </Button>
         <Button

@@ -261,7 +261,7 @@ const SSRGenerationDialog: React.FC<SSRGenerationDialogProps> = ({
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} disabled={isPending}>
+        <Button onClick={onClose} disabled={isPending} variant="outlined">
           Cancel
         </Button>
         <Button

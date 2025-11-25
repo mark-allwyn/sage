@@ -846,7 +846,7 @@ const EvaluationDashboardPage: React.FC = () => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenDetailDialog(false)}>Close</Button>
+          <Button onClick={() => setOpenDetailDialog(false)} variant="outlined">Close</Button>
         </DialogActions>
       </Dialog>
 
@@ -1154,7 +1154,7 @@ const EvaluationDashboardPage: React.FC = () => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenCompareDialog(false)}>Close</Button>
+          <Button onClick={() => setOpenCompareDialog(false)} variant="outlined">Close</Button>
         </DialogActions>
       </Dialog>
     </Container>

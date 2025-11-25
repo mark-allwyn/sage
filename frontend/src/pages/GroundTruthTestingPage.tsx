@@ -1279,7 +1279,7 @@ const GroundTruthTestingPage: React.FC = () => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setViewingGroundTruthId(null)}>Close</Button>
+          <Button onClick={() => setViewingGroundTruthId(null)} variant="outlined">Close</Button>
         </DialogActions>
       </Dialog>
     </Box>
