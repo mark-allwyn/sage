@@ -760,10 +760,129 @@ const DocumentationPage: React.FC = () => {
         </AccordionSummary>
         <AccordionDetails>
           <Box sx={{ p: 2 }}>
+            <Typography variant="h6" gutterBottom>Analysis Dashboard</Typography>
+            <Typography variant="body1" paragraph>
+              After completing a survey run, access the comprehensive Analysis Dashboard to explore
+              your results in depth. The dashboard provides multiple views optimized for different analysis needs:
+            </Typography>
+
+            <Grid container spacing={2} sx={{ mt: 2, mb: 4 }}>
+              <Grid item xs={12} md={6}>
+                <Card variant="outlined" sx={{ height: '100%' }}>
+                  <CardContent>
+                    <Typography variant="subtitle1" gutterBottom fontWeight="bold" color="primary">
+                      Executive Summary
+                    </Typography>
+                    <Typography variant="body2" paragraph>
+                      High-level overview with contextual insights:
+                    </Typography>
+                    <List dense>
+                      <ListItem>
+                        <ListItemIcon><CheckIcon fontSize="small" /></ListItemIcon>
+                        <ListItemText
+                          primary="Key findings with natural language descriptions"
+                          secondary="e.g., '67% found it appealing, 15% were neutral'"
+                        />
+                      </ListItem>
+                      <ListItem>
+                        <ListItemIcon><CheckIcon fontSize="small" /></ListItemIcon>
+                        <ListItemText primary="Sample size and demographic breakdown" />
+                      </ListItem>
+                      <ListItem>
+                        <ListItemIcon><CheckIcon fontSize="small" /></ListItemIcon>
+                        <ListItemText primary="Category performance rankings (if applicable)" />
+                      </ListItem>
+                    </List>
+                  </CardContent>
+                </Card>
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <Card variant="outlined" sx={{ height: '100%' }}>
+                  <CardContent>
+                    <Typography variant="subtitle1" gutterBottom fontWeight="bold" color="primary">
+                      Question Analysis Table
+                    </Typography>
+                    <Typography variant="body2" paragraph>
+                      Sortable table with comprehensive statistics:
+                    </Typography>
+                    <List dense>
+                      <ListItem>
+                        <ListItemIcon><CheckIcon fontSize="small" /></ListItemIcon>
+                        <ListItemText primary="Mean, median, std deviation, confidence intervals" />
+                      </ListItem>
+                      <ListItem>
+                        <ListItemIcon><CheckIcon fontSize="small" /></ListItemIcon>
+                        <ListItemText primary="Top-box %, bottom-box %, net score" />
+                      </ListItem>
+                      <ListItem>
+                        <ListItemIcon><CheckIcon fontSize="small" /></ListItemIcon>
+                        <ListItemText primary="Performance grades (A/B+/B/C+/C/D)" />
+                      </ListItem>
+                    </List>
+                  </CardContent>
+                </Card>
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <Card variant="outlined" sx={{ height: '100%' }}>
+                  <CardContent>
+                    <Typography variant="subtitle1" gutterBottom fontWeight="bold" color="primary">
+                      Demographic Analysis
+                    </Typography>
+                    <Typography variant="body2" paragraph>
+                      Deep dive into audience segments:
+                    </Typography>
+                    <List dense>
+                      <ListItem>
+                        <ListItemIcon><CheckIcon fontSize="small" /></ListItemIcon>
+                        <ListItemText primary="Response distributions by demographic field" />
+                      </ListItem>
+                      <ListItem>
+                        <ListItemIcon><CheckIcon fontSize="small" /></ListItemIcon>
+                        <ListItemText primary="Chi-squared tests for statistical significance" />
+                      </ListItem>
+                      <ListItem>
+                        <ListItemIcon><CheckIcon fontSize="small" /></ListItemIcon>
+                        <ListItemText primary="Visual charts comparing segments" />
+                      </ListItem>
+                    </List>
+                  </CardContent>
+                </Card>
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <Card variant="outlined" sx={{ height: '100%' }}>
+                  <CardContent>
+                    <Typography variant="subtitle1" gutterBottom fontWeight="bold" color="primary">
+                      Category Comparison
+                    </Typography>
+                    <Typography variant="body2" paragraph>
+                      Compare performance across products/categories:
+                    </Typography>
+                    <List dense>
+                      <ListItem>
+                        <ListItemIcon><CheckIcon fontSize="small" /></ListItemIcon>
+                        <ListItemText primary="Winner identification and rankings" />
+                      </ListItem>
+                      <ListItem>
+                        <ListItemIcon><CheckIcon fontSize="small" /></ListItemIcon>
+                        <ListItemText primary="Top and bottom questions per category" />
+                      </ListItem>
+                      <ListItem>
+                        <ListItemIcon><CheckIcon fontSize="small" /></ListItemIcon>
+                        <ListItemText primary="Category-level statistics" />
+                      </ListItem>
+                    </List>
+                  </CardContent>
+                </Card>
+              </Grid>
+            </Grid>
+
             <Typography variant="h6" gutterBottom>Survey History & Results</Typography>
             <Typography variant="body1" paragraph>
               All completed survey runs are saved and accessible from the Survey History page.
-              Here's what you can explore:
+              From there you can view raw data, export to CSV, or access the Analysis Dashboard.
             </Typography>
 
             <Divider sx={{ my: 3 }} />
@@ -1030,39 +1149,63 @@ const DocumentationPage: React.FC = () => {
               <Grid container spacing={3}>
                 <Grid item xs={12} md={6}>
                   <Typography variant="subtitle2" gutterBottom fontWeight="bold" color="primary">
-                    Pearson Correlation
+                    KL Divergence
                   </Typography>
                   <Typography variant="body2">
-                    Measures linear relationship between synthetic and ground truth responses.
-                    Values above 0.7 indicate strong agreement.
+                    Kullback-Leibler divergence measures information loss. Range: [0, ∞).
+                    Lower is better, 0 = identical distributions.
                   </Typography>
                 </Grid>
                 <Grid item xs={12} md={6}>
                   <Typography variant="subtitle2" gutterBottom fontWeight="bold" color="primary">
-                    Mean Absolute Error
+                    JS Divergence
                   </Typography>
                   <Typography variant="body2">
-                    Average difference between expected values. Lower is better - below 0.5 is excellent.
+                    Jensen-Shannon divergence (symmetric version of KL). Range: [0, 1].
+                    0 = identical, 1 = completely different.
                   </Typography>
                 </Grid>
                 <Grid item xs={12} md={6}>
                   <Typography variant="subtitle2" gutterBottom fontWeight="bold" color="primary">
-                    Spearman Correlation
+                    Wasserstein Distance
                   </Typography>
                   <Typography variant="body2">
-                    Measures rank-order agreement. Better than Pearson for non-linear relationships.
+                    "Earth Mover's Distance" accounts for ordering of scale values.
+                    Lower is better - measures minimum work to transform one distribution into another.
                   </Typography>
                 </Grid>
                 <Grid item xs={12} md={6}>
                   <Typography variant="subtitle2" gutterBottom fontWeight="bold" color="primary">
-                    Jensen-Shannon Divergence
+                    Chi-Squared Test
                   </Typography>
                   <Typography variant="body2">
-                    Measures similarity between probability distributions. Lower values (closer to 0) mean more similar.
+                    Statistical significance test. P-value &lt; 0.05 = significantly different.
+                    Note: Shows N/A when expected frequencies are too low (&lt; 1.0).
+                  </Typography>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <Typography variant="subtitle2" gutterBottom fontWeight="bold" color="primary">
+                    Mean Absolute Error (MAE)
+                  </Typography>
+                  <Typography variant="body2">
+                    Average absolute difference between probability values.
+                    Lower is better - below 0.05 is excellent.
                   </Typography>
                 </Grid>
               </Grid>
             </Paper>
+
+            <Alert severity="info" sx={{ mt: 3 }}>
+              <Typography variant="body2" fontWeight="bold" gutterBottom>
+                Why Some Chi-Squared Values Show N/A
+              </Typography>
+              <Typography variant="body2">
+                Chi-squared tests require minimum expected frequency ≥ 1.0 for validity. When ground truth
+                data has response options with zero or very low probabilities (&lt; 0.5%), the expected
+                frequency falls below this threshold and the test cannot be performed. This is a limitation
+                of the statistical test, not an error in your data.
+              </Typography>
+            </Alert>
 
             <Alert severity="warning" icon={<WarningIcon />} sx={{ mt: 3 }}>
               <Typography variant="body2" fontWeight="bold">Important Note</Typography>

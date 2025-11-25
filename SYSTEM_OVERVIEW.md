@@ -247,101 +247,365 @@ Rendered in Analysis Dashboard
 
 ### Survey Run Data Structure
 
+Stored in `/results/run_YYYYMMDD_HHMMSS.json`
+
 ```json
 {
-  "run_id": "uuid",
+  "run_id": "run_20251125_162002",
   "survey_id": "lottery_general_survey",
-  "timestamp": "2025-01-15T10:30:00Z",
+  "survey_name": "General Lottery Player Survey",
+  "timestamp": "2025-11-25T16:20:02.441158",
+  "num_profiles": 200,
+  "num_responses": 1600,
+  "num_distributions": 1600,
   "config": {
-    "llm_provider": "anthropic",
-    "llm_model": "claude-3-5-sonnet-20250219",
+    "llm_provider": "openai",
+    "model": "gpt-3.5-turbo",
     "llm_temperature": 0.7,
     "ssr_temperature": 1.0,
-    "sample_size": 200,
-    "seed": 42
+    "normalize_method": "paper",
+    "num_profiles": 200,
+    "seed": 100
   },
-  "results": {
-    "responses": [
-      {
-        "profile_id": "p001",
-        "demographics": {
-          "age_group": "35-44",
+  "distributions": {
+    "general": {  // Category level (could be "Category A", "Category B", etc.)
+      "play_frequency": {  // Question ID
+        "R001": {  // Respondent ID
+          "probabilities": [0.05, 0.10, 0.25, 0.45, 0.15],
+          "mode": 4,
+          "expected_value": 3.55,
+          "entropy": 1.32,
+          "text_response": "I typically buy lottery tickets once or twice a week...",
+
+          // Demographics embedded at individual response level
           "gender": "Female",
-          "occupation": "Professional"
+          "age_group": "35-44",
+          "occupation": "Professional",
+          "persona_group": "Regular Players",
+          "persona_description": "Sarah, 38, never misses her weekly lottery routine"
         },
-        "persona_group": "Regular Players",
-        "question_responses": {
-          "play_frequency": {
-            "llm_response": "text...",
-            "distribution": {
-              "Never": 0.05,
-              "Rarely (few times a year)": 0.10,
-              "Occasionally (monthly)": 0.25,
-              "Regularly (weekly)": 0.45,
-              "Very frequently (multiple times per week)": 0.15
-            }
-          }
+        "R002": {
+          // Similar structure for next respondent
         }
+      },
+      "trust_fairness": {
+        // Similar nested structure for other questions
       }
-    ],
-    "aggregated_distributions": {...},
-    "statistics": {...}
+    },
+    "Category A": {
+      // If multi-category survey, repeat structure for other categories
+    }
   }
 }
 ```
 
+**Key Structure Notes:**
+- **Three-level nesting**: Category → Question ID → Respondent ID
+- **Demographics at response level**: Each individual distribution includes all demographic fields
+- **SSR outputs**: `probabilities`, `mode`, `expected_value`, `entropy` from SSR model
+- **Original text**: `text_response` contains the LLM's original qualitative answer
+- **Flexible categories**: Can be "general" for single-category surveys or named categories for multi-product surveys
+
 ### Analysis Data Structure
+
+Analysis is computed on-demand from survey run data. The system provides multiple analysis views optimized for different use cases.
+
+#### Executive Summary Endpoint: `/api/analysis/{run_id}/summary`
 
 ```json
 {
+  "context": {
+    "survey_type": "MULTI_CATEGORY",  // or "GENERAL"
+    "has_categories": true,
+    "has_demographics": true,
+    "demographic_fields": ["age_group", "gender", "occupation"],
+    "num_questions": 8,
+    "sample_size": 200
+  },
   "executive_summary": {
     "total_respondents": 200,
     "total_questions": 8,
-    "demographic_fields": ["age_group", "gender", "occupation"],
-    "has_demographics": true,
     "key_insights": [
-      "Insight 1...",
-      "Insight 2..."
+      "Category A outperformed Category B by 15%",
+      "Highest scoring question: trust_reliability (mean: 4.2)"
     ],
     "question_findings": [
       {
         "question_id": "play_frequency",
         "question": "How often do you purchase lottery tickets?",
-        "type": "likert_5",
-        "category": null,
+        "type": "likert_7",
+        "category": "general",
         "n": 200,
-        "mean": 3.4,
-        "median": 3.0,
-        "std": 1.2,
-        "finding": "Most respondents play regularly...",
-        "distribution": {...}
+        "mean": 4.5,
+        "median": 5.0,
+        "finding": "67% found it appealing (ratings 6-7), 15% were neutral",
+        "distribution": {
+          "Not at all": 10,
+          "Slightly": 15,
+          "Moderately": 20,
+          "Somewhat": 30,
+          "Quite": 45,
+          "Very": 50,
+          "Extremely": 30
+        }
       }
     ]
-  },
-  "question_analysis": [
-    {
-      "question_id": "play_frequency",
-      "question_text": "How often do you purchase lottery tickets?",
-      "mean": 3.4,
-      "median": 3.0,
-      "std": 1.2,
-      "ci_95_lower": 3.2,
-      "ci_95_upper": 3.6,
-      "top_box_pct": 35.5,
-      "net_score": 25.0,
-      "grade": "B",
-      "sample_size": 200,
-      "category": null
-    }
-  ],
-  "context": {
-    "survey_name": "General Lottery Player Survey",
-    "demographic_fields": ["age_group", "gender", "occupation"],
-    "has_demographics": true,
-    "has_categories": false
   }
 }
 ```
+
+**Key Fields:**
+- **finding**: Natural language interpretation using actual scale labels and percentages (e.g., "67% found it appealing" instead of "mean: 4.5")
+- **distribution**: Uses actual scale labels (e.g., "Strongly Agree") instead of numeric values
+- **context**: Provides metadata about survey structure for proper interpretation
+
+#### Question Analysis Endpoint: `/api/analysis/{run_id}/questions`
+
+```json
+[
+  {
+    "question_id": "play_frequency",
+    "question_text": "How often do you purchase lottery tickets?",
+    "category": "general",
+    "mean": 4.5,
+    "median": 5.0,
+    "std": 1.2,
+    "ci_95_lower": 4.3,
+    "ci_95_upper": 4.7,
+    "top_box_pct": 45.5,
+    "bottom_box_pct": 12.5,
+    "net_score": 33.0,
+    "grade": "A",
+    "sample_size": 200,
+    "mean_distribution": [0.05, 0.08, 0.10, 0.15, 0.22, 0.25, 0.15]
+  }
+]
+```
+
+**Statistical Metrics:**
+- **mean/median/std**: Basic statistics on response values
+- **ci_95_lower/upper**: 95% confidence intervals
+- **top_box_pct**: Percentage of responses in top categories (≥6 for 7-point scales)
+- **bottom_box_pct**: Percentage in bottom categories (≤2)
+- **net_score**: top_box_pct - bottom_box_pct
+- **grade**: Performance grade (A/B+/B/C+/C/D) based on mean thresholds
+- **mean_distribution**: Averaged probability distribution across all respondents
+
+#### Category Comparison Endpoint: `/api/analysis/{run_id}/categories`
+
+```json
+{
+  "winner": {
+    "name": "Category A",
+    "mean": 4.8,
+    "sample_size": 400
+  },
+  "ranked_categories": [
+    {
+      "name": "Category A",
+      "mean": 4.8,
+      "std": 0.9,
+      "sample_size": 400,
+      "num_questions": 5,
+      "rank": 1,
+      "top_questions": [
+        {"question_id": "Q001", "mean": 5.2},
+        {"question_id": "Q002", "mean": 5.0}
+      ],
+      "bottom_questions": [
+        {"question_id": "Q005", "mean": 4.1}
+      ]
+    }
+  ],
+  "category_performance": {
+    "Category A": {
+      /* same structure as ranked_categories items */
+    }
+  }
+}
+```
+
+#### Demographic Analysis Endpoint: `/api/analysis/{run_id}/demographics/{field}`
+
+```json
+{
+  "demographic_field": "age_group",
+  "segments": {
+    "18-24": {
+      "sample_size": 40,
+      "questions": [
+        {
+          "question_id": "play_frequency",
+          "question_text": "How often do you purchase lottery tickets?",
+          "question_type": "likert_7",
+          "scale_labels": {
+            "1": "Not at all",
+            "7": "Extremely"
+          },
+          "probabilities": [0.05, 0.08, 0.10, 0.15, 0.22, 0.25, 0.15],
+          "sample_size": 40
+        }
+      ]
+    },
+    "25-34": {
+      /* similar structure */
+    }
+  },
+  "statistical_tests": {
+    "play_frequency": {
+      "chi2": 15.3,
+      "p_value": 0.018,
+      "significant": true
+    }
+  }
+}
+```
+
+**Features:**
+- Returns full probability distributions for each demographic segment
+- Includes chi-squared tests to identify statistically significant differences
+- Provides scale labels for proper visualization
+
+### Ground Truth Data Structure
+
+Ground truth data is used to validate synthetic survey runs against real survey responses. Stored in `/ground_truths/gt_*.json`
+
+```json
+{
+  "id": "gt_lottery_20251125",
+  "name": "Lottery Study - Real Responses",
+  "survey_id": "lottery_general_survey",
+  "survey_name": "General Lottery Player Survey",
+  "source": "ssr_generated",  // or "uploaded"
+  "created_at": "2025-11-25T15:57:35.123456",
+  "num_profiles": 200,
+  "num_responses": 1600,
+  "description": "Ground truth baseline for lottery study",
+
+  // If SSR-generated, includes generation config
+  "generation_config": {
+    "num_profiles": 200,
+    "llm_provider": "anthropic",
+    "model": "claude-3-5-sonnet-20250219",
+    "llm_temperature": 0.7,
+    "ssr_temperature": 1.0,
+    "normalize_method": "paper",
+    "seed": 42,
+    "persona_groups": ["Heavy Players", "Casual Players", "Non-Players"],
+    "persona_distribution": {
+      "Heavy Players": 0.3,
+      "Casual Players": 0.5,
+      "Non-Players": 0.2
+    }
+  },
+
+  // Aggregated distributions (averaged across all respondents)
+  "aggregated_distributions": {
+    "general": {
+      "play_frequency": {
+        "mean_probabilities": [0.05, 0.10, 0.25, 0.40, 0.20],
+        "std_probabilities": [0.02, 0.03, 0.05, 0.06, 0.04],
+        "sample_size": 200,
+        "mean_mode": 3.8,
+        "mean_expected_value": 3.6,
+        "mean_entropy": 1.42
+      }
+    }
+  },
+
+  // Optional: raw distributions (same structure as survey run)
+  "raw_distributions": {
+    /* Same structure as survey run distributions */
+  }
+}
+```
+
+**Key Features:**
+- **source**: Either "ssr_generated" (from a survey run) or "uploaded" (from real survey data)
+- **aggregated_distributions**: Population-level averaged distributions for comparison
+- **generation_config**: Tracks SSR parameters if generated synthetically
+- **raw_distributions**: Optional individual-level data for detailed analysis
+
+### Ground Truth Comparison Structure
+
+Comparison results measure how well a test run matches ground truth. Stored in `/comparisons/comp_*.json`
+
+```json
+{
+  "id": "comp_20251125_162113",
+  "run_id": "run_20251125_162002",
+  "ground_truth_id": "gt_lottery_20251125",
+  "survey_id": "lottery_general_survey",
+  "created_at": "2025-11-25T16:21:13.456789",
+
+  "comparison": {
+    "overall_metrics": {
+      "mean_kl_divergence": 0.0245,
+      "std_kl_divergence": 0.0132,
+      "mean_js_divergence": 0.0812,
+      "std_js_divergence": 0.0421,
+      "mean_wasserstein": 0.1234,
+      "std_wasserstein": 0.0567,
+      "mean_mae": 0.0345,
+      "std_mae": 0.0189,
+      "num_questions_compared": 8
+    },
+
+    "by_category": {
+      "general": {
+        "mean_kl_divergence": 0.0245,
+        "mean_js_divergence": 0.0812,
+        "mean_wasserstein": 0.1234,
+        "mean_mae": 0.0345,
+        "num_questions": 8
+      }
+    },
+
+    "by_question": {
+      "general_play_frequency": {
+        "kl_divergence": 0.0187,
+        "js_divergence": 0.0654,
+        "wasserstein_distance": 0.0987,
+        "chi_squared": 3.42,
+        "chi_squared_p_value": 0.489,
+        "significant_difference": false,
+        "mean_absolute_error": 0.0276
+      },
+      "general_trust_fairness": {
+        "kl_divergence": 0.0312,
+        "js_divergence": 0.0921,
+        "wasserstein_distance": 0.1456,
+        "chi_squared": null,
+        "chi_squared_p_value": null,
+        "significant_difference": false,
+        "mean_absolute_error": 0.0412
+      }
+    }
+  },
+
+  // Optional: distribution data for visualization
+  "test_run_distributions": {
+    /* Distributions from test run */
+  },
+  "ground_truth_distributions": {
+    /* Aggregated distributions from ground truth */
+  }
+}
+```
+
+**Comparison Metrics:**
+- **KL Divergence**: Measures information loss; Range: [0, ∞), lower is better, 0 = identical
+- **JS Divergence**: Symmetric version of KL; Range: [0, 1], 0 = identical, 1 = completely different
+- **Wasserstein Distance**: "Earth Mover's Distance"; accounts for scale ordering
+- **Chi-Squared Test**: Statistical significance test; p < 0.05 means significantly different
+  - **Note**: Returns null when expected frequencies < 1.0 (chi-squared test invalid)
+- **MAE**: Simple average absolute difference between probability values
+
+**Important Notes:**
+- Chi-squared test requires minimum expected frequency ≥ 1.0 for validity
+- Expected frequency = probability × sample_size
+- Ground truth with zero/near-zero probabilities will result in null chi-squared values
+- Lower divergence values indicate better match to ground truth population distribution
 
 ---
 
